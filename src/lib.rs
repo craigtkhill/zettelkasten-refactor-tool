@@ -1,3 +1,9 @@
+#![warn(clippy::all)]
+// #![warn(clippy::pedantic)]
+// #![warn(clippy::nursery)]
+// #![warn(clippy::cargo)]
+// #![warn(clippy::restriction)]
+
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use glob::Pattern;
@@ -74,8 +80,8 @@ impl IgnorePatterns {
         }
 
         // Handle negation patterns
-        let (pattern, is_negation) = if pattern.starts_with('!') {
-            (&pattern[1..], true)
+        let (pattern, is_negation) = if let Some(stripped) = pattern.strip_prefix('!') {
+            (stripped, true)
         } else {
             (pattern, false)
         };
@@ -105,16 +111,10 @@ impl IgnorePatterns {
                 } else {
                     format!("{}**", pattern)
                 }
+            } else if is_negation || pattern.contains('.') {
+                pattern // For negation or files with extension, match exactly
             } else {
-                if is_negation {
-                    pattern // For negation, match exactly
-                } else {
-                    if pattern.contains('.') {
-                        pattern // If it has an extension, match exactly
-                    } else {
-                        format!("{}/**", pattern) // Otherwise, match directory
-                    }
-                }
+                format!("{}/**", pattern) // Otherwise, match directory
             };
 
         // Handle case where pattern is just a filename without path
@@ -126,8 +126,10 @@ impl IgnorePatterns {
         // Handle file extension groups like *.{js,ts}
         if glob_pattern.contains("{") {
             // Split the pattern into multiple patterns
-            let (prefix, suffix) = glob_pattern.split_once("{").unwrap();
-            let (extensions, rest) = suffix.split_once("}").unwrap();
+            let (prefix, suffix) = glob_pattern.split_once("{")
+                .expect("Invalid pattern: missing opening brace");
+            let (extensions, rest) = suffix.split_once("}")
+                .expect("Invalid pattern: missing closing brace");
             let extensions: Vec<&str> = extensions.split(',').map(|s| s.trim()).collect();
 
             for ext in extensions {
@@ -190,8 +192,8 @@ impl IgnorePatterns {
     }
 }
 
-pub fn load_ignore_patterns(dir: &PathBuf) -> Result<IgnorePatterns> {
-    let mut patterns = IgnorePatterns::new(dir.clone());
+pub fn load_ignore_patterns(dir: &Path) -> Result<IgnorePatterns> {
+    let mut patterns = IgnorePatterns::new(dir.to_path_buf());
     let ignore_file = dir.join(".zrtignore");
 
     if ignore_file.exists() {
@@ -319,6 +321,7 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     Ok(count)
 }
 
+#[derive(Debug, Default)]
 pub struct SinglePatternStats {
     pub total_files: u64,
     pub files_with_pattern: u64,
@@ -340,6 +343,7 @@ impl SinglePatternStats {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct ComparisonStats {
     pub total_files: u64,
     pub done_files: u64,
