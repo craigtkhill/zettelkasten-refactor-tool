@@ -45,7 +45,7 @@ pub struct Args {
     #[arg(short = 'f', long)]
     pub filter_out: Option<String>,
 
-    /// Single pattern to search for (e.g., "to_refactor")
+    /// Single pattern to search for (e.g., "`to_refactor`")
     #[arg(short = 'p', long)]
     pub pattern: Option<String>,
 
@@ -53,7 +53,7 @@ pub struct Args {
     #[arg(short = 'r', long)]
     pub done_tag: Option<String>,
 
-    /// "Todo" tag to search for (e.g., "to_refactor")
+    /// "Todo" tag to search for (e.g., "`to_refactor`")
     #[arg(short = 'o', long)]
     pub todo_tag: Option<String>,
 }
@@ -65,7 +65,7 @@ pub struct IgnorePatterns {
 }
 
 impl IgnorePatterns {
-    pub fn new(root_dir: PathBuf) -> Self {
+    #[must_use] pub fn new(root_dir: PathBuf) -> Self {
         Self {
             patterns: Vec::new(),
             root_dir,
@@ -107,35 +107,35 @@ impl IgnorePatterns {
                 }
             } else if pattern.ends_with('/') {
                 if is_negation {
-                    format!("{}**/*", pattern) // For negation, match all files in directory
+                    format!("{pattern}**/*") // For negation, match all files in directory
                 } else {
-                    format!("{}**", pattern)
+                    format!("{pattern}**")
                 }
             } else if is_negation || pattern.contains('.') {
                 pattern // For negation or files with extension, match exactly
             } else {
-                format!("{}/**", pattern) // Otherwise, match directory
+                format!("{pattern}/**") // Otherwise, match directory
             };
 
         // Handle case where pattern is just a filename without path
         // Only add **/ prefix for non-absolute patterns
         if !is_absolute && !glob_pattern.contains('/') && !glob_pattern.contains('\\') {
-            glob_pattern = format!("**/{}", glob_pattern);
+            glob_pattern = format!("**/{glob_pattern}");
         }
 
         // Handle file extension groups like *.{js,ts}
-        if glob_pattern.contains("{") {
+        if glob_pattern.contains('{') {
             // Split the pattern into multiple patterns
-            let (prefix, suffix) = glob_pattern.split_once("{")
+            let (prefix, suffix) = glob_pattern.split_once('{')
                 .expect("Invalid pattern: missing opening brace");
-            let (extensions, rest) = suffix.split_once("}")
+            let (extensions, rest) = suffix.split_once('}')
                 .expect("Invalid pattern: missing closing brace");
-            let extensions: Vec<&str> = extensions.split(',').map(|s| s.trim()).collect();
+            let extensions: Vec<&str> = extensions.split(',').map(str::trim).collect();
 
             for ext in extensions {
-                let full_pattern = format!("{}{}{}", prefix, ext, rest).replace("[GLOBSTAR]", "**");
+                let full_pattern = format!("{prefix}{ext}{rest}").replace("[GLOBSTAR]", "**");
                 let compiled = Pattern::new(&full_pattern)
-                    .with_context(|| format!("Invalid pattern: {}", full_pattern))?;
+                    .with_context(|| format!("Invalid pattern: {full_pattern}"))?;
                 // Store whether this was an absolute path pattern
                 self.patterns.push((compiled, is_negation));
             }
@@ -144,7 +144,7 @@ impl IgnorePatterns {
 
         let glob_pattern = glob_pattern.replace("[GLOBSTAR]", "**");
         let compiled = Pattern::new(&glob_pattern)
-            .with_context(|| format!("Invalid pattern: {}", glob_pattern))?;
+            .with_context(|| format!("Invalid pattern: {glob_pattern}"))?;
         // Store whether this was an absolute path pattern
         self.patterns.push((compiled, is_negation));
         Ok(())
@@ -198,7 +198,7 @@ pub fn load_ignore_patterns(dir: &Path) -> Result<IgnorePatterns> {
 
     if ignore_file.exists() {
         let content = fs::read_to_string(&ignore_file)
-            .with_context(|| format!("Failed to read .zrtignore file: {:?}", ignore_file))?;
+            .with_context(|| format!("Failed to read .zrtignore file: {ignore_file:?}"))?;
 
         for line in content.lines() {
             patterns.add_pattern(line)?;
@@ -240,8 +240,7 @@ pub fn contains_tag(path: &std::path::Path, tag: &str) -> io::Result<bool> {
             // Check if the tag exists in the frontmatter tags
             Ok(frontmatter
                 .tags
-                .map(|tags| tags.iter().any(|t| t == tag))
-                .unwrap_or(false))
+                .is_some_and(|tags| tags.iter().any(|t| t == tag)))
         }
         Err(_) => Ok(false), // If parsing fails, assume no tags
     }
@@ -317,7 +316,7 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
         }
     }
 
-    println!("Total files found: {}", count);
+    println!("Total files found: {count}");
     Ok(count)
 }
 
@@ -328,14 +327,14 @@ pub struct SinglePatternStats {
 }
 
 impl SinglePatternStats {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             total_files: 0,
             files_with_pattern: 0,
         }
     }
 
-    pub fn calculate_percentage(&self) -> f64 {
+    #[must_use] pub fn calculate_percentage(&self) -> f64 {
         if self.total_files == 0 {
             return 0.0;
         }
@@ -351,7 +350,7 @@ pub struct ComparisonStats {
 }
 
 impl ComparisonStats {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             total_files: 0,
             done_files: 0,
@@ -359,7 +358,7 @@ impl ComparisonStats {
         }
     }
 
-    pub fn calculate_percentage(&self) -> f64 {
+    #[must_use] pub fn calculate_percentage(&self) -> f64 {
         let total_tagged = self.done_files + self.todo_files;
         if total_tagged == 0 {
             return 0.0;
@@ -425,7 +424,7 @@ pub fn scan_directory_two_patterns(
     Ok(stats)
 }
 
-pub fn should_exclude(
+#[must_use] pub fn should_exclude(
     entry: &walkdir::DirEntry,
     exclude_dirs: &[&str],
     ignore_patterns: Option<&IgnorePatterns>,
@@ -437,7 +436,7 @@ pub fn should_exclude(
     // Check manual exclude dirs
     if let Some(path_str) = entry.path().to_str() {
         for dir in exclude_dirs {
-            if path_str.contains(&format!("/{}/", dir)) {
+            if path_str.contains(&format!("/{dir}/")) {
                 return true;
             }
         }
@@ -453,18 +452,17 @@ pub fn should_exclude(
     false
 }
 
-pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+#[must_use] pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .map(|s| {
+        .is_some_and(|s| {
             // Don't consider temp directories as hidden
             if s.starts_with(".tmp") {
                 return false;
             }
-            s.starts_with(".")
+            s.starts_with('.')
         })
-        .unwrap_or(false)
 }
 
 pub fn run(args: Args) -> Result<()> {
@@ -476,7 +474,7 @@ pub fn run(args: Args) -> Result<()> {
                 args.directory.display()
             )
         })?;
-        println!("{}", count);
+        println!("{count}");
     } else if args.words {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let files = count_words(&args.directory, &exclude_dirs, args.filter_out.as_deref())

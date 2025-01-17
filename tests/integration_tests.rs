@@ -72,7 +72,7 @@ fn setup_test_directory() -> Result<TempDir> {
         let entry = entry?;
         println!("  {:?}", entry.path());
     }
-    println!("");
+    println!();
 
     Ok(temp_dir)
 }
@@ -88,7 +88,7 @@ fn test_basic_file_operations() -> Result<()> {
 
     // Create and test with ignore file
     create_ignore_file(
-        &temp_dir.path(),
+        temp_dir.path(),
         &["*.tmp", "draft/", "cache/", "node_modules/"],
     )?;
 
@@ -105,7 +105,7 @@ fn test_word_counting() -> Result<()> {
 
     // Create ignore file
     create_ignore_file(
-        &temp_dir.path(),
+        temp_dir.path(),
         &["*.tmp", "draft/", "cache/", "node_modules/"],
     )?;
 
@@ -140,7 +140,7 @@ fn test_ignore_patterns() -> Result<()> {
 
     // Test comprehensive set of ignore patterns
     create_ignore_file(
-        &temp_dir.path(),
+        temp_dir.path(),
         &[
             "# Comment line",
             "*.tmp",
@@ -156,7 +156,7 @@ fn test_ignore_patterns() -> Result<()> {
         ],
     )?;
 
-    let patterns = load_ignore_patterns(&temp_dir.path().to_path_buf())?;
+    let patterns = load_ignore_patterns(temp_dir.path())?;
 
     // Test pattern matching
     assert!(patterns.matches("test.tmp"), "Should match *.tmp pattern");
@@ -212,7 +212,7 @@ fn test_scanning_with_ignore() -> Result<()> {
     let temp_dir = setup_test_directory()?;
 
     create_ignore_file(
-        &temp_dir.path(),
+        temp_dir.path(),
         &["*.tmp", "draft/", "cache/", "node_modules/"],
     )?;
 
@@ -256,8 +256,8 @@ fn test_edge_cases() -> Result<()> {
     let temp_dir = setup_test_directory()?;
 
     // Test empty ignore file
-    create_ignore_file(&temp_dir.path(), &[])?;
-    let count_empty_ignore = count_files(&temp_dir.path().to_path_buf(), &vec![".git"])?;
+    create_ignore_file(temp_dir.path(), &[])?;
+    let count_empty_ignore = count_files(&temp_dir.path().to_path_buf(), &[".git"])?;
     assert_eq!(
         count_empty_ignore, 8,
         "Empty ignore file should not exclude any files"
@@ -265,10 +265,10 @@ fn test_edge_cases() -> Result<()> {
 
     // Test ignore file with only comments and empty lines
     create_ignore_file(
-        &temp_dir.path(),
+        temp_dir.path(),
         &["# Comment 1", "", "  # Comment 2  ", "     ", "# Comment 3"],
     )?;
-    let count_comment_only = count_files(&temp_dir.path().to_path_buf(), &vec![".git"])?;
+    let count_comment_only = count_files(&temp_dir.path().to_path_buf(), &[".git"])?;
     assert_eq!(
         count_comment_only, 8,
         "Comments should not exclude any files"
@@ -276,7 +276,7 @@ fn test_edge_cases() -> Result<()> {
 
     // Test complex patterns
     create_ignore_file(
-        &temp_dir.path(),
+        temp_dir.path(),
         &[
             "*.{tmp,bak,swp}",
             "**/*.log",
@@ -287,7 +287,7 @@ fn test_edge_cases() -> Result<()> {
         ],
     )?;
 
-    let patterns = load_ignore_patterns(&temp_dir.path().to_path_buf())?;
+    let patterns = load_ignore_patterns(temp_dir.path())?;
 
     assert!(patterns.matches("test.tmp"), "Should match extension group");
     assert!(
