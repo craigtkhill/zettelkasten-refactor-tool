@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
-#![warn(clippy::nursery)]
+// #![warn(clippy::nursery)]
 // #![warn(clippy::cargo)]
 // #![warn(clippy::restriction)]
 
@@ -65,7 +65,7 @@ pub struct IgnorePatterns {
 }
 
 impl IgnorePatterns {
-    #[must_use] pub fn new(root_dir: PathBuf) -> Self {
+    #[must_use] pub const fn new(root_dir: PathBuf) -> Self {
         Self {
             patterns: Vec::new(),
             root_dir,
@@ -327,7 +327,7 @@ pub struct SinglePatternStats {
 }
 
 impl SinglePatternStats {
-    #[must_use] pub fn new() -> Self {
+    #[must_use] pub const fn new() -> Self {
         Self {
             total_files: 0,
             files_with_pattern: 0,
@@ -350,7 +350,7 @@ pub struct ComparisonStats {
 }
 
 impl ComparisonStats {
-    #[must_use] pub fn new() -> Self {
+    #[must_use] pub const fn new() -> Self {
         Self {
             total_files: 0,
             done_files: 0,
