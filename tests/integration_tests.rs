@@ -344,3 +344,20 @@ fn test_contains_tag() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn test_cargo_toml_publishing_readiness() {
+    use std::fs;
+    use toml::Value;
+
+    let cargo_toml = fs::read_to_string("Cargo.toml").unwrap();
+    let toml: Value = toml::from_str(&cargo_toml).unwrap();
+
+    let package = toml.get("package").expect("Missing [package] section");
+
+    // Required fields for publishing
+    assert!(package.get("name").is_some(), "Missing package name");
+    assert!(package.get("version").is_some(), "Missing version");
+    assert!(package.get("description").is_some(), "Missing description");
+    assert!(package.get("license").is_some(), "Missing license");
+}
