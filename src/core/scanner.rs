@@ -70,10 +70,16 @@ pub fn count_words(
 }
 
 pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<SinglePatternStats> {
-    let ignore_patterns = load_ignore_patterns(dir)?;
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        std::env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
     let mut stats = SinglePatternStats::new();
 
-    for entry in WalkDir::new(dir)
+    for entry in WalkDir::new(&absolute_dir)
         .follow_links(true)
         .into_iter()
         .filter_entry(|e| !should_exclude(e, &[], Some(&ignore_patterns)))
@@ -131,11 +137,14 @@ fn should_exclude(
     exclude_dirs: &[&str],
     ignore_patterns: Option<&IgnorePatterns>,
 ) -> bool {
+    if entry.file_type().is_dir() {
+        return is_hidden(entry);
+    }
+
     if is_hidden(entry) {
         return true;
     }
 
-    // Check manual exclude dirs
     if let Some(path_str) = entry.path().to_str() {
         for dir in exclude_dirs {
             if path_str.contains(&format!("/{dir}/")) {
@@ -144,7 +153,6 @@ fn should_exclude(
         }
     }
 
-    // Check ignore patterns
     if let Some(patterns) = ignore_patterns {
         if patterns.matches(entry.path()) {
             return true;
