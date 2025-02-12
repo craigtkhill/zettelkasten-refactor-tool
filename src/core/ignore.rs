@@ -1,8 +1,8 @@
 // src/core/ignore.rs
-use glob::Pattern;
-use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
+use glob::Pattern;
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Default)]
 pub struct IgnorePatterns {
@@ -11,7 +11,8 @@ pub struct IgnorePatterns {
 }
 
 impl IgnorePatterns {
-    #[must_use] pub const fn new(root_dir: PathBuf) -> Self {
+    #[must_use]
+    pub const fn new(root_dir: PathBuf) -> Self {
         Self {
             patterns: Vec::new(),
             root_dir,
@@ -72,9 +73,11 @@ impl IgnorePatterns {
         // Handle file extension groups like *.{js,ts}
         if glob_pattern.contains('{') {
             // Split the pattern into multiple patterns
-            let (prefix, suffix) = glob_pattern.split_once('{')
+            let (prefix, suffix) = glob_pattern
+                .split_once('{')
                 .expect("Invalid pattern: missing opening brace");
-            let (extensions, rest) = suffix.split_once('}')
+            let (extensions, rest) = suffix
+                .split_once('}')
                 .expect("Invalid pattern: missing closing brace");
             let extensions: Vec<&str> = extensions.split(',').map(str::trim).collect();
 

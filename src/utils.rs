@@ -1,10 +1,10 @@
 // src/utils.rs
+use crate::models::FileWordCount;
 use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::fs;
 use std::io;
 use std::path::Path;
-use crate::models::FileWordCount;
 
 #[derive(Deserialize, Debug, Default)]
 pub struct Frontmatter {
@@ -50,16 +50,13 @@ pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
 }
 
 pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
-        .is_some_and(|s| {
-            // Don't consider temp directories as hidden
-            if s.starts_with(".tmp") {
-                return false;
-            }
-            s.starts_with('.')
-        })
+    entry.file_name().to_str().is_some_and(|s| {
+        // Don't consider temp directories as hidden
+        if s.starts_with(".tmp") {
+            return false;
+        }
+        s.starts_with('.')
+    })
 }
 
 pub fn print_top_files(files: Vec<FileWordCount>, top: usize) {

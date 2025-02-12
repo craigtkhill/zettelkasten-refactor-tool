@@ -5,16 +5,18 @@
 // #![warn(clippy::cargo)]
 // #![warn(clippy::restriction)]
 
-use clap::Parser;
 use anyhow::Result;
+use clap::Parser;
 
 mod cli;
 mod core;
 mod models;
 mod utils;
 
+use crate::core::scanner::{
+    count_files, count_words, scan_directory_single_pattern, scan_directory_two_patterns,
+};
 use cli::Args;
-use crate::core::scanner::{count_files, count_words, scan_directory_single_pattern, scan_directory_two_patterns};
 use utils::print_top_files;
 
 fn main() -> Result<()> {

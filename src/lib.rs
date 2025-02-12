@@ -65,7 +65,8 @@ pub struct IgnorePatterns {
 }
 
 impl IgnorePatterns {
-    #[must_use] pub const fn new(root_dir: PathBuf) -> Self {
+    #[must_use]
+    pub const fn new(root_dir: PathBuf) -> Self {
         Self {
             patterns: Vec::new(),
             root_dir,
@@ -126,9 +127,11 @@ impl IgnorePatterns {
         // Handle file extension groups like *.{js,ts}
         if glob_pattern.contains('{') {
             // Split the pattern into multiple patterns
-            let (prefix, suffix) = glob_pattern.split_once('{')
+            let (prefix, suffix) = glob_pattern
+                .split_once('{')
                 .expect("Invalid pattern: missing opening brace");
-            let (extensions, rest) = suffix.split_once('}')
+            let (extensions, rest) = suffix
+                .split_once('}')
                 .expect("Invalid pattern: missing closing brace");
             let extensions: Vec<&str> = extensions.split(',').map(str::trim).collect();
 
@@ -327,14 +330,16 @@ pub struct SinglePatternStats {
 }
 
 impl SinglePatternStats {
-    #[must_use] pub const fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             total_files: 0,
             files_with_pattern: 0,
         }
     }
 
-    #[must_use] pub fn calculate_percentage(&self) -> f64 {
+    #[must_use]
+    pub fn calculate_percentage(&self) -> f64 {
         if self.total_files == 0 {
             return 0.0;
         }
@@ -350,7 +355,8 @@ pub struct ComparisonStats {
 }
 
 impl ComparisonStats {
-    #[must_use] pub const fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             total_files: 0,
             done_files: 0,
@@ -358,7 +364,8 @@ impl ComparisonStats {
         }
     }
 
-    #[must_use] pub fn calculate_percentage(&self) -> f64 {
+    #[must_use]
+    pub fn calculate_percentage(&self) -> f64 {
         let total_tagged = self.done_files + self.todo_files;
         if total_tagged == 0 {
             return 0.0;
@@ -424,7 +431,8 @@ pub fn scan_directory_two_patterns(
     Ok(stats)
 }
 
-#[must_use] pub fn should_exclude(
+#[must_use]
+pub fn should_exclude(
     entry: &walkdir::DirEntry,
     exclude_dirs: &[&str],
     ignore_patterns: Option<&IgnorePatterns>,
@@ -452,17 +460,15 @@ pub fn scan_directory_two_patterns(
     false
 }
 
-#[must_use] pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
-        .is_some_and(|s| {
-            // Don't consider temp directories as hidden
-            if s.starts_with(".tmp") {
-                return false;
-            }
-            s.starts_with('.')
-        })
+#[must_use]
+pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+    entry.file_name().to_str().is_some_and(|s| {
+        // Don't consider temp directories as hidden
+        if s.starts_with(".tmp") {
+            return false;
+        }
+        s.starts_with('.')
+    })
 }
 
 pub fn run(args: Args) -> Result<()> {

@@ -14,14 +14,16 @@ pub struct SinglePatternStats {
 }
 
 impl SinglePatternStats {
-    #[must_use] pub const fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             total_files: 0,
             files_with_pattern: 0,
         }
     }
 
-    #[must_use] pub fn calculate_percentage(&self) -> f64 {
+    #[must_use]
+    pub fn calculate_percentage(&self) -> f64 {
         if self.total_files == 0 {
             return 0.0;
         }
@@ -37,7 +39,8 @@ pub struct ComparisonStats {
 }
 
 impl ComparisonStats {
-    #[must_use] pub const fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             total_files: 0,
             done_files: 0,
@@ -45,7 +48,8 @@ impl ComparisonStats {
         }
     }
 
-    #[must_use] pub fn calculate_percentage(&self) -> f64 {
+    #[must_use]
+    pub fn calculate_percentage(&self) -> f64 {
         let total_tagged = self.done_files + self.todo_files;
         if total_tagged == 0 {
             return 0.0;
