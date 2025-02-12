@@ -8,10 +8,16 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
-    let ignore_patterns = load_ignore_patterns(dir)?;
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        std::env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
     let mut count = 0;
 
-    for entry in WalkDir::new(dir)
+    for entry in WalkDir::new(&absolute_dir)
         .follow_links(true)
         .into_iter()
         .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
@@ -31,10 +37,16 @@ pub fn count_words(
     exclude_dirs: &[&str],
     filter_out: Option<&str>,
 ) -> Result<Vec<FileWordCount>> {
-    let ignore_patterns = load_ignore_patterns(dir)?;
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        std::env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
     let mut files = Vec::new();
 
-    for entry in WalkDir::new(dir)
+    for entry in WalkDir::new(&absolute_dir)
         .follow_links(true)
         .into_iter()
         .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
@@ -105,10 +117,16 @@ pub fn scan_directory_two_patterns(
     done_tag: &str,
     todo_tag: &str,
 ) -> Result<ComparisonStats> {
-    let ignore_patterns = load_ignore_patterns(dir)?;
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        std::env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
     let mut stats = ComparisonStats::new();
 
-    for entry in WalkDir::new(dir)
+    for entry in WalkDir::new(&absolute_dir)
         .follow_links(true)
         .into_iter()
         .filter_entry(|e| !should_exclude(e, &[], Some(&ignore_patterns)))
@@ -145,6 +163,7 @@ fn should_exclude(
         return true;
     }
 
+    // Check manual exclude dirs
     if let Some(path_str) = entry.path().to_str() {
         for dir in exclude_dirs {
             if path_str.contains(&format!("/{dir}/")) {
@@ -153,6 +172,7 @@ fn should_exclude(
         }
     }
 
+    // Check ignore patterns
     if let Some(patterns) = ignore_patterns {
         if patterns.matches(entry.path()) {
             return true;
