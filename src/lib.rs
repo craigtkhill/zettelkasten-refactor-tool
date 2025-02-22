@@ -81,11 +81,8 @@ impl IgnorePatterns {
         }
 
         // Handle negation patterns
-        let (pattern, is_negation) = if let Some(stripped) = pattern.strip_prefix('!') {
-            (stripped, true)
-        } else {
-            (pattern, false)
-        };
+        let (pattern, is_negation) = pattern.strip_prefix('!')
+            .map_or((pattern, false), |stripped| (stripped, true));
 
         // Flag to track if this is an absolute path pattern
         let is_absolute = pattern.starts_with('/');

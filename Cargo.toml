@@ -18,3 +18,14 @@ serde_yaml_ng = "0.10"
 tempfile = "3.17"
 glob = "0.3.2"
 toml = "0.8.20"
+
+[lints.clippy]
+cargo        = { priority = -1, level = "deny" }
+complexity   = { priority = -1, level = "deny" }
+correctness  = { priority = -1, level = "deny" }
+perf         = { priority = -1, level = "deny" }
+suspicious   = { priority = -1, level = "deny" }
+style        = { priority = -1, level = "deny" }
+#pedantic     = { priority = -1, level = "deny" }
+#restriction  = { priority = -1, level = "deny" }
+#nursery      = { priority = -1, level = "deny" }
