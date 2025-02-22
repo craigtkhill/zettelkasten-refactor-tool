@@ -30,7 +30,7 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
     }
 
     // Parse YAML
-    serde_yaml::from_str(&frontmatter_str)
+    serde_yaml_ng::from_str(&frontmatter_str)
         .map_err(|e| anyhow!("Failed to parse frontmatter: {}", e))
 }
 
