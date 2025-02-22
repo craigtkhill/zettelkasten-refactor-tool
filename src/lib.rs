@@ -4,7 +4,7 @@
 // #![warn(clippy::cargo)]
 // #![warn(clippy::restriction)]
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use glob::Pattern;
 use serde::Deserialize;
@@ -81,7 +81,8 @@ impl IgnorePatterns {
         }
 
         // Handle negation patterns
-        let (pattern, is_negation) = pattern.strip_prefix('!')
+        let (pattern, is_negation) = pattern
+            .strip_prefix('!')
             .map_or((pattern, false), |stripped| (stripped, true));
 
         // Flag to track if this is an absolute path pattern

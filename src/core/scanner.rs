@@ -1,5 +1,5 @@
 // src/core/scanner.rs
-use crate::core::ignore::{load_ignore_patterns, IgnorePatterns};
+use crate::core::ignore::{IgnorePatterns, load_ignore_patterns};
 use crate::models::{ComparisonStats, FileWordCount, SinglePatternStats};
 use crate::utils::{contains_tag, is_hidden};
 use anyhow::Result;

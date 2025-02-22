@@ -1,6 +1,6 @@
 // src/utils.rs
 use crate::models::FileWordCount;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::Deserialize;
 use std::fs;
 use std::io;
