@@ -37,14 +37,10 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
 pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
     let content = fs::read_to_string(path)?;
 
-    // Parse frontmatter
     match parse_frontmatter(&content) {
-        Ok(frontmatter) => {
-            // Check if the tag exists in the frontmatter tags
-            Ok(frontmatter
-                .tags
-                .is_some_and(|tags| tags.iter().any(|t| t == tag)))
-        }
+        Ok(frontmatter) => Ok(frontmatter
+            .tags
+            .is_some_and(|tags| tags.iter().any(|t| t == tag))),
         Err(_) => Ok(false), // If parsing fails, assume no tags
     }
 }
