@@ -1,11 +1,35 @@
 # bacon.toml
-default_job = "all"
+# Default job runs all checks
+default_job = "check-all"
 
-[jobs.all]
+[jobs.check-all]
 command = ["cargo", "check"]
 need_stdout = false
 watch = ["src/", "tests/"]
-on_success = ["clippy", "test", "fmt"]
+on_success = "job:clippy-all"
+
+[jobs.clippy-all]
+command = ["cargo", "clippy", "--", "-D", "warnings"]
+need_stdout = false
+watch = ["src/", "tests/"]
+on_success = "job:test-all"
+
+[jobs.test-all]
+command = ["cargo", "test"]
+need_stdout = true
+watch = ["src/", "tests/"]
+on_success = "job:fmt-all"
+
+[jobs.fmt-all]
+command = ["cargo", "fmt"]
+need_stdout = false
+watch = ["src/", "tests/"]
+
+# Individual jobs for running specific checks
+[jobs.check]
+command = ["cargo", "check"]
+need_stdout = false
+watch = ["src/", "tests/"]
 
 [jobs.clippy]
 command = ["cargo", "clippy", "--", "-D", "warnings"]
@@ -18,6 +42,6 @@ need_stdout = true
 watch = ["src/", "tests/"]
 
 [jobs.fmt]
-command = ["cargo", "fmt", "--check"]
+command = ["cargo", "fmt"]
 need_stdout = false
 watch = ["src/", "tests/"]
