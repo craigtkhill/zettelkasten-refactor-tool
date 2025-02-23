@@ -63,3 +63,57 @@ impl ComparisonStats {
         (self.done_files as f64 / total_tagged as f64) * 100.0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_pattern_stats_zero_files() {
+        let stats = SinglePatternStats::new();
+        assert_eq!(stats.calculate_percentage(), 0.0);
+    }
+
+    #[test]
+    fn test_single_pattern_stats_fifty_percent() {
+        let stats = SinglePatternStats {
+            total_files: 10,
+            files_with_pattern: 5,
+        };
+        assert_eq!(stats.calculate_percentage(), 50.0);
+    }
+
+    #[test]
+    fn test_comparison_stats_zero_files() {
+        let stats = ComparisonStats::new();
+        assert_eq!(stats.calculate_percentage(), 0.0);
+    }
+
+    #[test]
+    fn test_comparison_stats_fifty_percent() {
+        let stats = ComparisonStats {
+            total_files: 20,
+            done_files: 5,
+            todo_files: 5,
+        };
+        assert_eq!(stats.calculate_percentage(), 50.0);
+    }
+
+    #[test]
+    fn test_frontmatter_deserialize() {
+        let yaml = r#"
+            tags:
+              - tag1
+              - tag2
+        "#;
+        let frontmatter: Frontmatter = serde_yaml_ng::from_str(yaml).unwrap();
+        assert_eq!(frontmatter.tags.unwrap(), vec!["tag1", "tag2"]);
+    }
+
+    #[test]
+    fn test_frontmatter_no_tags() {
+        let yaml = "{}";
+        let frontmatter: Frontmatter = serde_yaml_ng::from_str(yaml).unwrap();
+        assert!(frontmatter.tags.is_none());
+    }
+}
