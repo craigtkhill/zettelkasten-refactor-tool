@@ -86,3 +86,45 @@ pub fn run(args: Args) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_default_directory_is_current() {
+        let args = Args::parse_from(["program"]);
+        assert_eq!(args.directory, PathBuf::from("."));
+    }
+
+    #[test]
+    fn test_custom_directory_is_parsed() {
+        let args = Args::parse_from(["program", "-d", "/some/path"]);
+        assert_eq!(args.directory, PathBuf::from("/some/path"));
+    }
+
+    #[test]
+    fn test_count_flag_is_parsed() {
+        let args = Args::parse_from(["program", "--count"]);
+        assert!(args.count);
+    }
+
+    #[test]
+    fn test_run_with_count_flag() -> Result<()> {
+        let args = Args {
+            directory: PathBuf::from("."),
+            count: true,
+            words: false,
+            top: 10,
+            exclude: ".git".to_string(),
+            filter_out: None,
+            pattern: None,
+            done_tag: None,
+            todo_tag: None,
+        };
+
+        run(args)?;
+        Ok(())
+    }
+}
