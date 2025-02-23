@@ -54,9 +54,9 @@ impl IgnorePatterns {
                 }
             } else if pattern.ends_with('/') {
                 if is_negation {
-                    format!("{pattern}**/*") // For negation, match all files in directory
+                    format!("**/{pattern}**/*")
                 } else {
-                    format!("{pattern}**")
+                    format!("**/{pattern}**")
                 }
             } else if is_negation || pattern.contains('.') {
                 pattern // For negation or files with extension, match exactly
@@ -152,4 +152,117 @@ pub fn load_ignore_patterns(dir: &Path) -> Result<IgnorePatterns> {
     }
 
     Ok(patterns)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_empty_patterns_match_nothing() {
+        let patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        assert!(!patterns.matches("file.txt"));
+    }
+
+    #[test]
+    fn test_simple_file_pattern() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("*.txt")?;
+        assert!(patterns.matches("file.txt"));
+        assert!(!patterns.matches("file.rs"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_directory_pattern() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("node_modules/")?;
+
+        // Should match direct node_modules directory
+        assert!(
+            patterns.matches("node_modules/package.json"),
+            "Should match file directly in node_modules"
+        );
+
+        // Should match node_modules at any depth
+        assert!(
+            patterns.matches("src/node_modules/package.json"),
+            "Should match node_modules in subdirectory"
+        );
+
+        // Should not match similar but different directory names
+        assert!(
+            !patterns.matches("nodemodules/file.txt"),
+            "Should not match directory with similar name"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_negation_pattern() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("*.txt")?;
+        patterns.add_pattern("!important.txt")?;
+        assert!(patterns.matches("file.txt"));
+        assert!(!patterns.matches("important.txt"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_absolute_path_pattern() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("/src/generated/*.rs")?;
+        assert!(patterns.matches("src/generated/file.rs"));
+        assert!(!patterns.matches("other/generated/file.rs"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_extension_group_pattern() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("*.{js,ts}")?;
+        assert!(patterns.matches("file.js"));
+        assert!(patterns.matches("file.ts"));
+        assert!(!patterns.matches("file.rs"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_double_star_pattern() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("**/temp/**")?;
+        assert!(patterns.matches("temp/file.txt"));
+        assert!(patterns.matches("src/temp/file.txt"));
+        assert!(patterns.matches("src/temp/subfolder/file.txt"));
+        assert!(!patterns.matches("src/temporary/file.txt"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_comment_and_empty_lines() -> Result<()> {
+        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        patterns.add_pattern("")?;
+        patterns.add_pattern("# This is a comment")?;
+        patterns.add_pattern("*.txt")?;
+        assert!(patterns.matches("file.txt"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_load_ignore_patterns() -> Result<()> {
+        let temp_dir = tempfile::tempdir()?;
+        let ignore_file = temp_dir.path().join(".zrtignore");
+        std::fs::write(
+            &ignore_file,
+            "*.txt\n!important.txt\n# comment\n\n/src/generated/*.rs",
+        )?;
+
+        let patterns = load_ignore_patterns(temp_dir.path())?;
+        assert!(patterns.matches("file.txt"));
+        assert!(!patterns.matches("important.txt"));
+        assert!(patterns.matches("src/generated/test.rs"));
+        assert!(!patterns.matches("src/main.rs"));
+        Ok(())
+    }
 }
