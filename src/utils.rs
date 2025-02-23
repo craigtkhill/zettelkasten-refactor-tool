@@ -54,3 +54,135 @@ pub fn print_top_files(files: Vec<FileWordCount>, top: usize) {
         println!("{:8} words  {}", file.words, file.path.display());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_parse_frontmatter_empty_file() {
+        let content = "";
+        let result = parse_frontmatter(content).unwrap();
+        assert!(result.tags.is_none());
+    }
+
+    #[test]
+    fn test_parse_frontmatter_no_delimiter() {
+        let content = "Some content without frontmatter";
+        let result = parse_frontmatter(content).unwrap();
+        assert!(result.tags.is_none());
+    }
+
+    #[test]
+    fn test_parse_frontmatter_with_tags() {
+        let content = r#"---
+tags:
+  - tag1
+  - tag2
+---
+Content here"#;
+        let result = parse_frontmatter(content).unwrap();
+        assert_eq!(result.tags.unwrap(), vec!["tag1", "tag2"]);
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::fs::File;
+        use tempfile::TempDir;
+        use walkdir::WalkDir;
+
+        #[test]
+        fn test_is_hidden() -> Result<()> {
+            let temp_dir = TempDir::new()?;
+
+            // Create test files
+            File::create(temp_dir.path().join(".hidden"))?;
+            File::create(temp_dir.path().join(".tmp_file"))?;
+            File::create(temp_dir.path().join("normal.txt"))?;
+
+            // Test each file using WalkDir
+            let mut entries: Vec<_> = WalkDir::new(temp_dir.path())
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .collect();
+            entries.sort_by_key(|e| e.path().to_path_buf());
+
+            // Test hidden file
+            let hidden = entries.iter().find(|e| e.file_name() == ".hidden").unwrap();
+            assert!(is_hidden(hidden));
+
+            // Test temp file
+            let temp = entries
+                .iter()
+                .find(|e| e.file_name() == ".tmp_file")
+                .unwrap();
+            assert!(!is_hidden(temp));
+
+            // Test normal file
+            let normal = entries
+                .iter()
+                .find(|e| e.file_name() == "normal.txt")
+                .unwrap();
+            assert!(!is_hidden(normal));
+
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_print_top_files() {
+        let files = vec![
+            FileWordCount {
+                path: PathBuf::from("test.txt"),
+                words: 100,
+            },
+            FileWordCount {
+                path: PathBuf::from("test2.txt"),
+                words: 50,
+            },
+        ];
+
+        // Here we could capture stdout to verify the output format
+        print_top_files(files, 1);
+    }
+}
+
+#[cfg(test)]
+mod file_tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Write;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_contains_tag() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test.md");
+        let content = r#"---
+tags:
+  - test_tag
+---
+Content"#;
+
+        let mut file = File::create(&file_path)?;
+        file.write_all(content.as_bytes())?;
+
+        assert!(contains_tag(&file_path, "test_tag")?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_contains_tag_no_tags() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let file_path = temp_dir.path().join("test.md");
+        let content = "Just content, no frontmatter";
+
+        let mut file = File::create(&file_path)?;
+        file.write_all(content.as_bytes())?;
+
+        assert!(!contains_tag(&file_path, "test_tag")?);
+        Ok(())
+    }
+}
