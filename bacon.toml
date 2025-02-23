@@ -1,10 +1,11 @@
 # bacon.toml
-default_job = "check"
+default_job = "all"
 
-[jobs.check]
+[jobs.all]
 command = ["cargo", "check"]
 need_stdout = false
 watch = ["src/", "tests/"]
+on_success = ["clippy", "test", "fmt"]
 
 [jobs.clippy]
 command = ["cargo", "clippy", "--", "-D", "warnings"]
