@@ -1,9 +1,3 @@
-#![warn(clippy::all)]
-// #![warn(clippy::pedantic)]
-// #![warn(clippy::nursery)]
-// #![warn(clippy::cargo)]
-// #![warn(clippy::restriction)]
-
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use glob::Pattern;
