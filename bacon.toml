@@ -45,3 +45,14 @@ watch = ["src/", "tests/"]
 command = ["cargo", "fmt"]
 need_stdout = false
 watch = ["src/", "tests/"]
+
+# Install job
+[jobs.install]
+command = ["cargo", "build", "--release"]
+need_stdout = true
+watch = ["src/", "tests/"]
+on_success = "job:install-binary"
+
+[jobs.install-binary]
+command = ["cargo", "install", "--path", "."]
+need_stdout = true
