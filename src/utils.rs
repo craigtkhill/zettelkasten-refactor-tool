@@ -1,15 +1,9 @@
 // src/utils.rs
-use crate::models::FileWordCount;
+use crate::models::{FileWordCount, Frontmatter};
 use anyhow::{Result, anyhow};
-use serde::Deserialize;
 use std::fs;
 use std::io;
 use std::path::Path;
-
-#[derive(Deserialize, Debug, Default)]
-pub struct Frontmatter {
-    pub tags: Option<Vec<String>>,
-}
 
 pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
     let mut content_iter = content.lines();

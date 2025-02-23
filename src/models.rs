@@ -1,5 +1,11 @@
 // src/models.rs
+use serde::Deserialize;
 use std::path::PathBuf;
+
+#[derive(Deserialize, Debug, Default)]
+pub struct Frontmatter {
+    pub tags: Option<Vec<String>>,
+}
 
 #[derive(Debug)]
 pub struct FileWordCount {

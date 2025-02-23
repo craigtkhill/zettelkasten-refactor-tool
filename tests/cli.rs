@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
 use tempfile::TempDir;
-use zrt::Args; // Note: using the library crate
+use zrt::cli::Args;
 
 fn create_test_file(dir: &TempDir, name: &str, content: &str) -> Result<PathBuf> {
     let file_path = dir.path().join(name);
@@ -61,7 +61,7 @@ fn test_count_files() -> Result<()> {
         todo_tag: None,
     };
 
-    zrt::run(args)?;
+    zrt::cli::run(args)?;
     Ok(())
 }
 
@@ -81,7 +81,7 @@ fn test_word_count_with_filter() -> Result<()> {
         todo_tag: None,
     };
 
-    zrt::run(args)?;
+    zrt::cli::run(args)?;
     Ok(())
 }
 
@@ -101,7 +101,7 @@ fn test_pattern_search() -> Result<()> {
         todo_tag: None,
     };
 
-    zrt::run(args)?;
+    zrt::cli::run(args)?;
     Ok(())
 }
 
@@ -121,6 +121,6 @@ fn test_done_vs_todo_comparison() -> Result<()> {
         todo_tag: Some(String::from("to_refactor")),
     };
 
-    zrt::run(args)?;
+    zrt::cli::run(args)?;
     Ok(())
 }
