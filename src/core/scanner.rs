@@ -283,7 +283,7 @@ mod tests {
     fn test_scan_directory_two_patterns() -> Result<()> {
         let dir = setup_test_directory()?;
 
-        // Add files with done/todo tags in frontmatter
+        // Add files with done/todo tags in front-matter
         create_test_file(&dir, "done1.md", "---\ntags: [done]\n---\nTask one")?;
         create_test_file(&dir, "done2.md", "---\ntags: [done]\n---\nTask two")?;
         create_test_file(&dir, "todo1.md", "---\ntags: [todo]\n---\nTask three")?;

@@ -2,7 +2,7 @@
 //!
 //! A tool for analyzing and managing refactoring tasks in a Zettelkasten note system.
 //! Provides functionality for scanning directories, counting files and words,
-//! and tracking refactoring progress through frontmatter tags.
+//! and tracking refactoring progress through front matter tags.
 
 // Declare all modules
 pub mod cli;

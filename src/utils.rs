@@ -25,7 +25,7 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
 
     // Parse YAML
     serde_yaml_ng::from_str(&frontmatter_str)
-        .map_err(|e| anyhow!("Failed to parse frontmatter: {}", e))
+        .map_err(|e| anyhow!("Failed to parse front matter: {}", e))
 }
 
 pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
