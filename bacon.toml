@@ -1,0 +1,22 @@
+# bacon.toml
+default_job = "check"
+
+[jobs.check]
+command = ["cargo", "check"]
+need_stdout = false
+watch = ["src/", "tests/"]
+
+[jobs.clippy]
+command = ["cargo", "clippy", "--", "-D", "warnings"]
+need_stdout = false
+watch = ["src/", "tests/"]
+
+[jobs.test]
+command = ["cargo", "test"]
+need_stdout = true
+watch = ["src/", "tests/"]
+
+[jobs.fmt]
+command = ["cargo", "fmt", "--check"]
+need_stdout = false
+watch = ["src/", "tests/"]
