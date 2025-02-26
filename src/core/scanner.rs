@@ -1,6 +1,6 @@
 // src/core/scanner.rs
 use crate::core::ignore::{IgnorePatterns, load_ignore_patterns};
-use crate::models::{ComparisonStats, FileWordCount, SinglePatternStats};
+use crate::models::{ComparisonStats, FileWordCount, SinglePatternStats, WordCountStats};
 use crate::utils::{contains_tag, is_hidden};
 use anyhow::Result;
 use std::fs;
@@ -183,6 +183,73 @@ fn should_exclude(
     false
 }
 
+pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Result<WordCountStats> {
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        std::env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+    let mut stats = WordCountStats::new();
+
+    for entry in WalkDir::new(&absolute_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
+    {
+        let entry = entry?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
+
+        let path = entry.path();
+        if let Ok(content) = fs::read_to_string(path) {
+            // Parse frontmatter to check for tags
+            let has_tag;
+            let content_without_frontmatter: String;
+
+            if let Ok(frontmatter) = crate::utils::parse_frontmatter(&content) {
+                // Check if the file has the specified tag
+                has_tag = frontmatter
+                    .tags
+                    .as_ref()
+                    .map_or(false, |tags| tags.iter().any(|t| t == tag));
+
+                // Extract content without frontmatter
+                let lines: Vec<&str> = content.lines().collect();
+                if lines.len() > 2 && lines[0] == "---" {
+                    if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
+                        // +2 to account for the skip(1) and to get the line after the closing ---
+                        content_without_frontmatter = lines[(end_index + 2)..].join("\n");
+                    } else {
+                        content_without_frontmatter = content.clone();
+                    }
+                } else {
+                    content_without_frontmatter = content.clone();
+                }
+            } else {
+                has_tag = false;
+                content_without_frontmatter = content.clone();
+            }
+
+            // Count words in the content (excluding frontmatter)
+            let word_count = content_without_frontmatter.split_whitespace().count() as u64;
+
+            // Update the stats
+            stats.total_files += 1;
+            stats.total_words += word_count;
+
+            if has_tag {
+                stats.tagged_files += 1;
+                stats.tagged_words += word_count;
+            }
+        }
+    }
+
+    Ok(stats)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -331,6 +398,46 @@ mod tests {
             should_exclude(&nested_entry, &["nested"], None),
             "Should exclude specified directories"
         );
+
+        Ok(())
+    }
+    #[test]
+    fn test_count_word_stats() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+
+        // Create files with and without the refactored tag
+        create_test_file(
+            &temp_dir,
+            "file1.md",
+            "---\ntags: [refactored]\n---\nThis file has five words",
+        )?;
+        create_test_file(
+            &temp_dir,
+            "file2.md",
+            "---\ntags: [other]\n---\nThis file has four words",
+        )?;
+        create_test_file(
+            &temp_dir,
+            "file3.md",
+            "---\ntags: [refactored]\n---\nThis file has five more words",
+        )?;
+        create_test_file(&temp_dir, "file4.md", "No tags in this file")?;
+
+        // Test word stats counting
+        let stats = count_word_stats(&temp_dir.path().to_path_buf(), &[], "refactored")?;
+
+        assert_eq!(stats.total_files, 4, "Should count all 4 files");
+        assert_eq!(
+            stats.tagged_files, 2,
+            "Should find 2 files with 'refactored' tag"
+        );
+        assert_eq!(stats.tagged_words, 11, "Tagged files have 11 words total"); // Updated to 11
+        assert_eq!(stats.total_words, 21, "All files have 21 words total"); // Updated to 21
+        assert_eq!(
+            stats.calculate_percentage(),
+            (11.0 / 21.0) * 100.0,
+            "Percentage calculation should be correct"
+        ); // Updated
 
         Ok(())
     }

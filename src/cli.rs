@@ -4,7 +4,8 @@ use clap::Parser;
 use std::path::PathBuf;
 
 use crate::core::scanner::{
-    count_files, count_words, scan_directory_single_pattern, scan_directory_two_patterns,
+    count_files, count_word_stats, count_words, scan_directory_single_pattern,
+    scan_directory_two_patterns,
 };
 use crate::utils::print_top_files;
 
@@ -22,6 +23,10 @@ pub struct Args {
     /// Show word counts instead of refactor percentage
     #[arg(short, long)]
     pub words: bool,
+
+    /// Show word count statistics for files with a specific tag
+    #[arg(short = 's', long)]
+    pub stats: Option<String>,
 
     /// Number of files to show in word count mode
     #[arg(short = 't', long, default_value = "10")]
@@ -53,6 +58,19 @@ pub fn run(args: Args) -> Result<()> {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let count = count_files(&args.directory, &exclude_dirs)?;
         println!("{count}");
+    } else if let Some(tag) = &args.stats {
+        // New word count statistics mode
+        let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
+        let stats = count_word_stats(&args.directory, &exclude_dirs, tag)?;
+
+        println!("Files with tag '{}': {}", tag, stats.tagged_files);
+        println!("Words in tagged files: {}", stats.tagged_words);
+        println!("Total files: {}", stats.total_files);
+        println!("Total words in all files: {}", stats.total_words);
+        println!(
+            "Percentage of words tagged: {:.2}%",
+            stats.calculate_percentage()
+        );
     } else if args.words {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let files = count_words(&args.directory, &exclude_dirs, args.filter_out.as_deref())?;
@@ -116,6 +134,7 @@ mod tests {
             directory: PathBuf::from("."),
             count: true,
             words: false,
+            stats: None,
             top: 10,
             exclude: ".git".to_string(),
             filter_out: None,
@@ -124,6 +143,32 @@ mod tests {
             todo_tag: None,
         };
 
+        run(args)?;
+        Ok(())
+    }
+    #[test]
+    fn test_stats_option_is_parsed() {
+        let args = Args::parse_from(["program", "--stats", "refactored"]);
+        assert_eq!(args.stats, Some("refactored".to_string()));
+    }
+
+    #[test]
+    fn test_run_with_stats_option() -> Result<()> {
+        let args = Args {
+            directory: PathBuf::from("."),
+            count: false,
+            words: false,
+            stats: Some("refactored".to_string()),
+            top: 10,
+            exclude: ".git".to_string(),
+            filter_out: None,
+            pattern: None,
+            done_tag: None,
+            todo_tag: None,
+        };
+
+        // This test just ensures the function doesn't panic
+        // We can't easily test the output
         run(args)?;
         Ok(())
     }

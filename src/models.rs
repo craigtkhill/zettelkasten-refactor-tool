@@ -64,6 +64,34 @@ impl ComparisonStats {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct WordCountStats {
+    pub total_files: u64,
+    pub tagged_files: u64,
+    pub total_words: u64,
+    pub tagged_words: u64,
+}
+
+impl WordCountStats {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            total_files: 0,
+            tagged_files: 0,
+            total_words: 0,
+            tagged_words: 0,
+        }
+    }
+
+    #[must_use]
+    pub fn calculate_percentage(&self) -> f64 {
+        if self.total_words == 0 {
+            return 0.0;
+        }
+        (self.tagged_words as f64 / self.total_words as f64) * 100.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
