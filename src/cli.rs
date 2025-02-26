@@ -63,10 +63,10 @@ pub fn run(args: Args) -> Result<()> {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let stats = count_word_stats(&args.directory, &exclude_dirs, tag)?;
 
-        println!("Files with tag '{}': {}", tag, stats.tagged_files);
-        println!("Words in tagged files: {}", stats.tagged_words);
-        println!("Total files: {}", stats.total_files);
-        println!("Total words in all files: {}", stats.total_words);
+        // println!("Files with tag '{}': {}", tag, stats.tagged_files);
+        // println!("Words in tagged files: {}", stats.tagged_words);
+        // println!("Total files: {}", stats.total_files);
+        // println!("Total words in all files: {}", stats.total_words);
         println!(
             "Percentage of words tagged: {:.2}%",
             stats.calculate_percentage()
