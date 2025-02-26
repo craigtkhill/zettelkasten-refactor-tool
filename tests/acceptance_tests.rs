@@ -149,7 +149,7 @@ fn test_ignore_patterns() -> Result<()> {
             "cache/",
             "*.{log,cache,tmp}",
             "node_modules/",
-            "/absolute_path.md",
+            "/absolute_path.md", // This means 'absolute_path.md' at root only
             "*.bak",
             "build/**/*.js",
             "*.pdf",
@@ -196,12 +196,12 @@ fn test_ignore_patterns() -> Result<()> {
 
     // Test absolute path matching
     assert!(
-        patterns.matches("/absolute_path.md"),
-        "Should match absolute path"
+        patterns.matches("absolute_path.md"),
+        "Should match absolute path at root"
     );
     assert!(
         !patterns.matches("subdirectory/absolute_path.md"),
-        "Should not match relative path"
+        "Should not match absolute path in subdirectory"
     );
 
     Ok(())
