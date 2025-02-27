@@ -40,7 +40,7 @@ pub struct Args {
     #[arg(short = 'f', long)]
     pub filter_out: Option<String>,
 
-    /// Single pattern to search for (e.g., "to_refactor")
+    /// Single pattern to search for (e.g., `to_refactor`)
     #[arg(short = 'p', long)]
     pub pattern: Option<String>,
 
@@ -48,7 +48,7 @@ pub struct Args {
     #[arg(short = 'r', long)]
     pub done_tag: Option<String>,
 
-    /// "Todo" tag to search for (e.g., "to_refactor")
+    /// "Todo" tag to search for (e.g., `to_refactor`)
     #[arg(short = 'o', long)]
     pub todo_tag: Option<String>,
 }
