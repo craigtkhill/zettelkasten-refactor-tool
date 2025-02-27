@@ -93,7 +93,7 @@ impl IgnorePatterns {
         // Create both a path pattern and a filename pattern for bare filenames
         if is_bare_filename && !is_anchored {
             // Create the path pattern (with **/ prefix)
-            let path_pattern = format!("**/{}", pattern_str);
+            let path_pattern = format!("**/{pattern_str}");
             let compiled = Pattern::new(&path_pattern)
                 .with_context(|| format!("Invalid path pattern: {path_pattern}"))?;
             self.patterns.push((compiled, is_negation, false));
