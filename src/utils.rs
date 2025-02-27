@@ -50,7 +50,7 @@ pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     })
 }
 
-pub fn print_top_files(files: Vec<FileWordCount>, top: usize) {
+pub fn print_top_files(files: &[FileWordCount], top: usize) {
     for file in files.iter().take(top) {
         println!("{:8} words  {}", file.words, file.path.display());
     }
@@ -146,7 +146,7 @@ Content here";
         ];
 
         // Here we could capture stdout to verify the output format
-        print_top_files(files, 1);
+        print_top_files(&files, 1);
     }
 }
 

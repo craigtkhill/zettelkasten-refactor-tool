@@ -74,7 +74,7 @@ pub fn run(args: Args) -> Result<()> {
     } else if args.words {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let files = count_words(&args.directory, &exclude_dirs, args.filter_out.as_deref())?;
-        print_top_files(files, args.top);
+        print_top_files(&files, args.top);
     } else if let Some(pattern) = args.pattern {
         // Single pattern mode
         let stats = scan_directory_single_pattern(&args.directory, &pattern)?;
