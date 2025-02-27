@@ -214,7 +214,7 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
                 has_tag = frontmatter
                     .tags
                     .as_ref()
-                    .map_or(false, |tags| tags.iter().any(|t| t == tag));
+                    .is_some_and(|tags| tags.iter().any(|t| t == tag));
 
                 // Extract content without frontmatter
                 let lines: Vec<&str> = content.lines().collect();
