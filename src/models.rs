@@ -129,11 +129,11 @@ mod tests {
 
     #[test]
     fn test_frontmatter_deserialize() {
-        let yaml = r#"
+        let yaml = "
             tags:
               - tag1
               - tag2
-        "#;
+        ";
         let frontmatter: Frontmatter = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(frontmatter.tags.unwrap(), vec!["tag1", "tag2"]);
     }

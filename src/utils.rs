@@ -39,6 +39,7 @@ pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
     }
 }
 
+#[must_use]
 pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     entry.file_name().to_str().is_some_and(|s| {
         // Don't consider temp directories as hidden
@@ -76,12 +77,12 @@ mod tests {
 
     #[test]
     fn test_parse_frontmatter_with_tags() {
-        let content = r#"---
+        let content = "---
 tags:
   - tag1
   - tag2
 ---
-Content here"#;
+Content here";
         let result = parse_frontmatter(content).unwrap();
         assert_eq!(result.tags.unwrap(), vec!["tag1", "tag2"]);
     }
@@ -105,7 +106,7 @@ Content here"#;
             // Test each file using WalkDir
             let mut entries: Vec<_> = WalkDir::new(temp_dir.path())
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(core::result::Result::ok)
                 .collect();
             entries.sort_by_key(|e| e.path().to_path_buf());
 
@@ -160,11 +161,11 @@ mod file_tests {
     fn test_contains_tag() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let file_path = temp_dir.path().join("test.md");
-        let content = r#"---
+        let content = "---
 tags:
   - test_tag
 ---
-Content"#;
+Content";
 
         let mut file = File::create(&file_path)?;
         file.write_all(content.as_bytes())?;
