@@ -13,23 +13,23 @@ use crate::utils::print_top_files;
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     /// Directory to scan (defaults to current directory)
-    #[arg(short, long, default_value = ".")]
+    #[arg(short = 'd', long = "dir", default_value = ".")]
     pub directory: PathBuf,
 
     /// Show total file count only
-    #[arg(short = 'c', long)]
+    #[arg(short = 'c', long = "count")]
     pub count: bool,
 
     /// Show word counts instead of refactor percentage
-    #[arg(short, long)]
+    #[arg(short = 'w', long = "wordcount")]
     pub words: bool,
 
     /// Show word count statistics for files with a specific tag
-    #[arg(short = 's', long)]
+    #[arg(short = 's', long = "stats")]
     pub stats: Option<String>,
 
     /// Number of files to show in word count mode
-    #[arg(short = 't', long, default_value = "10")]
+    #[arg(short = 'n', long = "num", default_value = "10")]
     pub top: usize,
 
     /// Directories to exclude in word count mode (comma-separated)
@@ -37,19 +37,19 @@ pub struct Args {
     pub exclude: String,
 
     /// Filter out files containing this tag (e.g., "refactored")
-    #[arg(short = 'f', long)]
+    #[arg(short = 'f', long = "filter")]
     pub filter_out: Option<String>,
 
     /// Single pattern to search for (e.g., `to_refactor`)
-    #[arg(short = 'p', long)]
+    #[arg(short = 't', long = "tag")]
     pub pattern: Option<String>,
 
     /// "Done" tag to search for (e.g., "refactored")
-    #[arg(short = 'r', long)]
+    #[arg(short = 'r', long = "done")]
     pub done_tag: Option<String>,
 
     /// "Todo" tag to search for (e.g., `to_refactor`)
-    #[arg(short = 'o', long)]
+    #[arg(short = 'u', long = "todo")]
     pub todo_tag: Option<String>,
 }
 
