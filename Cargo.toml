@@ -26,6 +26,44 @@ correctness  = { priority = -1, level = "deny" }
 perf         = { priority = -1, level = "deny" }
 suspicious   = { priority = -1, level = "deny" }
 style        = { priority = -1, level = "deny" }
-#pedantic     = { priority = -1, level = "deny" }
-#restriction  = { priority = -1, level = "deny" }
+pedantic     = { priority = -1, level = "deny" }
+restriction  = { priority = -1, level = "deny" }
 #nursery      = { priority = -1, level = "deny" }
+
+# cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
+doc_markdown = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+needless_pass_by_value = "allow"
+uninlined_format_args = "allow"
+cast_precision_loss = "allow"
+struct_field_names = "allow"
+absolute_paths = "allow"
+arbitrary_source_item_ordering = "allow"
+arithmetic_side_effects = "allow"
+as_conversions = "allow"
+blanket_clippy_restriction_lints = "allow"
+exhaustive_structs = "allow"
+expect_used = "allow"
+filetype_is_file = "allow"
+float_arithmetic = "allow"
+impl_trait_in_params = "allow"
+implicit_return = "allow"
+indexing_slicing = "allow"
+min_ident_chars = "allow"
+missing_docs_in_private_items = "allow"
+missing_inline_in_public_items = "allow"
+mod_module_files = "allow"
+module_name_repetitions = "allow"
+pattern_type_mismatch = "allow"
+print_stdout = "allow"
+pub_use = "allow"
+question_mark_used = "allow"
+shadow_reuse = "allow"
+shadow_unrelated = "allow"
+str_to_string = "allow"
+string_slice = "allow"
+unused_trait_names = "allow"
+unwrap_in_result = "allow"
+single_call_fn = "allow"
