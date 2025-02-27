@@ -28,7 +28,7 @@ suspicious   = { priority = -1, level = "deny" }
 style        = { priority = -1, level = "deny" }
 pedantic     = { priority = -1, level = "deny" }
 restriction  = { priority = -1, level = "deny" }
-#nursery      = { priority = -1, level = "deny" }
+nursery      = { priority = -1, level = "deny" }
 
 # cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
 doc_markdown = "allow"
@@ -67,3 +67,5 @@ string_slice = "allow"
 unused_trait_names = "allow"
 unwrap_in_result = "allow"
 single_call_fn = "allow"
+option_if_let_else = "allow"
+redundant_clone = "allow"
