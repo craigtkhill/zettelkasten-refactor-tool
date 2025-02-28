@@ -1,5 +1,5 @@
 // src/core/scanner.rs
-use crate::core::ignore::{IgnorePatterns, load_ignore_patterns};
+use crate::core::ignore::{Patterns, load_ignore_patterns};
 use crate::models::{ComparisonStats, FileWordCount, SinglePatternStats, WordCountStats};
 use crate::utils::{contains_tag, is_hidden};
 use anyhow::Result;
@@ -153,7 +153,7 @@ pub fn scan_directory_two_patterns(
 fn should_exclude(
     entry: &walkdir::DirEntry,
     exclude_dirs: &[&str],
-    ignore_patterns: Option<&IgnorePatterns>,
+    ignore_patterns: Option<&Patterns>,
 ) -> bool {
     // Always check if it's hidden first
     if is_hidden(entry) {

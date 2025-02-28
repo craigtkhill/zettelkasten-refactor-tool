@@ -5,11 +5,16 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Default)]
-pub struct IgnorePatterns {
+pub struct Patterns {
+    /// Collection of ignore patterns with metadata.
+    /// Each tuple contains:
+    /// - The pattern to match against file paths
+    /// - Whether the pattern is a negation (to explicitly include files that would otherwise be ignored)
+    /// - Whether the pattern is anchored to the root directory
     patterns: Vec<(Pattern, bool, bool)>, // (pattern, is_negation, is_anchored_to_root)
 }
 
-impl IgnorePatterns {
+impl Patterns {
     #[must_use]
     pub fn new(_root_dir: PathBuf) -> Self {
         Self {
@@ -144,8 +149,8 @@ impl IgnorePatterns {
     }
 }
 
-pub fn load_ignore_patterns(dir: &Path) -> Result<IgnorePatterns> {
-    let mut patterns = IgnorePatterns::new(PathBuf::new());
+pub fn load_ignore_patterns(dir: &Path) -> Result<Patterns> {
+    let mut patterns = Patterns::new(PathBuf::new());
 
     let mut current_dir = dir.to_path_buf();
 
@@ -184,13 +189,13 @@ mod tests {
 
     #[test]
     fn test_empty_patterns_match_nothing() {
-        let patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let patterns = Patterns::new(PathBuf::from("/test"));
         assert!(!patterns.matches("file.txt"));
     }
 
     #[test]
     fn test_simple_file_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("*.txt")?;
         assert!(patterns.matches("file.txt"));
         assert!(!patterns.matches("file.rs"));
@@ -199,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_directory_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("node_modules/")?;
 
         assert!(
@@ -221,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_negation_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("*.txt")?;
         patterns.add_pattern("!important.txt")?;
         assert!(patterns.matches("file.txt"));
@@ -231,7 +236,7 @@ mod tests {
 
     #[test]
     fn test_absolute_path_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("/src/generated/*.rs")?;
         assert!(patterns.matches("src/generated/file.rs"));
         assert!(!patterns.matches("other/generated/file.rs"));
@@ -240,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_anchored_path_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("/absolute_path.md")?;
 
         // Should match at root level
@@ -260,7 +265,7 @@ mod tests {
 
     #[test]
     fn test_extension_group_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("*.{js,ts}")?;
         assert!(patterns.matches("file.js"));
         assert!(patterns.matches("file.ts"));
@@ -270,7 +275,7 @@ mod tests {
 
     #[test]
     fn test_double_star_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("**/temp/**")?;
         assert!(patterns.matches("temp/file.txt"));
         assert!(patterns.matches("src/temp/file.txt"));
@@ -281,7 +286,7 @@ mod tests {
 
     #[test]
     fn test_comment_and_empty_lines() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("")?;
         patterns.add_pattern("# This is a comment")?;
         patterns.add_pattern("*.txt")?;
@@ -291,7 +296,7 @@ mod tests {
 
     #[test]
     fn test_bare_filename_pattern() -> Result<()> {
-        let mut patterns = IgnorePatterns::new(PathBuf::from("/test"));
+        let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("TODO-CHORES.md")?;
 
         assert!(
