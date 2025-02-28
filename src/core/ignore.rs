@@ -86,9 +86,10 @@ impl Patterns {
 
             for ext in extensions {
                 let full_pattern = format!("{prefix}{ext}{rest}").replace("[GLOBSTAR]", "**");
-                let compiled = Pattern::new(&full_pattern)
+                let pattern_compiled = Pattern::new(&full_pattern)
                     .with_context(|| format!("Invalid pattern: {full_pattern}"))?;
-                self.patterns.push((compiled, is_negation, is_anchored));
+                self.patterns
+                    .push((pattern_compiled, is_negation, is_anchored));
             }
             return Ok(());
         }
@@ -102,9 +103,9 @@ impl Patterns {
             self.patterns.push((compiled, is_negation, false));
 
             // Also create a direct filename pattern (without the path)
-            let compiled = Pattern::new(&pattern_str)
+            let pattern_compiled = Pattern::new(&pattern_str)
                 .with_context(|| format!("Invalid filename pattern: {pattern_str}"))?;
-            self.patterns.push((compiled, is_negation, false));
+            self.patterns.push((pattern_compiled, is_negation, false));
 
             return Ok(());
         }
