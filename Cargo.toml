@@ -53,7 +53,6 @@ pub_use = "allow"
 question_mark_used = "allow"
 shadow_reuse = "allow"
 
-str_to_string = "allow"
 string_slice = "allow"
 unwrap_in_result = "allow"
 redundant_clone = "allow"

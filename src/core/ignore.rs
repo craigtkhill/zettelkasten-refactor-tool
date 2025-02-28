@@ -39,7 +39,7 @@ impl Patterns {
         let pattern_str = if is_anchored {
             pattern[1..].to_string()
         } else {
-            pattern.to_string()
+            pattern.to_owned()
         };
 
         let is_bare_filename = !pattern_str.contains('/')
