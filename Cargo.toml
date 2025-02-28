@@ -59,7 +59,8 @@ shadow_reuse = "allow"
 shadow_unrelated = "allow"
 str_to_string = "allow"
 string_slice = "allow"
-unused_trait_names = "allow"
 unwrap_in_result = "allow"
-single_call_fn = "allow"
 redundant_clone = "allow"
+
+# definitely keeping lints
+single_call_fn = "allow"

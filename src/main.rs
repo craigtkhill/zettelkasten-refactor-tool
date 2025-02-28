@@ -1,7 +1,7 @@
 // src/main.rs
 
 use anyhow::Result;
-use clap::Parser;
+use clap::Parser as _;
 
 mod cli;
 mod core;

@@ -1,5 +1,5 @@
 // src/core/ignore.rs
-use anyhow::{Context, Result};
+use anyhow::{Context as _, Result};
 use glob::Pattern;
 use std::fs;
 use std::path::{Path, PathBuf};
