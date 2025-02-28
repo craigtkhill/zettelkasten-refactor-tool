@@ -52,7 +52,6 @@ pattern_type_mismatch = "allow"
 pub_use = "allow"
 question_mark_used = "allow"
 shadow_reuse = "allow"
-
 string_slice = "allow"
 unwrap_in_result = "allow"
 redundant_clone = "allow"
