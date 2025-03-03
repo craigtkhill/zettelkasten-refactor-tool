@@ -40,29 +40,29 @@ impl SinglePatternStats {
 
 #[derive(Debug, Default)]
 pub struct ComparisonStats {
-    pub total_files: u64,
-    pub done_files: u64,
-    pub todo_files: u64,
+    pub total: u64,
+    pub done: u64,
+    pub todo: u64,
 }
 
 impl ComparisonStats {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            total_files: 0,
-            done_files: 0,
-            todo_files: 0,
+            total: 0,
+            done: 0,
+            todo: 0,
         }
     }
 
     #[must_use]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
-        let total_tagged = self.done_files + self.todo_files;
+        let total_tagged = self.done + self.todo;
         if total_tagged == 0 {
             return 0.0;
         }
-        (self.done_files as f64 / total_tagged as f64) * 100.0
+        (self.done as f64 / total_tagged as f64) * 100.0
     }
 }
 
@@ -123,9 +123,9 @@ mod tests {
     #[test]
     fn test_comparison_stats_fifty_percent() {
         let stats = ComparisonStats {
-            total_files: 20,
-            done_files: 5,
-            todo_files: 5,
+            total: 20,
+            done: 5,
+            todo: 5,
         };
         assert_eq!(stats.calculate_percentage(), 50.0);
     }

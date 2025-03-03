@@ -102,8 +102,8 @@ pub fn run(args: Args) -> Result<()> {
     } else if let (Some(done), Some(todo)) = (args.done_tag, args.todo_tag) {
         // Compare two tags mode
         let stats = scan_directory_two_patterns(&args.directory, &done, &todo)?;
-        println!("{} files: {}", done, stats.done_files);
-        println!("{} files: {}", todo, stats.todo_files);
+        println!("{} files: {}", done, stats.done);
+        println!("{} files: {}", todo, stats.todo);
         println!("Done percentage: {:.2}%", stats.calculate_percentage());
     } else {
         // Default behavior - scan for to_refactor

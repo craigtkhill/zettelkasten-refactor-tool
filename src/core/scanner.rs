@@ -212,14 +212,14 @@ pub fn scan_directory_two_patterns(
             continue;
         }
 
-        stats.total_files += 1;
+        stats.total += 1;
 
         let path = entry.path();
         if contains_tag(path, done_tag)? {
-            stats.done_files += 1;
+            stats.done += 1;
         }
         if contains_tag(path, todo_tag)? {
-            stats.todo_files += 1;
+            stats.todo += 1;
         }
     }
 
@@ -454,9 +454,9 @@ mod tests {
 
         let stats = scan_directory_two_patterns(&dir.path().to_path_buf(), "done", "todo")?;
 
-        assert_eq!(stats.total_files, 8, "Should count all non-hidden files");
-        assert_eq!(stats.done_files, 3, "Should find 3 files with 'done' tag");
-        assert_eq!(stats.todo_files, 2, "Should find 2 files with 'todo' tag");
+        assert_eq!(stats.total, 8, "Should count all non-hidden files");
+        assert_eq!(stats.done, 3, "Should find 3 files with 'done' tag");
+        assert_eq!(stats.todo, 2, "Should find 2 files with 'todo' tag");
 
         Ok(())
     }

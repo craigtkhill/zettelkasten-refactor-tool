@@ -234,16 +234,13 @@ fn test_scanning_with_ignore() -> Result<()> {
     let dual_stats =
         scan_directory_two_patterns(&temp_dir.path().to_path_buf(), "refactored", "to_refactor")?;
 
+    assert_eq!(dual_stats.total, 4, "Should count only non-ignored files");
     assert_eq!(
-        dual_stats.total_files, 4,
-        "Should count only non-ignored files"
-    );
-    assert_eq!(
-        dual_stats.done_files, 2,
+        dual_stats.done, 2,
         "Should find correct number of done files"
     );
     assert_eq!(
-        dual_stats.todo_files, 2,
+        dual_stats.todo, 2,
         "Should find correct number of todo files"
     );
     assert!((dual_stats.calculate_percentage() - 50.0).abs() < f64::EPSILON);
