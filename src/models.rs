@@ -47,7 +47,7 @@ impl ComparisonStats {
     #[must_use]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
-        let total_tagged = self.done + self.todo;
+        let total_tagged = self.done.saturating_add(self.todo);
         if total_tagged == 0 {
             return 0.0;
         }

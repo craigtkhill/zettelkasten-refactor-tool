@@ -33,7 +33,7 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     };
 
     let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
-    let mut count = 0;
+    let mut count: u64 = 0;
 
     for entry in WalkDir::new(&absolute_dir)
         .follow_links(true)
@@ -42,7 +42,7 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     {
         let entry = entry?;
         if entry.file_type().is_file() {
-            count += 1;
+            count = count.saturating_add(1);
         }
     }
 
@@ -108,7 +108,8 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
                 if lines.len() > 2 && lines[0] == "---" {
                     if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
                         // +2 to account for the skip(1) and to get the line after the closing ---
-                        content_without_frontmatter = lines[(end_index + 2)..].join("\n");
+                        content_without_frontmatter =
+                            lines[(end_index.saturating_add(2))..].join("\n");
                     } else {
                         content_without_frontmatter = content.clone();
                     }
@@ -124,12 +125,12 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
             let word_count = content_without_frontmatter.split_whitespace().count() as u64;
 
             // Update the stats
-            stats.total_files += 1;
-            stats.total_words += word_count;
+            stats.total_files = stats.total_files.saturating_add(1);
+            stats.total_words = stats.total_words.saturating_add(word_count);
 
             if has_tag {
-                stats.tagged_files += 1;
-                stats.tagged_words += word_count;
+                stats.tagged_files = stats.tagged_files.saturating_add(1);
+                stats.tagged_words = stats.tagged_words.saturating_add(word_count);
             }
         }
     }
@@ -245,11 +246,11 @@ pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<Sin
             continue;
         }
 
-        stats.total_files += 1;
+        stats.total_files = stats.total_files.saturating_add(1);
 
         let path = entry.path();
         if contains_tag(path, pattern)? {
-            stats.files_with_pattern += 1;
+            stats.files_with_pattern = stats.files_with_pattern.saturating_add(1);
         }
     }
 
@@ -300,14 +301,14 @@ pub fn scan_directory_two_patterns(
             continue;
         }
 
-        stats.total += 1;
+        stats.total = stats.total.saturating_add(1);
 
         let path = entry.path();
         if contains_tag(path, done_tag)? {
-            stats.done += 1;
+            stats.done = stats.done.saturating_add(1);
         }
         if contains_tag(path, todo_tag)? {
-            stats.todo += 1;
+            stats.todo = stats.todo.saturating_add(1);
         }
     }
 
