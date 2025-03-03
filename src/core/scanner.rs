@@ -1,8 +1,9 @@
 // src/core/scanner.rs
 use crate::core::ignore::{Patterns, load_ignore_patterns};
 use crate::models::{ComparisonStats, FileWordCount, SinglePatternStats, WordCountStats};
-use crate::utils::{contains_tag, is_hidden};
+use crate::utils::{contains_tag, is_hidden, parse_frontmatter};
 use anyhow::Result;
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 use walkdir::WalkDir;
@@ -28,7 +29,7 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
     } else {
-        std::env::current_dir()?.join(dir)
+        env::current_dir()?.join(dir)
     };
 
     let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
@@ -77,7 +78,7 @@ pub fn count_words(
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
     } else {
-        std::env::current_dir()?.join(dir)
+        env::current_dir()?.join(dir)
     };
 
     let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
@@ -97,7 +98,7 @@ pub fn count_words(
         if let Ok(content) = fs::read_to_string(path) {
             // Skip file if it contains the filter_out tag
             if let Some(tag) = filter_out {
-                if let Ok(frontmatter) = crate::utils::parse_frontmatter(&content) {
+                if let Ok(frontmatter) = parse_frontmatter(&content) {
                     if let Some(tags) = frontmatter.tags {
                         if tags.iter().any(|t| t == tag) {
                             continue;
@@ -141,7 +142,7 @@ pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<Sin
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
     } else {
-        std::env::current_dir()?.join(dir)
+        env::current_dir()?.join(dir)
     };
 
     let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
@@ -196,7 +197,7 @@ pub fn scan_directory_two_patterns(
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
     } else {
-        std::env::current_dir()?.join(dir)
+        env::current_dir()?.join(dir)
     };
 
     let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
@@ -283,7 +284,7 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
     } else {
-        std::env::current_dir()?.join(dir)
+        env::current_dir()?.join(dir)
     };
 
     let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
@@ -305,7 +306,7 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
             let has_tag;
             let content_without_frontmatter: String;
 
-            if let Ok(frontmatter) = crate::utils::parse_frontmatter(&content) {
+            if let Ok(frontmatter) = parse_frontmatter(&content) {
                 // Check if the file has the specified tag
                 has_tag = frontmatter
                     .tags

@@ -1,6 +1,7 @@
 // src/core/ignore.rs
 use anyhow::{Context as _, Result};
 use glob::Pattern;
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -200,7 +201,7 @@ pub fn load_ignore_patterns(dir: &Path) -> Result<Patterns> {
 
     let mut current_dir = dir.to_path_buf();
 
-    let mut visited = std::collections::HashSet::new();
+    let mut visited = HashSet::new();
 
     while !visited.contains(&current_dir) {
         visited.insert(current_dir.clone());
