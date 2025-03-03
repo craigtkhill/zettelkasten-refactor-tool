@@ -45,6 +45,7 @@ impl ComparisonStats {
     }
 
     #[must_use]
+    #[expect(clippy::as_conversions, reason = "Precision not critical")]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
         let total_tagged = self.done.saturating_add(self.todo);
@@ -65,6 +66,7 @@ impl SinglePatternStats {
     }
 
     #[must_use]
+    #[expect(clippy::as_conversions, reason = "Precision not critical")]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
         if self.total_files == 0 {
@@ -86,6 +88,7 @@ impl WordCountStats {
     }
 
     #[must_use]
+    #[expect(clippy::as_conversions, reason = "Precision not critical")]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
         if self.total_words == 0 {

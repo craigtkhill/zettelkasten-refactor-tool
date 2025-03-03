@@ -122,7 +122,8 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
             }
 
             // Count words in the content (excluding frontmatter)
-            let word_count = content_without_frontmatter.split_whitespace().count() as u64;
+            let word_count = u64::try_from(content_without_frontmatter.split_whitespace().count())
+                .unwrap_or(u64::MAX); // Fallback to max value if conversion fails
 
             // Update the stats
             stats.total_files = stats.total_files.saturating_add(1);
