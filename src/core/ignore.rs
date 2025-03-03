@@ -21,6 +21,7 @@ impl Patterns {
             patterns: Vec::new(),
         }
     }
+
     /// Adds a new pattern to the ignore list.
     ///
     /// Parses the pattern string, handling various pattern formats:
@@ -43,6 +44,12 @@ impl Patterns {
     /// This function may return an error if:
     /// * The pattern contains invalid glob syntax
     /// * The pattern has mismatched braces in extension groups
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// * A pattern contains an opening brace `{` without a matching closing brace `}`
+    /// * A pattern contains a closing brace `}` without a matching opening brace `{`
     pub fn add_pattern(&mut self, pattern: &str) -> Result<()> {
         let pattern = pattern.trim();
         if pattern.is_empty() || pattern.starts_with('#') {
