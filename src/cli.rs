@@ -52,7 +52,22 @@ pub struct Args {
     #[arg(short = 'u', long = "todo")]
     pub todo_tag: Option<String>,
 }
-
+/// Runs the tool with the provided arguments.
+///
+/// # Arguments
+///
+/// * `args` - Command-line arguments parsed into an `Args` struct
+///
+/// # Returns
+///
+/// * `Ok(())` if the command completes successfully
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The specified directory cannot be read
+/// * File operations fail during counting or scanning
+/// * Pattern matching operations encounter an error
 pub fn run(args: Args) -> Result<()> {
     if args.count {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
@@ -63,10 +78,10 @@ pub fn run(args: Args) -> Result<()> {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let stats = count_word_stats(&args.directory, &exclude_dirs, tag)?;
 
-        // println!("Files with tag '{}': {}", tag, stats.tagged_files);
-        // println!("Words in tagged files: {}", stats.tagged_words);
-        // println!("Total files: {}", stats.total_files);
-        // println!("Total words in all files: {}", stats.total_words);
+        println!("Files with tag '{}': {}", tag, stats.tagged_files);
+        println!("Words in tagged files: {}", stats.tagged_words);
+        println!("Total files: {}", stats.total_files);
+        println!("Total words in all files: {}", stats.total_words);
         println!(
             "Percentage of words tagged: {:.2}%",
             stats.calculate_percentage()

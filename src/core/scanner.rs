@@ -7,6 +7,23 @@ use std::fs;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
+/// Counts the total number of files in a directory and its subdirectories.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `exclude_dirs` - A list of directory names to exclude from the count
+///
+/// # Returns
+///
+/// * `Ok(u64)` - The total number of files found
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * The ignore patterns file cannot be parsed
 pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
@@ -32,6 +49,26 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     Ok(count)
 }
 
+/// Counts words in all files within a directory and its subdirectories.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `exclude_dirs` - A list of directory names to exclude from the scan
+/// * `filter_out` - Optional tag to exclude files containing this tag
+///
+/// # Returns
+///
+/// * `Ok(Vec<FileWordCount>)` - A vector of file paths and their word counts
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Frontmatter parsing fails
 pub fn count_words(
     dir: &PathBuf,
     exclude_dirs: &[&str],
@@ -81,6 +118,25 @@ pub fn count_words(
     Ok(files)
 }
 
+/// Scans a directory for files containing a specific pattern/tag.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `pattern` - The pattern or tag to search for in files
+///
+/// # Returns
+///
+/// * `Ok(SinglePatternStats)` - Statistics about files with the specified pattern
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Tag detection encounters an error
 pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<SinglePatternStats> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
@@ -112,6 +168,26 @@ pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<Sin
     Ok(stats)
 }
 
+/// Scans a directory for files containing two different patterns/tags.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `done_tag` - The first tag to search for in files
+/// * `todo_tag` - The second tag to search for in files
+///
+/// # Returns
+///
+/// * `Ok(ComparisonStats)` - Statistics comparing the presence of both tags
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Tag detection encounters an error
 pub fn scan_directory_two_patterns(
     dir: &PathBuf,
     done_tag: &str,
@@ -183,6 +259,26 @@ fn should_exclude(
     false
 }
 
+/// Calculates word count statistics for files with and without a specific tag.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `exclude_dirs` - A list of directory names to exclude from the scan
+/// * `tag` - The tag to identify files for separate statistics
+///
+/// # Returns
+///
+/// * `Ok(WordCountStats)` - Word count statistics for tagged and untagged files
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Frontmatter parsing fails
 pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Result<WordCountStats> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()

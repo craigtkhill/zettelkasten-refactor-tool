@@ -21,7 +21,28 @@ impl Patterns {
             patterns: Vec::new(),
         }
     }
-
+    /// Adds a new pattern to the ignore list.
+    ///
+    /// Parses the pattern string, handling various pattern formats:
+    /// - Negation with `!` prefix
+    /// - Directory-specific patterns ending with `/`
+    /// - File extension groups like `*.{js,ts}`
+    /// - Absolute path patterns starting with `/`
+    /// - Bare filenames
+    ///
+    /// # Arguments
+    ///
+    /// * `pattern` - The pattern string to add
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the pattern was successfully added
+    ///
+    /// # Errors
+    ///
+    /// This function may return an error if:
+    /// * The pattern contains invalid glob syntax
+    /// * The pattern has mismatched braces in extension groups
     pub fn add_pattern(&mut self, pattern: &str) -> Result<()> {
         let pattern = pattern.trim();
         if pattern.is_empty() || pattern.starts_with('#') {
@@ -150,6 +171,23 @@ impl Patterns {
     }
 }
 
+/// Loads ignore patterns from .zrtignore files starting from the given directory
+/// and recursively checking parent directories until a file is found.
+///
+/// # Arguments
+///
+/// * `dir` - The starting directory to search for .zrtignore files
+///
+/// # Returns
+///
+/// * `Ok(Patterns)` containing the loaded patterns
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The .zrtignore file exists but cannot be read
+/// * The file contains invalid pattern syntax
+/// * File system operations fail during the search
 pub fn load_ignore_patterns(dir: &Path) -> Result<Patterns> {
     let mut patterns = Patterns::new(PathBuf::new());
 

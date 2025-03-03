@@ -31,7 +31,6 @@ restriction  = { priority = -1, level = "deny" }
 nursery      = { priority = -1, level = "deny" }
 
 # cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
-missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 struct_field_names = "allow"
 absolute_paths = "allow"

@@ -5,6 +5,23 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+/// Parses YAML frontmatter from markdown content.
+///
+/// Frontmatter must be enclosed between `---` delimiters at the start of the content.
+///
+/// # Arguments
+///
+/// * `content` - The string content to parse
+///
+/// # Returns
+///
+/// * `Ok(Frontmatter)` - The parsed frontmatter, or a default empty frontmatter if none exists
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The frontmatter contains invalid YAML syntax
+/// * The YAML cannot be deserialized into the Frontmatter struct
 pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
     let mut content_iter = content.lines();
 
@@ -28,6 +45,22 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
         .map_err(|e| anyhow!("Failed to parse front matter: {}", e))
 }
 
+/// Checks if a file contains a specific tag in its frontmatter.
+///
+/// # Arguments
+///
+/// * `path` - Path to the file to check
+/// * `tag` - The tag to search for
+///
+/// # Returns
+///
+/// * `Ok(bool)` - True if the file contains the tag, false otherwise
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The file cannot be read
+/// * File system operations fail
 pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
     let content = fs::read_to_string(path)?;
 
