@@ -12,25 +12,17 @@ use crate::utils::print_top_files;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
-    /// Directory to scan (defaults to current directory)
-    #[arg(short = 'd', long = "dir", default_value = ".")]
-    pub directory: PathBuf,
-
     /// Show total file count only
     #[arg(short = 'c', long = "count")]
     pub count: bool,
 
-    /// Show word counts instead of refactor percentage
-    #[arg(short = 'w', long = "wordcount")]
-    pub words: bool,
+    /// Directory to scan (defaults to current directory)
+    #[arg(short = 'd', long = "dir", default_value = ".")]
+    pub directory: PathBuf,
 
-    /// Show word count statistics for files with a specific tag
-    #[arg(short = 's', long = "stats")]
-    pub stats: Option<String>,
-
-    /// Number of files to show in word count mode
-    #[arg(short = 'n', long = "num", default_value = "10")]
-    pub top: usize,
+    /// "Done" tag to search for (e.g., "refactored")
+    #[arg(short = 'r', long = "done")]
+    pub done_tag: Option<String>,
 
     /// Directories to exclude in word count mode (comma-separated)
     #[arg(short, long, default_value = ".git")]
@@ -44,13 +36,21 @@ pub struct Args {
     #[arg(short = 't', long = "tag")]
     pub pattern: Option<String>,
 
-    /// "Done" tag to search for (e.g., "refactored")
-    #[arg(short = 'r', long = "done")]
-    pub done_tag: Option<String>,
+    /// Show word count statistics for files with a specific tag
+    #[arg(short = 's', long = "stats")]
+    pub stats: Option<String>,
 
     /// "Todo" tag to search for (e.g., `to_refactor`)
     #[arg(short = 'u', long = "todo")]
     pub todo_tag: Option<String>,
+
+    /// Number of files to show in word count mode
+    #[arg(short = 'n', long = "num", default_value = "10")]
+    pub top: usize,
+
+    /// Show word counts instead of refactor percentage
+    #[arg(short = 'w', long = "wordcount")]
+    pub words: bool,
 }
 /// Runs the tool with the provided arguments.
 ///
@@ -151,7 +151,7 @@ mod tests {
             words: false,
             stats: None,
             top: 10,
-            exclude: ".git".to_string(),
+            exclude: ".git".to_owned(),
             filter_out: None,
             pattern: None,
             done_tag: None,
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     fn test_stats_option_is_parsed() {
         let args = Args::parse_from(["program", "--stats", "refactored"]);
-        assert_eq!(args.stats, Some("refactored".to_string()));
+        assert_eq!(args.stats, Some("refactored".to_owned()));
     }
 
     #[test]
@@ -173,9 +173,9 @@ mod tests {
             directory: PathBuf::from("."),
             count: false,
             words: false,
-            stats: Some("refactored".to_string()),
+            stats: Some("refactored".to_owned()),
             top: 10,
-            exclude: ".git".to_string(),
+            exclude: ".git".to_owned(),
             filter_out: None,
             pattern: None,
             done_tag: None,

@@ -1,0 +1,12 @@
+source-item-ordering = ["module", "struct", "trait"]
+module-item-order-groupings = [
+    ["modules", ["extern_crate", "mod", "foreign_mod"]],
+    ["use", ["use"]],
+    ["macros", ["macro"]],
+    ["global_asm", ["global_asm"]],
+    ["constants", ["static", "const"]],
+    ["types", ["ty_alias", "enum", "struct", "union"]],
+    ["traits", ["trait", "trait_alias"]],
+    ["implementations", ["impl"]],
+    ["functions", ["fn"]]
+]

@@ -50,6 +50,93 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     Ok(count)
 }
 
+/// Calculates word count statistics for files with and without a specific tag.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `exclude_dirs` - A list of directory names to exclude from the scan
+/// * `tag` - The tag to identify files for separate statistics
+///
+/// # Returns
+///
+/// * `Ok(WordCountStats)` - Word count statistics for tagged and untagged files
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Frontmatter parsing fails
+pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Result<WordCountStats> {
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+    let mut stats = WordCountStats::new();
+
+    for entry in WalkDir::new(&absolute_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
+    {
+        let entry = entry?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
+
+        let path = entry.path();
+        if let Ok(content) = fs::read_to_string(path) {
+            // Parse frontmatter to check for tags
+            let has_tag;
+            let content_without_frontmatter: String;
+
+            if let Ok(frontmatter) = parse_frontmatter(&content) {
+                // Check if the file has the specified tag
+                has_tag = frontmatter
+                    .tags
+                    .as_ref()
+                    .is_some_and(|tags| tags.iter().any(|t| t == tag));
+
+                // Extract content without frontmatter
+                let lines: Vec<&str> = content.lines().collect();
+                if lines.len() > 2 && lines[0] == "---" {
+                    if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
+                        // +2 to account for the skip(1) and to get the line after the closing ---
+                        content_without_frontmatter = lines[(end_index + 2)..].join("\n");
+                    } else {
+                        content_without_frontmatter = content.clone();
+                    }
+                } else {
+                    content_without_frontmatter = content.clone();
+                }
+            } else {
+                has_tag = false;
+                content_without_frontmatter = content.clone();
+            }
+
+            // Count words in the content (excluding frontmatter)
+            let word_count = content_without_frontmatter.split_whitespace().count() as u64;
+
+            // Update the stats
+            stats.total_files += 1;
+            stats.total_words += word_count;
+
+            if has_tag {
+                stats.tagged_files += 1;
+                stats.tagged_words += word_count;
+            }
+        }
+    }
+
+    Ok(stats)
+}
+
 /// Counts words in all files within a directory and its subdirectories.
 ///
 /// # Arguments
@@ -260,98 +347,11 @@ fn should_exclude(
     false
 }
 
-/// Calculates word count statistics for files with and without a specific tag.
-///
-/// # Arguments
-///
-/// * `dir` - The directory path to scan
-/// * `exclude_dirs` - A list of directory names to exclude from the scan
-/// * `tag` - The tag to identify files for separate statistics
-///
-/// # Returns
-///
-/// * `Ok(WordCountStats)` - Word count statistics for tagged and untagged files
-///
-/// # Errors
-///
-/// This function may return an error if:
-/// * The directory cannot be accessed or read
-/// * File system operations fail during traversal
-/// * Files cannot be read as UTF-8 text
-/// * The ignore patterns file cannot be parsed
-/// * Frontmatter parsing fails
-pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Result<WordCountStats> {
-    let absolute_dir = if dir.is_absolute() {
-        dir.clone()
-    } else {
-        env::current_dir()?.join(dir)
-    };
-
-    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
-    let mut stats = WordCountStats::new();
-
-    for entry in WalkDir::new(&absolute_dir)
-        .follow_links(true)
-        .into_iter()
-        .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
-    {
-        let entry = entry?;
-        if !entry.file_type().is_file() {
-            continue;
-        }
-
-        let path = entry.path();
-        if let Ok(content) = fs::read_to_string(path) {
-            // Parse frontmatter to check for tags
-            let has_tag;
-            let content_without_frontmatter: String;
-
-            if let Ok(frontmatter) = parse_frontmatter(&content) {
-                // Check if the file has the specified tag
-                has_tag = frontmatter
-                    .tags
-                    .as_ref()
-                    .is_some_and(|tags| tags.iter().any(|t| t == tag));
-
-                // Extract content without frontmatter
-                let lines: Vec<&str> = content.lines().collect();
-                if lines.len() > 2 && lines[0] == "---" {
-                    if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
-                        // +2 to account for the skip(1) and to get the line after the closing ---
-                        content_without_frontmatter = lines[(end_index + 2)..].join("\n");
-                    } else {
-                        content_without_frontmatter = content.clone();
-                    }
-                } else {
-                    content_without_frontmatter = content.clone();
-                }
-            } else {
-                has_tag = false;
-                content_without_frontmatter = content.clone();
-            }
-
-            // Count words in the content (excluding frontmatter)
-            let word_count = content_without_frontmatter.split_whitespace().count() as u64;
-
-            // Update the stats
-            stats.total_files += 1;
-            stats.total_words += word_count;
-
-            if has_tag {
-                stats.tagged_files += 1;
-                stats.tagged_words += word_count;
-            }
-        }
-    }
-
-    Ok(stats)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs::{self, File};
-    use std::io::Write;
+    use std::io::Write as _;
     use tempfile::TempDir;
 
     fn create_test_file(dir: &TempDir, name: &str, content: &str) -> Result<PathBuf> {

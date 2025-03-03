@@ -2,9 +2,11 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 
-#[derive(Deserialize, Debug, Default)]
-pub struct Frontmatter {
-    pub tags: Option<Vec<String>>,
+#[derive(Debug, Default)]
+pub struct ComparisonStats {
+    pub done: u64,
+    pub todo: u64,
+    pub total: u64,
 }
 
 #[derive(Debug)]
@@ -13,10 +15,44 @@ pub struct FileWordCount {
     pub words: usize,
 }
 
+#[derive(Deserialize, Debug, Default)]
+pub struct Frontmatter {
+    pub tags: Option<Vec<String>>,
+}
+
 #[derive(Debug, Default)]
 pub struct SinglePatternStats {
-    pub total_files: u64,
     pub files_with_pattern: u64,
+    pub total_files: u64,
+}
+
+#[derive(Debug, Default)]
+pub struct WordCountStats {
+    pub tagged_files: u64,
+    pub tagged_words: u64,
+    pub total_files: u64,
+    pub total_words: u64,
+}
+
+impl ComparisonStats {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            done: 0,
+            todo: 0,
+            total: 0,
+        }
+    }
+
+    #[must_use]
+    #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
+    pub fn calculate_percentage(&self) -> f64 {
+        let total_tagged = self.done + self.todo;
+        if total_tagged == 0 {
+            return 0.0;
+        }
+        (self.done as f64 / total_tagged as f64) * 100.0
+    }
 }
 
 impl SinglePatternStats {
@@ -38,50 +74,14 @@ impl SinglePatternStats {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct ComparisonStats {
-    pub total: u64,
-    pub done: u64,
-    pub todo: u64,
-}
-
-impl ComparisonStats {
-    #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            total: 0,
-            done: 0,
-            todo: 0,
-        }
-    }
-
-    #[must_use]
-    #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
-    pub fn calculate_percentage(&self) -> f64 {
-        let total_tagged = self.done + self.todo;
-        if total_tagged == 0 {
-            return 0.0;
-        }
-        (self.done as f64 / total_tagged as f64) * 100.0
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct WordCountStats {
-    pub total_files: u64,
-    pub tagged_files: u64,
-    pub total_words: u64,
-    pub tagged_words: u64,
-}
-
 impl WordCountStats {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            total_files: 0,
             tagged_files: 0,
-            total_words: 0,
             tagged_words: 0,
+            total_files: 0,
+            total_words: 0,
         }
     }
 
@@ -108,8 +108,8 @@ mod tests {
     #[test]
     fn test_single_pattern_stats_fifty_percent() {
         let stats = SinglePatternStats {
-            total_files: 10,
             files_with_pattern: 5,
+            total_files: 10,
         };
         assert_eq!(stats.calculate_percentage(), 50.0);
     }
@@ -123,8 +123,8 @@ mod tests {
     #[test]
     fn test_comparison_stats_fifty_percent() {
         let stats = ComparisonStats {
-            total: 20,
             done: 5,
+            total: 20,
             todo: 5,
         };
         assert_eq!(stats.calculate_percentage(), 50.0);

@@ -5,6 +5,44 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+/// Checks if a file contains a specific tag in its frontmatter.
+///
+/// # Arguments
+///
+/// * `path` - Path to the file to check
+/// * `tag` - The tag to search for
+///
+/// # Returns
+///
+/// * `Ok(bool)` - True if the file contains the tag, false otherwise
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The file cannot be read
+/// * File system operations fail
+pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
+    let content = fs::read_to_string(path)?;
+
+    match parse_frontmatter(&content) {
+        Ok(frontmatter) => Ok(frontmatter
+            .tags
+            .is_some_and(|tags| tags.iter().any(|t| t == tag))),
+        Err(_) => Ok(false), // If parsing fails, assume no tags
+    }
+}
+
+#[must_use]
+pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+    entry.file_name().to_str().is_some_and(|s| {
+        // Don't consider temp directories as hidden
+        if s.starts_with(".tmp") {
+            return false;
+        }
+        s.starts_with('.')
+    })
+}
+
 /// Parses YAML frontmatter from markdown content.
 ///
 /// Frontmatter must be enclosed between `---` delimiters at the start of the content.
@@ -43,44 +81,6 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
     // Parse YAML
     serde_yaml_ng::from_str(&frontmatter_str)
         .map_err(|e| anyhow!("Failed to parse front matter: {}", e))
-}
-
-/// Checks if a file contains a specific tag in its frontmatter.
-///
-/// # Arguments
-///
-/// * `path` - Path to the file to check
-/// * `tag` - The tag to search for
-///
-/// # Returns
-///
-/// * `Ok(bool)` - True if the file contains the tag, false otherwise
-///
-/// # Errors
-///
-/// This function may return an error if:
-/// * The file cannot be read
-/// * File system operations fail
-pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
-    let content = fs::read_to_string(path)?;
-
-    match parse_frontmatter(&content) {
-        Ok(frontmatter) => Ok(frontmatter
-            .tags
-            .is_some_and(|tags| tags.iter().any(|t| t == tag))),
-        Err(_) => Ok(false), // If parsing fails, assume no tags
-    }
-}
-
-#[must_use]
-pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
-    entry.file_name().to_str().is_some_and(|s| {
-        // Don't consider temp directories as hidden
-        if s.starts_with(".tmp") {
-            return false;
-        }
-        s.starts_with('.')
-    })
 }
 
 pub fn print_top_files(files: &[FileWordCount], top: usize) {
@@ -187,7 +187,7 @@ Content here";
 mod file_tests {
     use super::*;
     use std::fs::File;
-    use std::io::Write;
+    use std::io::Write as _;
     use tempfile::TempDir;
 
     #[test]

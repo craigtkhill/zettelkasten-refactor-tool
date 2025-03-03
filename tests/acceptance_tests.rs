@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::fs;
-use std::io::Write;
+use std::io::Write as _;
 use std::path::Path;
 use tempfile::TempDir;
 use zrt::{

@@ -16,13 +16,6 @@ pub struct Patterns {
 }
 
 impl Patterns {
-    #[must_use]
-    pub fn new(_root_dir: PathBuf) -> Self {
-        Self {
-            patterns: Vec::new(),
-        }
-    }
-
     /// Adds a new pattern to the ignore list.
     ///
     /// Parses the pattern string, handling various pattern formats:
@@ -144,6 +137,13 @@ impl Patterns {
             .with_context(|| format!("Invalid pattern: {glob_pattern}"))?;
         self.patterns.push((compiled, is_negation, is_anchored));
         Ok(())
+    }
+
+    #[must_use]
+    pub fn new(_root_dir: PathBuf) -> Self {
+        Self {
+            patterns: Vec::new(),
+        }
     }
 
     pub fn matches(&self, path: impl AsRef<Path>) -> bool {
