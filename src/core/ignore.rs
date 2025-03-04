@@ -103,10 +103,10 @@ impl Patterns {
         if glob_pattern.contains('{') {
             let (prefix, suffix) = glob_pattern
                 .split_once('{')
-                .expect("Invalid pattern: missing opening brace");
+                .ok_or_else(|| anyhow::anyhow!("Invalid pattern: missing opening brace"))?;
             let (extensions, rest) = suffix
                 .split_once('}')
-                .expect("Invalid pattern: missing closing brace");
+                .ok_or_else(|| anyhow::anyhow!("Invalid pattern: missing closing brace"))?;
             let extensions: Vec<&str> = extensions.split(',').map(str::trim).collect();
 
             for ext in extensions {

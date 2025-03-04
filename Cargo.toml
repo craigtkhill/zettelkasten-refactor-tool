@@ -37,7 +37,6 @@ filetype_is_file = "allow"
 missing_docs_in_private_items = "allow"
 missing_inline_in_public_items = "allow"
 mod_module_files = "allow"
-unwrap_in_result = "allow"
 
 # definitely keeping lints
 blanket_clippy_restriction_lints = "allow"
