@@ -73,7 +73,7 @@ pub fn run(args: Args) -> Result<()> {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let count = count_files(&args.directory, &exclude_dirs)?;
         println!("{count}");
-    } else if let Some(tag) = &args.stats {
+    } else if let Some(tag) = args.stats.as_ref() {
         // New word count statistics mode
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();
         let stats = count_word_stats(&args.directory, &exclude_dirs, tag)?;

@@ -160,26 +160,30 @@ impl Patterns {
             .unwrap_or_default();
 
         // First check negation patterns
-        for (pattern, is_neg, is_anchored) in &self.patterns {
+        for tuple in &self.patterns {
+            let (pattern, is_neg, is_anchored) = (&tuple.0, tuple.1, tuple.2);
+
             // For an anchored pattern with no subdirectories in the pattern itself,
             // it should only match files at the root level
-            let is_simple_anchored = *is_anchored && !pattern.as_str().contains('/');
+            let is_simple_anchored = is_anchored && !pattern.as_str().contains('/');
 
             if is_simple_anchored && path_str.contains('/') {
                 // Skip this pattern for paths with subdirectories
                 continue;
             }
 
-            if *is_neg && (pattern.matches(&path_str) || pattern.matches(&filename)) {
+            if is_neg && (pattern.matches(&path_str) || pattern.matches(&filename)) {
                 return false;
             }
         }
 
         // Handle normal patterns
-        for (pattern, is_neg, is_anchored) in &self.patterns {
+        for tuple in &self.patterns {
+            let (pattern, is_neg, is_anchored) = (&tuple.0, tuple.1, tuple.2);
+
             // For an anchored pattern with no subdirectories in the pattern itself,
             // it should only match files at the root level
-            let is_simple_anchored = *is_anchored && !pattern.as_str().contains('/');
+            let is_simple_anchored = is_anchored && !pattern.as_str().contains('/');
 
             if is_simple_anchored && path_str.contains('/') {
                 // Skip this pattern for paths with subdirectories
