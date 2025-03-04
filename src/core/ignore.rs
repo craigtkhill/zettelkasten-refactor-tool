@@ -64,6 +64,9 @@ impl Patterns {
             pattern.to_owned()
         };
 
+        // Create a clone early to preserve the original value for later use
+        let pattern_str_for_later = pattern_str.clone();
+
         let is_bare_filename = !pattern_str.contains('/')
             && !pattern_str.contains('\\')
             && !pattern_str.contains('*')
@@ -77,7 +80,7 @@ impl Patterns {
             if pattern_str.contains("**") {
                 pattern_str.replace("**", "[GLOBSTAR]")
             } else {
-                pattern_str.clone()
+                pattern_str
             }
         } else if pattern_str.ends_with('/') {
             if is_negation {
@@ -86,7 +89,7 @@ impl Patterns {
                 format!("**/{pattern_str}**")
             }
         } else if is_negation || pattern_str.contains('.') || is_bare_filename {
-            pattern_str.clone()
+            pattern_str
         } else {
             format!("{pattern_str}/**")
         };
@@ -118,15 +121,15 @@ impl Patterns {
 
         // Create both a path pattern and a filename pattern for bare filenames
         if is_bare_filename && !is_anchored {
-            // Create the path pattern (with **/ prefix)
-            let path_pattern = format!("**/{pattern_str}");
+            // Create the path pattern (with **/ prefix) using the saved copy
+            let path_pattern = format!("**/{pattern_str_for_later}");
             let compiled = Pattern::new(&path_pattern)
                 .with_context(|| format!("Invalid path pattern: {path_pattern}"))?;
             self.patterns.push((compiled, is_negation, false));
 
             // Also create a direct filename pattern (without the path)
-            let pattern_compiled = Pattern::new(&pattern_str)
-                .with_context(|| format!("Invalid filename pattern: {pattern_str}"))?;
+            let pattern_compiled = Pattern::new(&pattern_str_for_later)
+                .with_context(|| format!("Invalid filename pattern: {pattern_str_for_later}"))?;
             self.patterns.push((pattern_compiled, is_negation, false));
 
             return Ok(());
