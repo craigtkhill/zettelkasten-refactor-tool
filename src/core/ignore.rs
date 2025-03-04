@@ -149,7 +149,7 @@ impl Patterns {
         }
     }
 
-    pub fn matches(&self, path: impl AsRef<Path>) -> bool {
+    pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
 
         // Get the path string and filename
@@ -160,19 +160,32 @@ impl Patterns {
             .unwrap_or_default();
 
         // First check negation patterns
-        for (pattern, is_neg, _) in &self.patterns {
+        for (pattern, is_neg, is_anchored) in &self.patterns {
+            // For an anchored pattern with no subdirectories in the pattern itself,
+            // it should only match files at the root level
+            let is_simple_anchored = *is_anchored && !pattern.as_str().contains('/');
+
+            if is_simple_anchored && path_str.contains('/') {
+                // Skip this pattern for paths with subdirectories
+                continue;
+            }
+
             if *is_neg && (pattern.matches(&path_str) || pattern.matches(&filename)) {
                 return false;
             }
         }
 
-        // For the special case of absolute-path patterns in the acceptance test
-        if path_str == "subdirectory/absolute_path.md" {
-            return false;
-        }
-
         // Handle normal patterns
-        for (pattern, is_neg, _) in &self.patterns {
+        for (pattern, is_neg, is_anchored) in &self.patterns {
+            // For an anchored pattern with no subdirectories in the pattern itself,
+            // it should only match files at the root level
+            let is_simple_anchored = *is_anchored && !pattern.as_str().contains('/');
+
+            if is_simple_anchored && path_str.contains('/') {
+                // Skip this pattern for paths with subdirectories
+                continue;
+            }
+
             if !is_neg && (pattern.matches(&path_str) || pattern.matches(&filename)) {
                 return true;
             }
