@@ -42,7 +42,6 @@ missing_inline_in_public_items = "allow"
 mod_module_files = "allow"
 pattern_type_mismatch = "allow"
 shadow_reuse = "allow"
-string_slice = "allow"
 unwrap_in_result = "allow"
 redundant_clone = "allow"
 

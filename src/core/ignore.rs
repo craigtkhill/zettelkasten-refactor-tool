@@ -59,7 +59,7 @@ impl Patterns {
 
         // Handle absolute paths
         let pattern_str = if is_anchored {
-            pattern[1..].to_string()
+            pattern.chars().skip(1).collect::<String>()
         } else {
             pattern.to_owned()
         };
