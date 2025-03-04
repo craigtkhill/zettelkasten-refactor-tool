@@ -33,7 +33,6 @@ nursery      = { priority = -1, level = "deny" }
 # cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
 missing_docs_in_private_items = "allow"
 missing_inline_in_public_items = "allow"
-mod_module_files = "allow"
 
 # definitely keeping lints
 blanket_clippy_restriction_lints = "allow"
@@ -45,5 +44,6 @@ min_ident_chars = "allow"
 print_stdout = "allow"
 pub_use = "allow"
 question_mark_used = "allow"
+self_named_module_files = "allow"
 shadow_reuse = "allow"
 single_call_fn = "allow"
