@@ -31,7 +31,6 @@ restriction  = { priority = -1, level = "deny" }
 nursery      = { priority = -1, level = "deny" }
 
 # cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
-missing_docs_in_private_items = "allow"
 missing_inline_in_public_items = "allow"
 
 # definitely keeping lints

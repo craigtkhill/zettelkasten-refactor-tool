@@ -318,6 +318,19 @@ pub fn scan_directory_two_patterns(
     Ok(stats)
 }
 
+/// Determines if a directory entry should be excluded from processing based on
+/// multiple criteria including:
+/// - Whether it's a hidden file/directory
+/// - Whether it matches any of the explicitly excluded directories
+/// - Whether it matches any patterns in the provided ignore patterns
+///
+/// # Arguments
+/// * `entry` - The directory entry to check
+/// * `exclude_dirs` - List of directory names to exclude
+/// * `ignore_patterns` - Optional gitignore-style patterns to match against
+///
+/// # Returns
+/// `true` if the entry should be excluded, `false` otherwise
 fn should_exclude(
     entry: &walkdir::DirEntry,
     exclude_dirs: &[&str],
