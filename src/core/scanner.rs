@@ -105,11 +105,13 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
 
                 // Extract content without frontmatter
                 let lines: Vec<&str> = content.lines().collect();
-                if lines.len() > 2 && lines[0] == "---" {
+                if lines.len() > 2 && lines.first().is_some_and(|line| *line == "---") {
                     if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
-                        // +2 to account for the skip(1) and to get the line after the closing ---
                         content_without_frontmatter =
-                            lines[(end_index.saturating_add(2))..].join("\n");
+                            lines.get(end_index.saturating_add(2)..).map_or_else(
+                                || content.clone(),
+                                |content_slice| content_slice.join("\n"),
+                            );
                     } else {
                         content_without_frontmatter = content.clone();
                     }
