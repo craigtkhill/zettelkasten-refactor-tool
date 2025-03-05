@@ -46,7 +46,7 @@ command = ["cargo", "tarpaulin", "--out", "Html"]
 need_stdout = true
 
 [jobs.mutants]
-command = ["cargo", "mutants"]
+command = ["sh", "-c", "rm -rf mutants.out html/mutants.out 2>/dev/null; cargo mutants --output html > mutation-report.html"]
 need_stdout = true
 
 [jobs.fmt]

@@ -27,3 +27,6 @@ coverage/
 
 # Mutation testing files
 mutants.out/
+mutation-report.html
+mutations.json
+html/
