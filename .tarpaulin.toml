@@ -1,0 +1,29 @@
+# .tarpaulin.toml
+
+[coverage]
+# Fail if coverage is below this percentage
+fail_under = 100
+
+# Generate HTML reports by default
+out = ["Html"]
+
+# Directories to ignore in coverage calculations
+exclude-files = [
+    # Add any files you want to exclude, for example:
+    # "src/main.rs"
+]
+
+# Functions to ignore in coverage calculations
+# ignored-functions = ["main"]
+
+# Enable branch coverage
+branch = true
+
+# Show line coverage statistics
+line = true
+
+# Include doc tests in coverage
+run-types = ["Tests", "Doctests"]
+
+# Clean old coverage data before running
+clean = true

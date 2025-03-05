@@ -41,6 +41,10 @@ command = ["cargo", "test"]
 need_stdout = true
 watch = ["src/", "tests/"]
 
+[jobs.coverage]
+command = ["cargo", "tarpaulin", "--out", "Html"]
+need_stdout = true
+
 [jobs.fmt]
 command = ["cargo", "fmt"]
 need_stdout = false

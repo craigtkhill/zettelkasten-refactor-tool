@@ -18,3 +18,9 @@ Cargo.lock
 
 # MacOS
 .DS_Store
+
+# Tarpaulin coverage files
+*.profraw
+tarpaulin-report.html
+cobertura.xml
+coverage/
