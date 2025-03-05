@@ -45,6 +45,10 @@ watch = ["src/", "tests/"]
 command = ["cargo", "tarpaulin", "--out", "Html"]
 need_stdout = true
 
+[jobs.mutants]
+command = ["cargo", "mutants"]
+need_stdout = true
+
 [jobs.fmt]
 command = ["cargo", "fmt"]
 need_stdout = false

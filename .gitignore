@@ -24,3 +24,6 @@ Cargo.lock
 tarpaulin-report.html
 cobertura.xml
 coverage/
+
+# Mutation testing files
+mutants.out/
