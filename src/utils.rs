@@ -21,6 +21,7 @@ use std::path::Path;
 /// This function may return an error if:
 /// * The file cannot be read
 /// * File system operations fail
+#[inline]
 pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
     let content = fs::read_to_string(path)?;
 
@@ -31,7 +32,7 @@ pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
         Err(_) => Ok(false), // If parsing fails, assume no tags
     }
 }
-
+#[inline]
 #[must_use]
 pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
     entry.file_name().to_str().is_some_and(|s| {
@@ -60,6 +61,7 @@ pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
 /// This function may return an error if:
 /// * The frontmatter contains invalid YAML syntax
 /// * The YAML cannot be deserialized into the Frontmatter struct
+#[inline]
 pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
     let mut content_iter = content.lines();
 
@@ -83,6 +85,7 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
         .map_err(|e| anyhow!("Failed to parse front matter: {}", e))
 }
 
+#[inline]
 pub fn print_top_files(files: &[FileWordCount], top: usize) {
     for file in files.iter().take(top) {
         println!("{:8} words  {}", file.words, file.path.display());

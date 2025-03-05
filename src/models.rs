@@ -35,6 +35,7 @@ pub struct WordCountStats {
 }
 
 impl ComparisonStats {
+    #[inline]
     #[must_use]
     pub const fn new() -> Self {
         Self {
@@ -44,6 +45,7 @@ impl ComparisonStats {
         }
     }
 
+    #[inline]
     #[must_use]
     #[expect(clippy::as_conversions, reason = "Precision not critical")]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
@@ -57,6 +59,7 @@ impl ComparisonStats {
 }
 
 impl SinglePatternStats {
+    #[inline]
     #[must_use]
     pub const fn new() -> Self {
         Self {
@@ -64,7 +67,7 @@ impl SinglePatternStats {
             files_with_pattern: 0,
         }
     }
-
+    #[inline]
     #[must_use]
     #[expect(clippy::as_conversions, reason = "Precision not critical")]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
@@ -77,6 +80,7 @@ impl SinglePatternStats {
 }
 
 impl WordCountStats {
+    #[inline]
     #[must_use]
     pub const fn new() -> Self {
         Self {
@@ -86,7 +90,7 @@ impl WordCountStats {
             total_words: 0,
         }
     }
-
+    #[inline]
     #[must_use]
     #[expect(clippy::as_conversions, reason = "Precision not critical")]
     #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]

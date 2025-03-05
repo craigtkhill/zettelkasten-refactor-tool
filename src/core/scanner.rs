@@ -25,6 +25,7 @@ use walkdir::WalkDir;
 /// * The directory cannot be accessed or read
 /// * File system operations fail during traversal
 /// * The ignore patterns file cannot be parsed
+#[inline]
 pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
@@ -70,6 +71,7 @@ pub fn count_files(dir: &PathBuf, exclude_dirs: &[&str]) -> Result<u64> {
 /// * Files cannot be read as UTF-8 text
 /// * The ignore patterns file cannot be parsed
 /// * Frontmatter parsing fails
+#[inline]
 pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Result<WordCountStats> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
@@ -161,6 +163,7 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
 /// * Files cannot be read as UTF-8 text
 /// * The ignore patterns file cannot be parsed
 /// * Frontmatter parsing fails
+#[inline]
 pub fn count_words(
     dir: &PathBuf,
     exclude_dirs: &[&str],
@@ -229,6 +232,7 @@ pub fn count_words(
 /// * Files cannot be read as UTF-8 text
 /// * The ignore patterns file cannot be parsed
 /// * Tag detection encounters an error
+#[inline]
 pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<SinglePatternStats> {
     let absolute_dir = if dir.is_absolute() {
         dir.clone()
@@ -280,6 +284,7 @@ pub fn scan_directory_single_pattern(dir: &PathBuf, pattern: &str) -> Result<Sin
 /// * Files cannot be read as UTF-8 text
 /// * The ignore patterns file cannot be parsed
 /// * Tag detection encounters an error
+#[inline]
 pub fn scan_directory_two_patterns(
     dir: &PathBuf,
     done_tag: &str,

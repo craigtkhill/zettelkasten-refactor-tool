@@ -68,6 +68,7 @@ pub struct Args {
 /// * The specified directory cannot be read
 /// * File operations fail during counting or scanning
 /// * Pattern matching operations encounter an error
+#[inline]
 pub fn run(args: Args) -> Result<()> {
     if args.count {
         let exclude_dirs: Vec<&str> = args.exclude.split(',').collect();

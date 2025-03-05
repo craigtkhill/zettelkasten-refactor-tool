@@ -44,6 +44,7 @@ impl Patterns {
     /// This function will panic if:
     /// * A pattern contains an opening brace `{` without a matching closing brace `}`
     /// * A pattern contains a closing brace `}` without a matching opening brace `{`
+    #[inline]
     pub fn add_pattern(&mut self, pattern: &str) -> Result<()> {
         let pattern = pattern.trim();
         if pattern.is_empty() || pattern.starts_with('#') {
@@ -142,6 +143,7 @@ impl Patterns {
         Ok(())
     }
 
+    #[inline]
     #[must_use]
     pub fn new(_root_dir: PathBuf) -> Self {
         Self {
@@ -149,6 +151,7 @@ impl Patterns {
         }
     }
 
+    #[inline]
     pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
 
@@ -216,6 +219,7 @@ impl Patterns {
 /// * The .zrtignore file exists but cannot be read
 /// * The file contains invalid pattern syntax
 /// * File system operations fail during the search
+#[inline]
 pub fn load_ignore_patterns(dir: &Path) -> Result<Patterns> {
     let mut patterns = Patterns::new(PathBuf::new());
 
