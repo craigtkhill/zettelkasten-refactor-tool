@@ -4,8 +4,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 use crate::core::scanner::{
-    count_files, count_word_stats, count_words, scan_directory_single_pattern,
-    scan_directory_two_patterns,
+    count_files, count_word_stats, count_words, scan_directory_single, scan_directory_two,
 };
 use crate::utils::print_top_files;
 
@@ -93,7 +92,7 @@ pub fn run(args: Args) -> Result<()> {
         print_top_files(&files, args.top);
     } else if let Some(pattern) = args.pattern {
         // Single pattern mode
-        let stats = scan_directory_single_pattern(&args.directory, &pattern)?;
+        let stats = scan_directory_single(&args.directory, &pattern)?;
         println!("Total files: {}", stats.total_files);
         println!(
             "Files with pattern '{}': {}",
@@ -102,14 +101,14 @@ pub fn run(args: Args) -> Result<()> {
         println!("Percentage: {:.2}%", stats.calculate_percentage());
     } else if let (Some(done), Some(todo)) = (args.done_tag, args.todo_tag) {
         // Compare two tags mode
-        let stats = scan_directory_two_patterns(&args.directory, &done, &todo)?;
+        let stats = scan_directory_two(&args.directory, &done, &todo)?;
         println!("{} files: {}", done, stats.done);
         println!("{} files: {}", todo, stats.todo);
         println!("Done percentage: {:.2}%", stats.calculate_percentage());
     } else {
         // Default behavior - scan for to_refactor
         let default_pattern = String::from("to_refactor");
-        let stats = scan_directory_single_pattern(&args.directory, &default_pattern)?;
+        let stats = scan_directory_single(&args.directory, &default_pattern)?;
         println!("Total files: {}", stats.total_files);
         println!(
             "Files with pattern '{}': {}",

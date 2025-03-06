@@ -5,7 +5,7 @@ use std::path::Path;
 use tempfile::TempDir;
 use zrt::{
     contains_tag, count_files, count_words, load_ignore_patterns, parse_frontmatter,
-    scan_directory_single_pattern, scan_directory_two_patterns,
+    scan_directory_single, scan_directory_two,
 };
 
 fn create_test_file(dir: &Path, name: &str, content: &str) -> Result<()> {
@@ -217,8 +217,7 @@ fn test_scanning_with_ignore() -> Result<()> {
     )?;
 
     // Test single pattern scan
-    let single_stats =
-        scan_directory_single_pattern(&temp_dir.path().to_path_buf(), "to_refactor")?;
+    let single_stats = scan_directory_single(&temp_dir.path().to_path_buf(), "to_refactor")?;
 
     assert_eq!(
         single_stats.total_files, 4,
@@ -232,7 +231,7 @@ fn test_scanning_with_ignore() -> Result<()> {
 
     // Test two pattern scan
     let dual_stats =
-        scan_directory_two_patterns(&temp_dir.path().to_path_buf(), "refactored", "to_refactor")?;
+        scan_directory_two(&temp_dir.path().to_path_buf(), "refactored", "to_refactor")?;
 
     assert_eq!(dual_stats.total, 4, "Should count only non-ignored files");
     assert_eq!(
