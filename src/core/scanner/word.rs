@@ -1,5 +1,4 @@
-// src/core/scanner/word_counter.rs
-
+// src/core/scanner/word.rs
 use anyhow::Result;
 use std::env;
 use std::fs;
@@ -54,18 +53,14 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
 
         let path = entry.path();
         if let Ok(content) = fs::read_to_string(path) {
-            // Parse frontmatter to check for tags
             let has_tag;
             let content_without_frontmatter: String;
 
             if let Ok(frontmatter) = parse_frontmatter(&content) {
-                // Check if the file has the specified tag
                 has_tag = frontmatter
                     .tags
                     .as_ref()
                     .is_some_and(|tags| tags.iter().any(|t| t == tag));
-
-                // Extract content without frontmatter
                 let lines: Vec<&str> = content.lines().collect();
                 if lines.len() > 2 && lines.first().is_some_and(|line| *line == "---") {
                     if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
@@ -84,12 +79,8 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
                 has_tag = false;
                 content_without_frontmatter = content.clone();
             }
-
-            // Count words in the content (excluding frontmatter)
             let word_count = u64::try_from(content_without_frontmatter.split_whitespace().count())
                 .unwrap_or(u64::MAX); // Fallback to max value if conversion fails
-
-            // Update the stats
             stats.total_files = stats.total_files.saturating_add(1);
             stats.total_words = stats.total_words.saturating_add(word_count);
 
@@ -150,7 +141,6 @@ pub fn count_words(
 
         let path = entry.path();
         if let Ok(content) = fs::read_to_string(path) {
-            // Skip file if it contains the filter_out tag
             if let Some(tag) = filter_out {
                 if let Ok(frontmatter) = parse_frontmatter(&content) {
                     if let Some(tags) = frontmatter.tags {
@@ -183,8 +173,6 @@ mod tests {
     #[test]
     fn test_count_word_stats() -> Result<()> {
         let temp_dir = TempDir::new()?;
-
-        // Create files with and without the refactored tag
         create_test_file(
             &temp_dir,
             "file1.md",
@@ -201,8 +189,6 @@ mod tests {
             "---\ntags: [refactored]\n---\nThis file has five more words",
         )?;
         create_test_file(&temp_dir, "file4.md", "No tags in this file")?;
-
-        // Test word stats counting
         let stats = count_word_stats(&temp_dir.path().to_path_buf(), &[], "refactored")?;
 
         assert_eq!(stats.total_files, 4, "Should count all 4 files");
@@ -216,27 +202,20 @@ mod tests {
             stats.calculate_percentage(),
             (11.0 / 21.0) * 100.0,
             "Percentage calculation should be correct"
-        ); // Updated
-
+        );
         Ok(())
     }
 
     #[test]
     fn test_count_words() -> Result<()> {
         let dir = setup_test_directory()?;
-
-        // Test basic word counting
         let files = count_words(&dir.path().to_path_buf(), &[], None)?;
         assert_eq!(files.len(), 4, "Should process all non-hidden files");
-
-        // Find file2.md (should have 7 words)
         let file2 = files
             .iter()
             .find(|f| f.path.ends_with("file2.md"))
             .expect("file2.md should exist");
         assert_eq!(file2.words, 7, "file2.md should have 7 words");
-
-        // Test with filter_out tag
         let files = count_words(&dir.path().to_path_buf(), &[], Some("draft"))?;
         assert_eq!(files.len(), 3, "Should exclude file with 'draft' tag");
 
