@@ -346,7 +346,7 @@ fn test_cargo_toml_publishing_readiness() {
     use std::fs;
     use toml::Value;
 
-    let cargo_toml = fs::read_to_string("Cargo.toml").unwrap();
+    let cargo_toml = fs::read_to_string("../../Cargo.toml").unwrap();
     let toml: Value = toml::from_str(&cargo_toml).unwrap();
 
     let package = toml.get("package").expect("Missing [package] section");
