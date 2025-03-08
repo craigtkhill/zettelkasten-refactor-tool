@@ -10,3 +10,4 @@ module-item-order-groupings = [
     ["implementations", ["impl"]],
     ["functions", ["fn"]]
 ]
+test-attr-ignore = true
