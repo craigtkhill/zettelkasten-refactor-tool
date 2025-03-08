@@ -10,7 +10,7 @@ pub struct Patterns {
     /// - The pattern to match against file paths
     /// - Whether the pattern is a negation (to explicitly include files that would otherwise be ignored)
     /// - Whether the pattern is anchored to the root directory
-    patterns: Vec<(Pattern, bool, bool)>, // (pattern, is_negation, is_anchored_to_root)
+    patterns: Vec<(Pattern, bool, bool)>,
 }
 
 impl Patterns {
@@ -52,18 +52,12 @@ impl Patterns {
         let (pattern, is_negation) = pattern
             .strip_prefix('!')
             .map_or((pattern, false), |stripped| (stripped, true));
-
-        // Flag to track if this is an absolute path pattern (anchored to root)
         let is_anchored = pattern.starts_with('/');
-
-        // Handle absolute paths
         let pattern_str = if is_anchored {
             pattern.chars().skip(1).collect::<String>()
         } else {
             pattern.to_owned()
         };
-
-        // Create a clone early to preserve the original value for later use
         let pattern_str_for_later = pattern_str.clone();
 
         let is_bare_filename = !pattern_str.contains('/')
@@ -92,13 +86,10 @@ impl Patterns {
         } else {
             format!("{pattern_str}/**")
         };
-
-        // Only add **/ prefix for non-absolute patterns that don't have path separators
         if !is_anchored && !glob_pattern.contains('/') && !glob_pattern.contains('\\') {
             glob_pattern = format!("**/{glob_pattern}");
         }
 
-        // Handle file extension groups like *.{js,ts}
         if glob_pattern.contains('{') {
             let (prefix, suffix) = glob_pattern
                 .split_once('{')
@@ -117,16 +108,11 @@ impl Patterns {
             }
             return Ok(());
         }
-
-        // Create both a path pattern and a filename pattern for bare filenames
         if is_bare_filename && !is_anchored {
-            // Create the path pattern (with **/ prefix) using the saved copy
             let path_pattern = format!("**/{pattern_str_for_later}");
             let compiled = Pattern::new(&path_pattern)
                 .with_context(|| format!("Invalid path pattern: {path_pattern}"))?;
             self.patterns.push((compiled, is_negation, false));
-
-            // Also create a direct filename pattern (without the path)
             let pattern_compiled = Pattern::new(&pattern_str_for_later)
                 .with_context(|| format!("Invalid filename pattern: {pattern_str_for_later}"))?;
             self.patterns.push((pattern_compiled, is_negation, false));
@@ -152,24 +138,16 @@ impl Patterns {
     #[inline]
     pub fn matches<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
-
-        // Get the path string and filename
         let path_str = path.to_string_lossy();
         let filename = path
             .file_name()
             .map(|f| f.to_string_lossy())
             .unwrap_or_default();
-
-        // First check negation patterns
         for tuple in &self.patterns {
             let (pattern, is_neg, is_anchored) = (&tuple.0, tuple.1, tuple.2);
-
-            // For an anchored pattern with no subdirectories in the pattern itself,
-            // it should only match files at the root level
             let is_simple_anchored = is_anchored && !pattern.as_str().contains('/');
 
             if is_simple_anchored && path_str.contains('/') {
-                // Skip this pattern for paths with subdirectories
                 continue;
             }
 
@@ -177,17 +155,11 @@ impl Patterns {
                 return false;
             }
         }
-
-        // Handle normal patterns
         for tuple in &self.patterns {
             let (pattern, is_neg, is_anchored) = (&tuple.0, tuple.1, tuple.2);
-
-            // For an anchored pattern with no subdirectories in the pattern itself,
-            // it should only match files at the root level
             let is_simple_anchored = is_anchored && !pattern.as_str().contains('/');
 
             if is_simple_anchored && path_str.contains('/') {
-                // Skip this pattern for paths with subdirectories
                 continue;
             }
 
@@ -265,14 +237,10 @@ mod tests {
     fn test_anchored_path_pattern() -> Result<()> {
         let mut patterns = Patterns::new(PathBuf::from("/test"));
         patterns.add_pattern("/absolute_path.md")?;
-
-        // Should match at root level
         assert!(
             patterns.matches("absolute_path.md"),
             "Should match anchored path at root"
         );
-
-        // Should not match in subdirectory
         assert!(
             !patterns.matches("subdirectory/absolute_path.md"),
             "Should not match anchored path in subdirectory"
