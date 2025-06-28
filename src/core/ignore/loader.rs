@@ -36,8 +36,9 @@ pub fn load_ignore_patterns(dir: &Path) -> Result<Patterns> {
         let ignore_file = current_dir.join(".zrtignore");
 
         if ignore_file.exists() {
-            let content = fs::read_to_string(&ignore_file)
-                .with_context(|| format!("Failed to read .zrtignore file: {ignore_file:?}"))?;
+            let content = fs::read_to_string(&ignore_file).with_context(|| {
+                format!("Failed to read .zrtignore file: {}", ignore_file.display())
+            })?;
 
             for line in content.lines() {
                 patterns.add_pattern(line)?;

@@ -11,6 +11,12 @@ cargo install --path .
 ```
 
 ### Usage
+List the top 100 files without the refactored tag ordered by wordcount
 ```bash
-zrt -d PROJECTS/ -p "refactored"
+zrt -d PROJECTS/ -f refactored -w -n 100
+```
+
+List the files with only the tag "refactored"
+```bash
+zrt -d PROJECTS/ -o refactored
 ```

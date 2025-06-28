@@ -32,6 +32,35 @@ pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
         Err(_) => Ok(false), // If parsing fails, assume no tags
     }
 }
+
+/// Checks if a file contains only the specified tag and no other tags.
+///
+/// # Arguments
+///
+/// * `path` - Path to the file to check
+/// * `tag` - The tag to search for as the only tag
+///
+/// # Returns
+///
+/// * `Ok(bool)` - True if the file contains only the specified tag, false otherwise
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The file cannot be read
+/// * File system operations fail
+#[inline]
+pub fn has_only_tag(path: &Path, tag: &str) -> io::Result<bool> {
+    let content = fs::read_to_string(path)?;
+
+    match parse_frontmatter(&content) {
+        Ok(frontmatter) => frontmatter.tags.map_or(Ok(false), |tags| {
+            Ok(tags.len() == 1 && tags.contains(&tag.to_owned()))
+        }),
+        Err(_) => Ok(false),
+    }
+}
+
 #[inline]
 #[must_use]
 pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
@@ -220,6 +249,32 @@ Content";
         file.write_all(content.as_bytes())?;
 
         assert!(!contains_tag(&file_path, "test_tag")?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_has_only_tag() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+
+        let single_tag_file = temp_dir.path().join("single.md");
+        let content = "---\ntags: [refactored]\n---\nContent";
+        let mut file = File::create(&single_tag_file)?;
+        file.write_all(content.as_bytes())?;
+
+        let multi_tag_file = temp_dir.path().join("multi.md");
+        let content = "---\ntags: [refactored, reviewed]\n---\nContent";
+        let mut file = File::create(&multi_tag_file)?;
+        file.write_all(content.as_bytes())?;
+
+        let no_tag_file = temp_dir.path().join("none.md");
+        let content = "Just content, no frontmatter";
+        let mut file = File::create(&no_tag_file)?;
+        file.write_all(content.as_bytes())?;
+
+        assert!(has_only_tag(&single_tag_file, "refactored")?);
+        assert!(!has_only_tag(&multi_tag_file, "refactored")?);
+        assert!(!has_only_tag(&no_tag_file, "refactored")?);
+
         Ok(())
     }
 }

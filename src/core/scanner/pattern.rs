@@ -1,4 +1,4 @@
-// src/core/scanner/pattern_scanner.rs
+// src/core/scanner/pattern.rs
 use anyhow::Result;
 use std::env;
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ use walkdir::WalkDir;
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
 use crate::models::{ComparisonStats, SinglePatternStats};
-use crate::utils::contains_tag;
+use crate::utils::{contains_tag, has_only_tag};
 
 /// Scans a directory for files containing a specific pattern/tag.
 ///
@@ -55,6 +55,63 @@ pub fn scan_directory_single(dir: &PathBuf, pattern: &str) -> Result<SinglePatte
         if contains_tag(path, pattern)? {
             stats.files_with_pattern = stats.files_with_pattern.saturating_add(1);
         }
+    }
+
+    Ok(stats)
+}
+/// Scans a directory for files containing only a specific tag and no other tags.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `tag` - The tag to search for as the only tag in files
+///
+/// # Returns
+///
+/// * `Ok(SinglePatternStats)` - Statistics about files with only the specified tag
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Tag detection encounters an error
+#[inline]
+pub fn scan_directory_only_tag(dir: &PathBuf, tag: &str) -> Result<SinglePatternStats> {
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+    let mut stats = SinglePatternStats::new();
+    let mut matching_files = Vec::new(); // Add this line
+
+    for entry in WalkDir::new(&absolute_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|e| !should_exclude(e, &[], Some(&ignore_patterns)))
+    {
+        let entry = entry?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
+
+        stats.total_files = stats.total_files.saturating_add(1);
+
+        let path = entry.path();
+        if has_only_tag(path, tag)? {
+            stats.files_with_pattern = stats.files_with_pattern.saturating_add(1);
+            matching_files.push(path.to_path_buf()); // Add this line
+        }
+    }
+
+    // Print the files
+    for file in matching_files {
+        println!("{}", file.display());
     }
 
     Ok(stats)
@@ -160,6 +217,35 @@ mod tests {
         assert_eq!(stats.total, 8, "Should count all non-hidden files");
         assert_eq!(stats.done, 3, "Should find 3 files with 'done' tag");
         assert_eq!(stats.todo, 2, "Should find 2 files with 'todo' tag");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scan_directory_only_tag() -> Result<()> {
+        let dir = setup_test_directory()?;
+
+        // Add files with various tag combinations
+        create_test_file(
+            &dir,
+            "only_refactored.md",
+            "---\ntags: [refactored]\n---\nContent",
+        )?;
+        create_test_file(
+            &dir,
+            "refactored_plus.md",
+            "---\ntags: [refactored, reviewed]\n---\nContent",
+        )?;
+        create_test_file(&dir, "only_other.md", "---\ntags: [draft]\n---\nContent")?;
+        create_test_file(&dir, "no_tags.md", "Just content")?;
+
+        let stats = scan_directory_only_tag(&dir.path().to_path_buf(), "refactored")?;
+
+        assert_eq!(stats.total_files, 8, "Should count all non-hidden files"); // 4 original + 4 new
+        assert_eq!(
+            stats.files_with_pattern, 1,
+            "Should find 1 file with only 'refactored' tag"
+        );
 
         Ok(())
     }

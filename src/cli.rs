@@ -4,7 +4,8 @@ use clap::Parser;
 use std::path::PathBuf;
 
 use crate::core::scanner::{
-    count_files, count_word_stats, count_words, scan_directory_single, scan_directory_two,
+    count_files, count_word_stats, count_words, scan_directory_only_tag, scan_directory_single,
+    scan_directory_two,
 };
 use crate::utils::print_top_files;
 
@@ -30,6 +31,10 @@ pub struct Args {
     /// Filter out files containing this tag (e.g., "refactored")
     #[arg(short = 'f', long = "filter")]
     pub filter_out: Option<String>,
+
+    /// Show files that have only this tag (no other tags present)
+    #[arg(short = 'o', long = "only")]
+    pub only_tag: Option<String>,
 
     /// Single pattern to search for (e.g., `to_refactor`)
     #[arg(short = 't', long = "tag")]
@@ -105,6 +110,15 @@ pub fn run(args: Args) -> Result<()> {
         println!("{} files: {}", done, stats.done);
         println!("{} files: {}", todo, stats.todo);
         println!("Done percentage: {:.2}%", stats.calculate_percentage());
+    } else if let Some(only_tag) = args.only_tag {
+        // Only tag mode
+        let stats = scan_directory_only_tag(&args.directory, &only_tag)?;
+        println!("Total files: {}", stats.total_files);
+        println!(
+            "Files with only tag '{}': {}",
+            only_tag, stats.files_with_pattern
+        );
+        println!("Percentage: {:.2}%", stats.calculate_percentage());
     } else {
         // Default behavior - scan for to_refactor
         let default_pattern = String::from("to_refactor");
@@ -156,11 +170,13 @@ mod tests {
             pattern: None,
             done_tag: None,
             todo_tag: None,
+            only_tag: None,
         };
 
         run(args)?;
         Ok(())
     }
+
     #[test]
     fn test_stats_option_is_parsed() {
         let args = Args::parse_from(["program", "--stats", "refactored"]);
@@ -180,11 +196,18 @@ mod tests {
             pattern: None,
             done_tag: None,
             todo_tag: None,
+            only_tag: None,
         };
 
         // This test just ensures the function doesn't panic
         // We can't easily test the output
         run(args)?;
         Ok(())
+    }
+
+    #[test]
+    fn test_only_tag_option_is_parsed() {
+        let args = Args::parse_from(["program", "--only", "refactored"]);
+        assert_eq!(args.only_tag, Some("refactored".to_owned()));
     }
 }
