@@ -276,7 +276,29 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
     match command {
         PredictCommands::Train { directory } => {
             println!("Training model with data from: {}", directory.display());
-            // TODO: Implement training
+
+            // Load configuration
+            let config_path = std::path::Path::new(".zrt/config.toml");
+            let settings = if config_path.exists() {
+                zrt_tagging::Settings::load_from_file(config_path)?
+            } else {
+                println!("No config found at .zrt/config.toml, using defaults");
+                zrt_tagging::Settings::default()
+            };
+
+            // Extract training data from notes
+            let training_data = zrt_tagging::extraction::extract_training_data(&directory)?;
+
+            if training_data.notes.is_empty() {
+                println!("No notes found in directory: {}", directory.display());
+                return Ok(());
+            }
+
+            // Create and train predictor
+            let mut predictor = zrt_tagging::Predictor::new(settings)?;
+            predictor.train(&training_data)?;
+
+            println!("Training completed successfully!");
             Ok(())
         }
         PredictCommands::Suggest {

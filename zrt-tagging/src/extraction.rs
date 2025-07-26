@@ -2,6 +2,7 @@ use anyhow::{Context as _, Result};
 use serde_yaml_ng::Value;
 use std::collections::HashSet;
 use std::path::Path;
+use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
 pub struct NoteData {
@@ -95,6 +96,15 @@ impl TrainingData {
         self.notes.retain(|note| !note.tags.is_empty());
         self.all_tags.retain(|tag| !excluded_tags.contains(tag));
     }
+
+    /// Returns all unique tags in the training data
+    #[must_use]
+    #[inline]
+    pub fn get_all_tags(&self) -> Vec<String> {
+        let mut tags: Vec<String> = self.all_tags.iter().cloned().collect();
+        tags.sort();
+        tags
+    }
 }
 
 #[inline]
@@ -162,4 +172,58 @@ fn clean_tag(tag: &str) -> String {
         .trim()
         .to_lowercase()
         .replace(' ', "_")
+}
+
+/// Extracts training data from a directory of notes
+///
+/// # Errors
+/// Returns an error if directory traversal or file reading fails
+#[expect(
+    clippy::missing_inline_in_public_items,
+    reason = "Development: file I/O function"
+)]
+pub fn extract_training_data(directory: &Path) -> Result<TrainingData> {
+    let mut training_data = TrainingData::new();
+
+    println!("Scanning directory: {}", directory.display());
+
+    for entry in WalkDir::new(directory)
+        .follow_links(false)
+        .into_iter()
+        .filter_map(core::result::Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path();
+
+        // Only process markdown files
+        let Some(ext) = path.extension() else {
+            continue;
+        };
+        if ext != "md" && ext != "markdown" {
+            continue;
+        }
+
+        // Skip hidden files and directories
+        if path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.starts_with('.'))
+        {
+            continue;
+        }
+
+        match NoteData::from_file(path) {
+            Ok(note) => {
+                if !note.tags.is_empty() {
+                    training_data.add_note(note);
+                }
+            }
+            Err(e) => {
+                println!("Warning: Failed to process {}: {}", path.display(), e);
+            }
+        }
+    }
+
+    println!("Found {} notes with tags", training_data.notes.len());
+    Ok(training_data)
 }
