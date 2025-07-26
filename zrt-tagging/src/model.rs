@@ -167,6 +167,8 @@ impl TagClassifier {
             .context("Failed to apply sigmoid")?
             .squeeze(0)
             .context("Failed to remove batch dimension")?
+            .squeeze(0)
+            .context("Failed to remove output dimension")?
             .to_scalar::<f32>()
             .context("Failed to convert to scalar")?;
 
