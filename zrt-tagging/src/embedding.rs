@@ -89,8 +89,8 @@ impl Model {
             .context("Failed to run forward pass")?;
 
         // Mean pooling across sequence dimension (excluding special tokens)
-        let attention_mask =
-            Tensor::ones_like(&token_ids).context("Failed to create attention mask")?;
+        let attention_mask = Tensor::ones(token_ids.shape(), candle_core::DType::F32, &self.device)
+            .context("Failed to create attention mask")?;
 
         let masked_embeddings = embeddings
             .broadcast_mul(&attention_mask.unsqueeze(2)?)
