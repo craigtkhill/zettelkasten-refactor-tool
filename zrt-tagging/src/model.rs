@@ -165,8 +165,8 @@ impl TagClassifier {
 
         let probability = ops::sigmoid(&logits)
             .context("Failed to apply sigmoid")?
-            .get(0)
-            .context("Failed to get prediction")?
+            .squeeze(0)
+            .context("Failed to remove batch dimension")?
             .to_scalar::<f32>()
             .context("Failed to convert to scalar")?;
 
