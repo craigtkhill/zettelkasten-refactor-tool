@@ -8,7 +8,11 @@
     clippy::unnecessary_wraps,
     reason = "Development: consistency with future error handling"
 )]
-use anyhow::Result;
+#![allow(
+    clippy::arbitrary_source_item_ordering,
+    reason = "Development: logical grouping over alphabetical"
+)]
+use anyhow::{Context as _, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -307,24 +311,407 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
             threshold,
             top,
         } => {
-            if let Some(file) = file {
-                println!("Suggesting tags for: {}", file.display());
+            // Load configuration
+            let config_path = std::path::Path::new(".zrt/config.toml");
+            let mut settings = if config_path.exists() {
+                zrt_tagging::Settings::load_from_file(config_path)?
             } else {
-                println!("Suggesting tags for files in: {}", directory.display());
-            }
+                println!("No config found at .zrt/config.toml, using defaults");
+                zrt_tagging::Settings::default()
+            };
+
+            // Override settings with command line arguments
             if let Some(t) = threshold {
-                println!("Using threshold: {t}");
+                settings.confidence_threshold = t;
             }
-            println!("Showing top {top} results");
-            // TODO: Implement suggestion
+            settings.max_suggestions = top;
+
+            // Create predictor and load trained models
+            let mut predictor = zrt_tagging::Predictor::new(settings)?;
+            predictor.load_classifiers()?;
+
+            if let Some(file_path) = file {
+                // Suggest tags for single file
+                println!("Suggesting tags for: {}", file_path.display());
+                suggest_tags_for_file(&predictor, &file_path)?;
+            } else {
+                // Suggest tags for all files in directory
+                println!("Suggesting tags for files in: {}", directory.display());
+                suggest_tags_for_directory(&predictor, &directory)?;
+            }
+
             Ok(())
         }
         PredictCommands::Validate { directory } => {
             println!("Validating model with data from: {}", directory.display());
-            // TODO: Implement validation
+
+            // Load configuration
+            let config_path = std::path::Path::new(".zrt/config.toml");
+            let settings = if config_path.exists() {
+                zrt_tagging::Settings::load_from_file(config_path)?
+            } else {
+                println!("No config found at .zrt/config.toml, using defaults");
+                zrt_tagging::Settings::default()
+            };
+
+            // Extract validation data from notes
+            let validation_data = zrt_tagging::extraction::extract_training_data(&directory)?;
+
+            if validation_data.notes.is_empty() {
+                println!("No notes found in directory: {}", directory.display());
+                return Ok(());
+            }
+
+            // Create predictor and load trained models
+            let mut predictor = zrt_tagging::Predictor::new(settings)?;
+            predictor.load_classifiers()?;
+
+            // Run validation
+            validate_model_performance(&predictor, &validation_data)?;
+
             Ok(())
         }
     }
+}
+
+#[cfg(feature = "tagging")]
+#[inline]
+fn suggest_tags_for_file(
+    predictor: &zrt_tagging::Predictor,
+    file_path: &std::path::Path,
+) -> Result<()> {
+    // Read file content
+    let content = std::fs::read_to_string(file_path)
+        .context(format!("Failed to read file: {}", file_path.display()))?;
+
+    // Extract content (remove frontmatter if present)
+    let (_, body) = extract_frontmatter_content(&content)?;
+
+    // Get predictions
+    let predictions = predictor.predict(&body)?;
+
+    if predictions.is_empty() {
+        println!("No tag suggestions above threshold");
+    } else {
+        println!("Suggested tags:");
+        for prediction in predictions {
+            println!(
+                "  {} (confidence: {:.3})",
+                prediction.tag, prediction.confidence
+            );
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "tagging")]
+#[expect(
+    clippy::default_numeric_fallback,
+    reason = "Development: simple counter"
+)]
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "Development: controlled counting"
+)]
+#[inline]
+fn suggest_tags_for_directory(
+    predictor: &zrt_tagging::Predictor,
+    directory: &std::path::Path,
+) -> Result<()> {
+    use walkdir::WalkDir;
+
+    let mut processed_count = 0;
+
+    for entry in WalkDir::new(directory)
+        .follow_links(false)
+        .into_iter()
+        .filter_map(core::result::Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path();
+
+        // Only process markdown files
+        let Some(ext) = path.extension() else {
+            continue;
+        };
+        if ext != "md" && ext != "markdown" {
+            continue;
+        }
+
+        // Skip hidden files
+        if path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.starts_with('.'))
+        {
+            continue;
+        }
+
+        match suggest_tags_for_file(predictor, path) {
+            Ok(()) => {
+                processed_count += 1;
+                println!(); // Add spacing between files
+            }
+            Err(e) => {
+                println!("Warning: Failed to process {}: {}", path.display(), e);
+            }
+        }
+    }
+
+    println!("Processed {processed_count} files");
+    Ok(())
+}
+
+#[cfg(feature = "tagging")]
+#[expect(
+    clippy::option_if_let_else,
+    reason = "Development: clearer control flow"
+)]
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Development: bounds already checked"
+)]
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "Development: controlled arithmetic"
+)]
+#[inline]
+fn extract_frontmatter_content(content: &str) -> Result<(Option<String>, String)> {
+    if !content.starts_with("---") {
+        return Ok((None, content.to_owned()));
+    }
+
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.len() < 3 {
+        return Ok((None, content.to_owned()));
+    }
+
+    let mut end_index = None;
+    for (i, line) in lines.iter().enumerate().skip(1) {
+        if line.trim() == "---" {
+            end_index = Some(i);
+            break;
+        }
+    }
+
+    if let Some(end) = end_index {
+        let frontmatter = lines[1..end].join("\n");
+        let body = lines[end + 1..].join("\n");
+        Ok((Some(frontmatter), body))
+    } else {
+        Ok((None, content.to_owned()))
+    }
+}
+
+#[cfg(feature = "tagging")]
+#[derive(Debug, Default)]
+struct TagMetrics {
+    actual_count: usize,
+    false_positives: usize,
+    true_positives: usize,
+}
+
+#[cfg(feature = "tagging")]
+impl TagMetrics {
+    fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[cfg(feature = "tagging")]
+#[expect(
+    clippy::too_many_lines,
+    reason = "Development: comprehensive validation function"
+)]
+#[expect(
+    clippy::default_numeric_fallback,
+    reason = "Development: simple metrics"
+)]
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "Development: controlled arithmetic"
+)]
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "Development: metrics calculation"
+)]
+#[expect(
+    clippy::as_conversions,
+    reason = "Development: safe numeric conversions"
+)]
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Development: bounds controlled by iteration"
+)]
+#[expect(
+    clippy::iter_over_hash_type,
+    reason = "Development: HashMap iteration acceptable"
+)]
+#[expect(
+    clippy::unwrap_or_default,
+    reason = "Development: explicit construction clearer"
+)]
+#[expect(
+    clippy::pattern_type_mismatch,
+    reason = "Development: destructuring preference"
+)]
+#[expect(
+    clippy::uninlined_format_args,
+    reason = "Development: explicit args clearer"
+)]
+#[expect(
+    clippy::cast_lossless,
+    reason = "Development: explicit casting for clarity"
+)]
+fn validate_model_performance(
+    predictor: &zrt_tagging::Predictor,
+    validation_data: &zrt_tagging::extraction::TrainingData,
+) -> Result<()> {
+    println!(
+        "Running validation on {} notes",
+        validation_data.notes.len()
+    );
+
+    let mut total_predictions = 0;
+    let mut correct_predictions = 0;
+    let mut total_actual_tags = 0;
+    let mut total_predicted_tags = 0;
+
+    // Track precision@k metrics
+    let k_values = [1, 3, 5];
+    let mut precision_at_k = [0.0; 3];
+    let mut count_at_k = [0; 3];
+
+    // Per-tag metrics
+    let mut tag_stats: std::collections::HashMap<String, TagMetrics> =
+        std::collections::HashMap::new();
+
+    for note in &validation_data.notes {
+        // Get predictions for this note
+        let predictions = predictor.predict(&note.content)?;
+
+        total_predicted_tags += predictions.len();
+        total_actual_tags += note.tags.len();
+
+        // Calculate precision@k
+        for (i, &k) in k_values.iter().enumerate() {
+            if !note.tags.is_empty() {
+                let top_k_predictions: Vec<_> = predictions.iter().take(k).collect();
+                let correct_in_k = top_k_predictions
+                    .iter()
+                    .filter(|pred| note.tags.contains(&pred.tag))
+                    .count();
+
+                precision_at_k[i] += correct_in_k as f64 / k.min(note.tags.len()) as f64;
+                count_at_k[i] += 1;
+            }
+        }
+
+        // Per-tag statistics
+        for tag in &note.tags {
+            let metrics = tag_stats.entry(tag.clone()).or_insert_with(TagMetrics::new);
+            metrics.actual_count += 1;
+
+            // Check if this tag was predicted
+            if predictions.iter().any(|pred| &pred.tag == tag) {
+                metrics.true_positives += 1;
+                correct_predictions += 1;
+            }
+            total_predictions += 1;
+        }
+
+        // Count false positives
+        for prediction in &predictions {
+            if !note.tags.contains(&prediction.tag) {
+                let metrics = tag_stats
+                    .entry(prediction.tag.clone())
+                    .or_insert_with(TagMetrics::new);
+                metrics.false_positives += 1;
+            }
+        }
+    }
+
+    // Calculate overall metrics
+    let overall_precision = if total_predicted_tags > 0 {
+        correct_predictions as f64 / total_predictions as f64
+    } else {
+        0.0
+    };
+
+    let overall_recall = if total_actual_tags > 0 {
+        correct_predictions as f64 / total_actual_tags as f64
+    } else {
+        0.0
+    };
+
+    let f1_score = if overall_precision + overall_recall > 0.0 {
+        2.0 * (overall_precision * overall_recall) / (overall_precision + overall_recall)
+    } else {
+        0.0
+    };
+
+    // Print results
+    println!("\n=== Overall Performance ===");
+    println!("Precision: {:.3}", overall_precision);
+    println!("Recall: {:.3}", overall_recall);
+    println!("F1 Score: {:.3}", f1_score);
+
+    println!("\n=== Precision@K ===");
+    for (i, &k) in k_values.iter().enumerate() {
+        if count_at_k[i] > 0 {
+            println!(
+                "Precision@{}: {:.3}",
+                k,
+                precision_at_k[i] / count_at_k[i] as f64
+            );
+        }
+    }
+
+    // Show top/bottom performing tags
+    let mut tag_performance: Vec<_> = tag_stats
+        .iter()
+        .filter(|(_, metrics)| metrics.actual_count >= 3) // Only tags with enough examples
+        .map(|(tag, metrics)| {
+            let precision = if metrics.true_positives + metrics.false_positives > 0 {
+                metrics.true_positives as f64
+                    / (metrics.true_positives + metrics.false_positives) as f64
+            } else {
+                0.0
+            };
+            let recall = if metrics.actual_count > 0 {
+                metrics.true_positives as f64 / metrics.actual_count as f64
+            } else {
+                0.0
+            };
+            let f1 = if precision + recall > 0.0 {
+                2.0 * (precision * recall) / (precision + recall)
+            } else {
+                0.0
+            };
+            (tag, f1, precision, recall, metrics.actual_count)
+        })
+        .collect();
+
+    tag_performance.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(core::cmp::Ordering::Equal));
+
+    println!("\n=== Top Performing Tags ===");
+    for (tag, f1, precision, recall, count) in tag_performance.iter().take(5) {
+        println!(
+            "{}: F1={:.3}, P={:.3}, R={:.3} (n={})",
+            tag, f1, precision, recall, count
+        );
+    }
+
+    println!("\n=== Bottom Performing Tags ===");
+    for (tag, f1, precision, recall, count) in tag_performance.iter().rev().take(5) {
+        println!(
+            "{}: F1={:.3}, P={:.3}, R={:.3} (n={})",
+            tag, f1, precision, recall, count
+        );
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
