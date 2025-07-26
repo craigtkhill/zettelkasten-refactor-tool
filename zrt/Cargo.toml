@@ -1,0 +1,28 @@
+[package]
+name = "zrt"
+version = "0.1.0"
+description = "A zettelkasten refactoring tool"
+authors = ["Craig Hill craigthomashill@gmail.com>"]
+license = "MIT"
+edition = "2024"
+repository = "https://github.com/craigtkhill/zettelkasten-refactor-tool"
+keywords = ["zettelkasten", "notes", "refactoring"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+walkdir = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_yaml_ng = { workspace = true }
+tempfile = { workspace = true }
+glob = { workspace = true }
+toml = { workspace = true }
+zrt-tagging = { path = "../zrt-tagging", optional = true }
+
+[features]
+default = ["tagging"]
+tagging = ["dep:zrt-tagging"]
+
+[lints]
+workspace = true

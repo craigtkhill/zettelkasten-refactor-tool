@@ -30,3 +30,6 @@ mutants.out/
 mutation-report.html
 mutations.json
 html/
+
+# AI
+CLAUDE.md

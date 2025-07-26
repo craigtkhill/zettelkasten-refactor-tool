@@ -1,16 +1,8 @@
-[package]
-name = "zrt"
-version = "0.1.0"
-description = "A zettelkasten refactoring tool"
-authors = ["Craig Hill craigthomashill@gmail.com>"]
-license = "MIT"
-edition = "2024"
-repository = "https://github.com/craigtkhill/zettelkasten-refactor-tool"
-keywords = ["zettelkasten", "notes", "refactoring"]
-categories = ["command-line-utilities"]
+[workspace]
+members = ["zrt", "zrt-tagging"]
+resolver = "2"
 
-[dependencies]
-walkdir = "2.5.0"
+[workspace.dependencies]
 anyhow = "1.0.96"
 clap = { version = "4.5.30", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -18,8 +10,11 @@ serde_yaml_ng = "0.10"
 tempfile = "3.17"
 glob = "0.3.2"
 toml = "0.8.20"
+walkdir = "2.5.0"
 
-[lints.clippy]
+[workspace.lints.clippy]
+# Allow ML dependency version conflicts during development
+multiple_crate_versions = "allow"
 cargo        = { priority = -1, level = "deny" }
 complexity   = { priority = -1, level = "deny" }
 correctness  = { priority = -1, level = "deny" }
