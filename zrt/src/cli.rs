@@ -465,9 +465,7 @@ fn suggest_tags_for_file(
     // Get predictions
     let predictions = predictor.predict(&body)?;
 
-    if predictions.is_empty() {
-        println!("No tag suggestions above threshold");
-    } else {
+    if !predictions.is_empty() {
         println!("Suggested tags:");
         for prediction in predictions {
             println!(
@@ -539,29 +537,29 @@ fn suggest_tags_for_directory(
     // Sort files by highest confidence (descending)
     file_predictions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(core::cmp::Ordering::Equal));
 
-    // Display files in confidence order
-    #[expect(clippy::ref_patterns, reason = "Development: destructuring preference")]
-    for &(ref file_path, max_confidence, ref predictions) in &file_predictions {
-        println!(
-            "\n{} (max confidence: {:.3})",
-            file_path.display(),
-            max_confidence
-        );
+    // Display files in confidence order (only those with predictions)
+    let files_with_predictions: Vec<_> = file_predictions
+        .iter()
+        .filter(|(_, _, predictions)| !predictions.is_empty())
+        .collect();
 
-        if predictions.is_empty() {
-            println!("  No tag suggestions above threshold");
-        } else {
-            println!("  Suggested tags:");
-            for prediction in predictions {
-                println!(
-                    "    {} (confidence: {:.3})",
-                    prediction.tag, prediction.confidence
-                );
-            }
-        }
+    for &(file_path, _, predictions) in &files_with_predictions {
+        let tags_string: Vec<String> = predictions
+            .iter()
+            .map(|p| format!("{} ({:.3})", p.tag, p.confidence))
+            .collect();
+        println!("{} {}", file_path.display(), tags_string.join(" "));
     }
 
-    println!("\nProcessed {} files", file_predictions.len());
+    if files_with_predictions.is_empty() {
+        println!("No files found with tag suggestions above threshold");
+    } else {
+        println!(
+            "\nShowing {} files with tag suggestions (processed {} total)",
+            files_with_predictions.len(),
+            file_predictions.len()
+        );
+    }
     Ok(())
 }
 
