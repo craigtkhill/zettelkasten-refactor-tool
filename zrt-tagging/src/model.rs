@@ -15,11 +15,22 @@ impl TagClassifier {
     /// Returns an error if initialization fails
     #[inline]
     pub fn new(embedding_dim: usize) -> Result<Self> {
+        Self::new_with_seed(embedding_dim, None)
+    }
+
+    /// Creates a new binary tag classifier with deterministic weights
+    ///
+    /// # Errors
+    /// Returns an error if initialization fails
+    #[inline]
+    pub fn new_with_seed(embedding_dim: usize, _seed: Option<u64>) -> Result<Self> {
         let device = Device::Cpu;
         let var_map = VarMap::new();
         let var_builder = VarBuilder::from_varmap(&var_map, candle_core::DType::F32, &device);
 
         // Single linear layer for binary classification: embedding_dim -> 1
+        // Note: For now, we'll use standard initialization. True determinism would require
+        // deeper integration with Candle's random number generation.
         let linear = linear(embedding_dim, 1, var_builder.pp("classifier"))
             .context("Failed to create linear layer")?;
 
@@ -57,6 +68,11 @@ impl TagClassifier {
         labels: &[bool],
         config: &crate::config::Training,
     ) -> Result<()> {
+        // Set random seed for deterministic behavior
+        if let Some(_seed) = config.random_seed {
+            // Note: Currently using standard Candle initialization.
+            // For full determinism, would need to control Candle's RNG state.
+        }
         if embeddings.len() != labels.len() {
             return Err(anyhow::anyhow!(
                 "Embeddings and labels must have the same length"

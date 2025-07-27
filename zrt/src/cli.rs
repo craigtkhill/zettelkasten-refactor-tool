@@ -341,7 +341,7 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
             }
 
             // Create and train predictor
-            let mut predictor = zrt_tagging::Predictor::new(settings)?;
+            let mut predictor = zrt_tagging::UnifiedPredictor::new(settings)?;
             predictor.train(&training_data)?;
 
             println!("Training completed successfully!");
@@ -380,8 +380,8 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
             }
 
             // Create predictor and load trained models
-            let mut predictor = zrt_tagging::Predictor::new(settings)?;
-            predictor.load_classifiers()?;
+            let mut predictor = zrt_tagging::UnifiedPredictor::new(settings)?;
+            predictor.load_models()?;
 
             if let Some(file_path) = file {
                 // Suggest tags for single file
@@ -438,8 +438,8 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
             }
 
             // Create predictor and load trained models
-            let mut predictor = zrt_tagging::Predictor::new(settings)?;
-            predictor.load_classifiers()?;
+            let mut predictor = zrt_tagging::UnifiedPredictor::new(settings)?;
+            predictor.load_models()?;
 
             // Run validation
             validate_model_performance(&predictor, &validation_data)?;
@@ -452,7 +452,7 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
 #[cfg(feature = "tagging")]
 #[inline]
 fn suggest_tags_for_file(
-    predictor: &zrt_tagging::Predictor,
+    predictor: &zrt_tagging::UnifiedPredictor,
     file_path: &std::path::Path,
 ) -> Result<()> {
     // Read file content
@@ -481,14 +481,14 @@ fn suggest_tags_for_file(
 #[cfg(feature = "tagging")]
 #[inline]
 fn suggest_tags_for_directory(
-    predictor: &zrt_tagging::Predictor,
+    predictor: &zrt_tagging::UnifiedPredictor,
     directory: &std::path::Path,
 ) -> Result<()> {
     use walkdir::WalkDir;
 
-    // Collect all files with their max confidence scores
-    let mut file_predictions: Vec<(std::path::PathBuf, f32, Vec<zrt_tagging::Prediction>)> =
-        Vec::new();
+    // Collect all markdown files and their content for batch processing
+    let mut files_to_process: Vec<(String, String)> = Vec::new();
+    let mut file_paths: Vec<std::path::PathBuf> = Vec::new();
 
     for entry in WalkDir::new(directory)
         .follow_links(false)
@@ -515,22 +515,46 @@ fn suggest_tags_for_directory(
             continue;
         }
 
-        match get_file_predictions(predictor, path) {
-            Ok(predictions) => {
-                #[expect(
-                    clippy::separated_literal_suffix,
-                    reason = "Development: explicit float type"
-                )]
-                let max_confidence = predictions
-                    .iter()
-                    .map(|p| p.confidence)
-                    .fold(0.0_f32, f32::max);
-
-                file_predictions.push((path.to_path_buf(), max_confidence, predictions));
+        // Read file content
+        match std::fs::read_to_string(path) {
+            Ok(content) => {
+                // Extract content (remove frontmatter if present)
+                match extract_frontmatter_content(&content) {
+                    Ok((_, body)) => {
+                        files_to_process.push((path.to_string_lossy().to_string(), body));
+                        file_paths.push(path.to_path_buf());
+                    }
+                    Err(e) => {
+                        println!("Warning: Failed to parse {}: {}", path.display(), e);
+                    }
+                }
             }
             Err(e) => {
-                println!("Warning: Failed to process {}: {}", path.display(), e);
+                println!("Warning: Failed to read {}: {}", path.display(), e);
             }
+        }
+    }
+
+    // Use batch prediction for efficiency (especially for EmbeddingKnn)
+    let batch_results = predictor.predict_batch(&files_to_process)?;
+
+    // Convert batch results to the expected format with confidence scores
+    let mut file_predictions: Vec<(std::path::PathBuf, f32, Vec<zrt_tagging::Prediction>)> =
+        Vec::new();
+
+    for (file_path_str, predictions) in batch_results {
+        // Find the corresponding PathBuf
+        if let Some(path_buf) = file_paths.iter().find(|p| p.to_string_lossy() == file_path_str) {
+            #[expect(
+                clippy::separated_literal_suffix,
+                reason = "Development: explicit float type"
+            )]
+            let max_confidence = predictions
+                .iter()
+                .map(|p| p.confidence)
+                .fold(0.0_f32, f32::max);
+
+            file_predictions.push((path_buf.clone(), max_confidence, predictions));
         }
     }
 
@@ -563,22 +587,6 @@ fn suggest_tags_for_directory(
     Ok(())
 }
 
-#[cfg(feature = "tagging")]
-#[inline]
-fn get_file_predictions(
-    predictor: &zrt_tagging::Predictor,
-    file_path: &std::path::Path,
-) -> Result<Vec<zrt_tagging::Prediction>> {
-    // Read file content
-    let content = std::fs::read_to_string(file_path)
-        .context(format!("Failed to read file: {}", file_path.display()))?;
-
-    // Extract content (remove frontmatter if present)
-    let (_, body) = extract_frontmatter_content(&content)?;
-
-    // Get predictions
-    predictor.predict(&body)
-}
 
 #[cfg(feature = "tagging")]
 #[expect(
@@ -682,7 +690,7 @@ impl TagMetrics {
     reason = "Development: explicit casting for clarity"
 )]
 fn validate_model_performance(
-    predictor: &zrt_tagging::Predictor,
+    predictor: &zrt_tagging::UnifiedPredictor,
     validation_data: &zrt_tagging::extraction::TrainingData,
 ) -> Result<()> {
     println!(

@@ -64,9 +64,14 @@
 
 pub mod config;
 pub mod embedding;
+pub mod embedding_cache;
+pub mod embedding_knn;
 pub mod extraction;
 pub mod model;
 pub mod prediction;
+pub mod tfidf;
+pub mod unified_predictor;
 
-pub use config::Settings;
+pub use config::{PredictorType, Settings};
 pub use prediction::{Prediction, Predictor};
+pub use unified_predictor::UnifiedPredictor;

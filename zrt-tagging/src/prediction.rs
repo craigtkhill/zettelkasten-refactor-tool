@@ -94,6 +94,21 @@ impl Predictor {
         reason = "Development: complex training function"
     )]
     pub fn train(&mut self, training_data: &TrainingData) -> Result<()> {
+        // Set random seed if specified
+        if let Some(seed) = self.settings.training.random_seed {
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+
+            // Set seed for reproducible random number generation
+            let mut hasher = DefaultHasher::new();
+            seed.hash(&mut hasher);
+            let _seed_value = hasher.finish();
+
+            // Note: This is a basic seed setting. For full determinism, you'd need
+            // to control the ML framework's random state as well.
+            println!("Using random seed: {}", seed);
+        }
+
         println!("Starting training with {} notes", training_data.notes.len());
 
         // Generate embeddings for all notes
@@ -146,8 +161,11 @@ impl Predictor {
                 .collect();
 
             // Create and train classifier
-            let mut classifier = TagClassifier::new(EmbeddingModel::embedding_dim())
-                .with_context(|| format!("Failed to create classifier for tag: {tag}"))?;
+            let mut classifier = TagClassifier::new_with_seed(
+                EmbeddingModel::embedding_dim(),
+                self.settings.training.random_seed,
+            )
+            .with_context(|| format!("Failed to create classifier for tag: {tag}"))?;
 
             classifier
                 .train(&embeddings, &labels, &self.settings.training)

@@ -12,6 +12,14 @@ pub struct Settings {
     pub min_tag_examples: usize,
     pub model_path: PathBuf,
     pub training: Training,
+    pub predictor_type: PredictorType,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PredictorType {
+    TfIdf,
+    MlEmbedding,
+    EmbeddingKnn,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,6 +28,7 @@ pub struct Training {
     pub epochs: usize,
     pub learning_rate: f32,
     pub train_split: f32,
+    pub random_seed: Option<u64>,
 }
 
 impl Default for Settings {
@@ -38,6 +47,7 @@ impl Default for Settings {
             min_tag_examples: 5,
             model_path: PathBuf::from(".zrt/models"),
             training: Training::default(),
+            predictor_type: PredictorType::EmbeddingKnn,
         }
     }
 }
@@ -50,6 +60,7 @@ impl Default for Training {
             epochs: 1,
             learning_rate: 0.001,
             train_split: 0.8,
+            random_seed: Some(42),
         }
     }
 }
@@ -109,6 +120,8 @@ mod tests {
         assert_eq!(settings.training.epochs, 1);
         assert_eq!(settings.training.learning_rate, 0.001);
         assert_eq!(settings.training.train_split, 0.8);
+        assert_eq!(settings.training.random_seed, Some(42));
+        assert!(matches!(settings.predictor_type, PredictorType::EmbeddingKnn));
     }
 
     #[test]
@@ -119,6 +132,7 @@ mod tests {
         assert_eq!(training.epochs, 1);
         assert_eq!(training.learning_rate, 0.001);
         assert_eq!(training.train_split, 0.8);
+        assert_eq!(training.random_seed, Some(42));
     }
 
     #[test]
