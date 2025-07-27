@@ -28,7 +28,12 @@ impl Default for Settings {
         Self {
             confidence_threshold: 0.9,
             embedding_model: "snowflake-arctic-embed-xs".to_owned(),
-            excluded_tags: HashSet::new(),
+            excluded_tags: {
+                let mut tags = HashSet::new();
+                tags.insert("refactored".to_owned());
+                tags.insert("to_refactor".to_owned());
+                tags
+            },
             max_suggestions: 5,
             min_tag_examples: 5,
             model_path: PathBuf::from(".zrt/models"),
@@ -93,7 +98,9 @@ mod tests {
 
         assert_eq!(settings.confidence_threshold, 0.9);
         assert_eq!(settings.embedding_model, "snowflake-arctic-embed-xs");
-        assert!(settings.excluded_tags.is_empty());
+        assert_eq!(settings.excluded_tags.len(), 2);
+        assert!(settings.excluded_tags.contains("refactored"));
+        assert!(settings.excluded_tags.contains("to_refactor"));
         assert_eq!(settings.max_suggestions, 5);
         assert_eq!(settings.min_tag_examples, 5);
         assert_eq!(settings.model_path, PathBuf::from(".zrt/models"));
@@ -137,7 +144,9 @@ mod tests {
         assert_eq!(loaded_settings.max_suggestions, 10);
         assert!(loaded_settings.excluded_tags.contains("draft"));
         assert!(loaded_settings.excluded_tags.contains("private"));
-        assert_eq!(loaded_settings.excluded_tags.len(), 2);
+        assert_eq!(loaded_settings.excluded_tags.len(), 4);
+        assert!(loaded_settings.excluded_tags.contains("refactored"));
+        assert!(loaded_settings.excluded_tags.contains("to_refactor"));
         assert_eq!(loaded_settings.training.epochs, 20);
 
         Ok(())

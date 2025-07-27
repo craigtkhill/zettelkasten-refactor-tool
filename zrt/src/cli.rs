@@ -121,15 +121,15 @@ pub enum Commands {
 
     #[cfg(feature = "tagging")]
     /// Tag prediction commands
-    Predict {
+    Tag {
         #[command(subcommand)]
-        command: PredictCommands,
+        command: TagCommands,
     },
 }
 
 #[cfg(feature = "tagging")]
 #[derive(Subcommand, Debug)]
-pub enum PredictCommands {
+pub enum TagCommands {
     /// Train the tag prediction model
     Train {
         /// Directory to scan for training data
@@ -257,7 +257,7 @@ pub fn run(args: Args) -> Result<()> {
             Ok(())
         }
         #[cfg(feature = "tagging")]
-        Commands::Predict { command } => run_predict_command(command),
+        Commands::Tag { command } => run_tag_command(command),
     }
 }
 
@@ -296,9 +296,9 @@ fn run_init() -> Result<()> {
     reason = "Development: debugging output for excluded tags"
 )]
 #[inline]
-fn run_predict_command(command: PredictCommands) -> Result<()> {
+fn run_tag_command(command: TagCommands) -> Result<()> {
     match command {
-        PredictCommands::Train {
+        TagCommands::Train {
             directory,
             exclude_tags,
         } => {
@@ -347,7 +347,7 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
             println!("Training completed successfully!");
             Ok(())
         }
-        PredictCommands::Suggest {
+        TagCommands::Suggest {
             directory,
             file,
             threshold,
@@ -395,7 +395,7 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
 
             Ok(())
         }
-        PredictCommands::Validate {
+        TagCommands::Validate {
             directory,
             exclude_tags,
         } => {
