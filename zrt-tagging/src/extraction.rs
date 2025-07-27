@@ -227,3 +227,287 @@ pub fn extract_training_data(directory: &Path) -> Result<TrainingData> {
     println!("Found {} notes with tags", training_data.notes.len());
     Ok(training_data)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+    use tempfile::TempDir;
+
+    fn create_test_note(dir: &Path, filename: &str, content: &str) -> Result<()> {
+        let file_path = dir.join(filename);
+        std::fs::write(file_path, content)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_note_data_from_file_with_tags() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let note_content = r#"---
+tags: ["ml", "ai", "research"]
+title: "Test Note"
+---
+
+# Machine Learning
+
+This is a test note about machine learning and AI research.
+"#;
+
+        create_test_note(temp_dir.path(), "test.md", note_content)?;
+        let note_path = temp_dir.path().join("test.md");
+
+        let note_data = NoteData::from_file(&note_path)?;
+
+        assert_eq!(
+            note_data.content,
+            "\n# Machine Learning\n\nThis is a test note about machine learning and AI research."
+        );
+        assert!(note_data.tags.contains("ml"));
+        assert!(note_data.tags.contains("ai"));
+        assert!(note_data.tags.contains("research"));
+        assert_eq!(note_data.tags.len(), 3);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_note_data_from_file_no_frontmatter() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let note_content = "# Simple Note\n\nThis note has no frontmatter.";
+
+        create_test_note(temp_dir.path(), "simple.md", note_content)?;
+        let note_path = temp_dir.path().join("simple.md");
+
+        let note_data = NoteData::from_file(&note_path)?;
+
+        assert_eq!(note_data.content, note_content);
+        assert!(note_data.tags.is_empty());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_note_data_from_file_string_tag() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let note_content = r#"---
+tags: "single-tag"
+---
+
+Content here.
+"#;
+
+        create_test_note(temp_dir.path(), "single_tag.md", note_content)?;
+        let note_path = temp_dir.path().join("single_tag.md");
+
+        let note_data = NoteData::from_file(&note_path)?;
+
+        assert!(note_data.tags.contains("single-tag"));
+        assert_eq!(note_data.tags.len(), 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_training_data_add_note() {
+        let mut training_data = TrainingData::new();
+        let mut tags = HashSet::new();
+        tags.insert("test".to_owned());
+        tags.insert("example".to_owned());
+
+        let note = NoteData {
+            content: "Test content".to_owned(),
+            path: "/test/path".to_owned(),
+            tags,
+        };
+
+        training_data.add_note(note);
+
+        assert_eq!(training_data.notes.len(), 1);
+        assert_eq!(training_data.all_tags.len(), 2);
+        assert!(training_data.all_tags.contains("test"));
+        assert!(training_data.all_tags.contains("example"));
+    }
+
+    #[test]
+    fn test_training_data_filter_by_min_examples() {
+        let mut training_data = TrainingData::new();
+
+        // Add notes with different tag frequencies
+        for i in 0..10 {
+            let mut tags = HashSet::new();
+            tags.insert("frequent".to_owned()); // Will appear in all 10 notes
+            if i < 3 {
+                tags.insert("rare".to_owned()); // Will appear in only 3 notes
+            }
+            if i < 7 {
+                tags.insert("common".to_owned()); // Will appear in 7 notes
+            }
+
+            let note = NoteData {
+                content: format!("Content {i}"),
+                path: format!("/test/{i}.md"),
+                tags,
+            };
+            training_data.add_note(note);
+        }
+
+        // Filter with min_examples = 5
+        training_data.filter_by_min_examples(5);
+
+        // Should keep "frequent" (10 examples) and "common" (7 examples)
+        // Should remove "rare" (3 examples)
+        assert!(training_data.all_tags.contains("frequent"));
+        assert!(training_data.all_tags.contains("common"));
+        assert!(!training_data.all_tags.contains("rare"));
+
+        // All notes should still be present since they all have at least one valid tag
+        assert_eq!(training_data.notes.len(), 10);
+    }
+
+    #[test]
+    fn test_training_data_exclude_tags() {
+        let mut training_data = TrainingData::new();
+
+        let mut tags = HashSet::new();
+        tags.insert("keep".to_owned());
+        tags.insert("exclude_me".to_owned());
+        tags.insert("also_exclude".to_owned());
+
+        let note = NoteData {
+            content: "Test content".to_owned(),
+            path: "/test/path".to_owned(),
+            tags,
+        };
+        training_data.add_note(note);
+
+        let mut excluded = HashSet::new();
+        excluded.insert("exclude_me".to_owned());
+        excluded.insert("also_exclude".to_owned());
+
+        training_data.exclude_tags(&excluded);
+
+        assert!(training_data.all_tags.contains("keep"));
+        assert!(!training_data.all_tags.contains("exclude_me"));
+        assert!(!training_data.all_tags.contains("also_exclude"));
+        assert_eq!(training_data.notes.len(), 1);
+        assert_eq!(training_data.notes[0].tags.len(), 1);
+    }
+
+    #[test]
+    fn test_extract_training_data_from_directory() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+
+        // Create test notes
+        create_test_note(
+            temp_dir.path(),
+            "note1.md",
+            r#"---
+tags: ["ml", "ai"]
+---
+Machine learning content."#,
+        )?;
+
+        create_test_note(
+            temp_dir.path(),
+            "note2.md",
+            r#"---
+tags: ["ai", "research"]
+---
+AI research content."#,
+        )?;
+
+        create_test_note(temp_dir.path(), "note3.md", "No frontmatter note.")?;
+
+        // Create a non-markdown file (should be ignored)
+        create_test_note(temp_dir.path(), "readme.txt", "Not a markdown file.")?;
+
+        // Create hidden file (should be ignored)
+        create_test_note(
+            temp_dir.path(),
+            ".hidden.md",
+            r#"---
+tags: ["hidden"]
+---
+Hidden note."#,
+        )?;
+
+        let training_data = extract_training_data(temp_dir.path())?;
+
+        // Should find 2 notes with tags (note1.md and note2.md)
+        assert_eq!(training_data.notes.len(), 2);
+
+        // Should have 3 unique tags: ml, ai, research
+        assert_eq!(training_data.all_tags.len(), 3);
+        assert!(training_data.all_tags.contains("ml"));
+        assert!(training_data.all_tags.contains("ai"));
+        assert!(training_data.all_tags.contains("research"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_clean_tag() {
+        assert_eq!(clean_tag("#tag"), "tag");
+        assert_eq!(clean_tag("  spaced tag  "), "spaced_tag");
+        assert_eq!(clean_tag("UPPERCASE"), "uppercase");
+        assert_eq!(clean_tag("#Multi Word Tag"), "multi_word_tag");
+    }
+
+    #[test]
+    fn test_extract_frontmatter() -> Result<()> {
+        let content_with_frontmatter = r#"---
+title: "Test"
+tags: ["test"]
+---
+
+Body content here."#;
+
+        let (frontmatter, body) = extract_frontmatter(content_with_frontmatter)?;
+        assert!(frontmatter.is_some());
+        assert!(frontmatter.unwrap().contains("title: \"Test\""));
+        assert_eq!(body, "\nBody content here.");
+
+        let content_without_frontmatter = "Just body content.";
+        let (frontmatter2, body2) = extract_frontmatter(content_without_frontmatter)?;
+        assert!(frontmatter2.is_none());
+        assert_eq!(body2, "Just body content.");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_extract_tags_from_frontmatter() -> Result<()> {
+        // Test array tags
+        let frontmatter_array = Some(
+            r#"title: "Test"
+tags: ["tag1", "tag2", "tag3"]"#
+                .to_owned(),
+        );
+        let tags = extract_tags_from_frontmatter(&frontmatter_array)?;
+        assert_eq!(tags.len(), 3);
+        assert!(tags.contains("tag1"));
+        assert!(tags.contains("tag2"));
+        assert!(tags.contains("tag3"));
+
+        // Test string tag
+        let frontmatter_string = Some(
+            r#"title: "Test"
+tags: "single-tag""#
+                .to_owned(),
+        );
+        let tags2 = extract_tags_from_frontmatter(&frontmatter_string)?;
+        assert_eq!(tags2.len(), 1);
+        assert!(tags2.contains("single-tag"));
+
+        // Test no tags
+        let frontmatter_no_tags = Some("title: \"Test\"".to_owned());
+        let tags3 = extract_tags_from_frontmatter(&frontmatter_no_tags)?;
+        assert!(tags3.is_empty());
+
+        // Test None frontmatter
+        let tags4 = extract_tags_from_frontmatter(&None)?;
+        assert!(tags4.is_empty());
+
+        Ok(())
+    }
+}

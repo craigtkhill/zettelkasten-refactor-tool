@@ -81,3 +81,117 @@ impl Settings {
             .with_context(|| format!("Failed to write config file: {}", path.display()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_settings_default() {
+        let settings = Settings::default();
+
+        assert_eq!(settings.confidence_threshold, 0.7);
+        assert_eq!(settings.embedding_model, "snowflake-arctic-embed-xs");
+        assert!(settings.excluded_tags.is_empty());
+        assert_eq!(settings.max_suggestions, 5);
+        assert_eq!(settings.min_tag_examples, 5);
+        assert_eq!(settings.model_path, PathBuf::from(".zrt/models"));
+
+        assert_eq!(settings.training.batch_size, 32);
+        assert_eq!(settings.training.epochs, 10);
+        assert_eq!(settings.training.learning_rate, 0.001);
+        assert_eq!(settings.training.train_split, 0.8);
+    }
+
+    #[test]
+    fn test_training_default() {
+        let training = Training::default();
+
+        assert_eq!(training.batch_size, 32);
+        assert_eq!(training.epochs, 10);
+        assert_eq!(training.learning_rate, 0.001);
+        assert_eq!(training.train_split, 0.8);
+    }
+
+    #[test]
+    fn test_settings_save_and_load() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let config_path = temp_dir.path().join("config.toml");
+
+        // Create modified settings
+        let mut settings = Settings::default();
+        settings.confidence_threshold = 0.8;
+        settings.max_suggestions = 10;
+        settings.excluded_tags.insert("draft".to_owned());
+        settings.excluded_tags.insert("private".to_owned());
+        settings.training.epochs = 20;
+
+        // Save settings
+        settings.save_to_file(&config_path)?;
+
+        // Load settings back
+        let loaded_settings = Settings::load_from_file(&config_path)?;
+
+        assert_eq!(loaded_settings.confidence_threshold, 0.8);
+        assert_eq!(loaded_settings.max_suggestions, 10);
+        assert!(loaded_settings.excluded_tags.contains("draft"));
+        assert!(loaded_settings.excluded_tags.contains("private"));
+        assert_eq!(loaded_settings.excluded_tags.len(), 2);
+        assert_eq!(loaded_settings.training.epochs, 20);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_settings_load_nonexistent_file() {
+        let result = Settings::load_from_file(&PathBuf::from("/nonexistent/config.toml"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_settings_save_creates_directory() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let nested_path = temp_dir
+            .path()
+            .join("nested")
+            .join("directory")
+            .join("config.toml");
+
+        let settings = Settings::default();
+        settings.save_to_file(&nested_path)?;
+
+        assert!(nested_path.exists());
+
+        // Verify we can load it back
+        let loaded = Settings::load_from_file(&nested_path)?;
+        assert_eq!(loaded.confidence_threshold, settings.confidence_threshold);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_settings_serialization_format() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let config_path = temp_dir.path().join("config.toml");
+
+        let mut settings = Settings::default();
+        settings.excluded_tags.insert("test".to_owned());
+
+        settings.save_to_file(&config_path)?;
+
+        let content = std::fs::read_to_string(&config_path)?;
+
+        // Check that the TOML contains expected fields
+        assert!(content.contains("confidence_threshold"));
+        assert!(content.contains("embedding_model"));
+        assert!(content.contains("excluded_tags"));
+        assert!(content.contains("max_suggestions"));
+        assert!(content.contains("min_tag_examples"));
+        assert!(content.contains("[training]"));
+        assert!(content.contains("batch_size"));
+        assert!(content.contains("epochs"));
+
+        Ok(())
+    }
+}
