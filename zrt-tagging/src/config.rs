@@ -26,7 +26,7 @@ impl Default for Settings {
     #[inline]
     fn default() -> Self {
         Self {
-            confidence_threshold: 0.7,
+            confidence_threshold: 0.9,
             embedding_model: "snowflake-arctic-embed-xs".to_owned(),
             excluded_tags: HashSet::new(),
             max_suggestions: 5,
@@ -41,8 +41,8 @@ impl Default for Training {
     #[inline]
     fn default() -> Self {
         Self {
-            batch_size: 32,
-            epochs: 10,
+            batch_size: 16,
+            epochs: 1,
             learning_rate: 0.001,
             train_split: 0.8,
         }
@@ -91,15 +91,15 @@ mod tests {
     fn test_settings_default() {
         let settings = Settings::default();
 
-        assert_eq!(settings.confidence_threshold, 0.7);
+        assert_eq!(settings.confidence_threshold, 0.9);
         assert_eq!(settings.embedding_model, "snowflake-arctic-embed-xs");
         assert!(settings.excluded_tags.is_empty());
         assert_eq!(settings.max_suggestions, 5);
         assert_eq!(settings.min_tag_examples, 5);
         assert_eq!(settings.model_path, PathBuf::from(".zrt/models"));
 
-        assert_eq!(settings.training.batch_size, 32);
-        assert_eq!(settings.training.epochs, 10);
+        assert_eq!(settings.training.batch_size, 16);
+        assert_eq!(settings.training.epochs, 1);
         assert_eq!(settings.training.learning_rate, 0.001);
         assert_eq!(settings.training.train_split, 0.8);
     }
@@ -108,8 +108,8 @@ mod tests {
     fn test_training_default() {
         let training = Training::default();
 
-        assert_eq!(training.batch_size, 32);
-        assert_eq!(training.epochs, 10);
+        assert_eq!(training.batch_size, 16);
+        assert_eq!(training.epochs, 1);
         assert_eq!(training.learning_rate, 0.001);
         assert_eq!(training.train_split, 0.8);
     }
