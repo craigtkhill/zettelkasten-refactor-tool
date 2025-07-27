@@ -135,6 +135,10 @@ pub enum PredictCommands {
         /// Directory to scan for training data
         #[arg(short = 'd', long = "dir", default_value = ".")]
         directory: PathBuf,
+
+        /// Tags to exclude from training (space-separated)
+        #[arg(short = 'e', long = "exclude-tags", num_args = 0..)]
+        exclude_tags: Vec<String>,
     },
 
     /// Suggest tags for files
@@ -154,6 +158,10 @@ pub enum PredictCommands {
         /// Number of top results to show
         #[arg(short = 'n', long = "num", default_value = "10")]
         top: usize,
+
+        /// Tags to exclude from suggestions (space-separated)
+        #[arg(short = 'e', long = "exclude-tags", num_args = 0..)]
+        exclude_tags: Vec<String>,
     },
 
     /// Validate model performance
@@ -161,6 +169,10 @@ pub enum PredictCommands {
         /// Directory to scan for validation data
         #[arg(short = 'd', long = "dir", default_value = ".")]
         directory: PathBuf,
+
+        /// Tags to exclude from validation (space-separated)
+        #[arg(short = 'e', long = "exclude-tags", num_args = 0..)]
+        exclude_tags: Vec<String>,
     },
 }
 
@@ -275,23 +287,53 @@ fn run_init() -> Result<()> {
 }
 
 #[cfg(feature = "tagging")]
+#[expect(
+    clippy::too_many_lines,
+    reason = "Development: comprehensive command handler"
+)]
+#[expect(
+    clippy::use_debug,
+    reason = "Development: debugging output for excluded tags"
+)]
 #[inline]
 fn run_predict_command(command: PredictCommands) -> Result<()> {
     match command {
-        PredictCommands::Train { directory } => {
+        PredictCommands::Train {
+            directory,
+            exclude_tags,
+        } => {
             println!("Training model with data from: {}", directory.display());
 
             // Load configuration
             let config_path = std::path::Path::new(".zrt/config.toml");
-            let settings = if config_path.exists() {
+            let mut settings = if config_path.exists() {
                 zrt_tagging::Settings::load_from_file(config_path)?
             } else {
                 println!("No config found at .zrt/config.toml, using defaults");
                 zrt_tagging::Settings::default()
             };
 
+            // Override excluded tags from command line
+            if !exclude_tags.is_empty() {
+                let additional_excluded: std::collections::HashSet<String> =
+                    exclude_tags.into_iter().collect();
+                settings.excluded_tags.extend(additional_excluded);
+                if !settings.excluded_tags.is_empty() {
+                    println!("Excluding tags: {:?}", settings.excluded_tags);
+                }
+            }
+
             // Extract training data from notes
-            let training_data = zrt_tagging::extraction::extract_training_data(&directory)?;
+            let mut training_data = zrt_tagging::extraction::extract_training_data(&directory)?;
+
+            // Apply tag exclusions to training data
+            if !settings.excluded_tags.is_empty() {
+                training_data.exclude_tags(&settings.excluded_tags);
+                println!(
+                    "After exclusions: {} notes with tags",
+                    training_data.notes.len()
+                );
+            }
 
             if training_data.notes.is_empty() {
                 println!("No notes found in directory: {}", directory.display());
@@ -310,6 +352,7 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
             file,
             threshold,
             top,
+            exclude_tags,
         } => {
             // Load configuration
             let config_path = std::path::Path::new(".zrt/config.toml");
@@ -325,6 +368,16 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
                 settings.confidence_threshold = t;
             }
             settings.max_suggestions = top;
+
+            // Override excluded tags from command line
+            if !exclude_tags.is_empty() {
+                let additional_excluded: std::collections::HashSet<String> =
+                    exclude_tags.into_iter().collect();
+                settings.excluded_tags.extend(additional_excluded);
+                if !settings.excluded_tags.is_empty() {
+                    println!("Excluding tags: {:?}", settings.excluded_tags);
+                }
+            }
 
             // Create predictor and load trained models
             let mut predictor = zrt_tagging::Predictor::new(settings)?;
@@ -342,20 +395,42 @@ fn run_predict_command(command: PredictCommands) -> Result<()> {
 
             Ok(())
         }
-        PredictCommands::Validate { directory } => {
+        PredictCommands::Validate {
+            directory,
+            exclude_tags,
+        } => {
             println!("Validating model with data from: {}", directory.display());
 
             // Load configuration
             let config_path = std::path::Path::new(".zrt/config.toml");
-            let settings = if config_path.exists() {
+            let mut settings = if config_path.exists() {
                 zrt_tagging::Settings::load_from_file(config_path)?
             } else {
                 println!("No config found at .zrt/config.toml, using defaults");
                 zrt_tagging::Settings::default()
             };
 
+            // Override excluded tags from command line
+            if !exclude_tags.is_empty() {
+                let additional_excluded: std::collections::HashSet<String> =
+                    exclude_tags.into_iter().collect();
+                settings.excluded_tags.extend(additional_excluded);
+                if !settings.excluded_tags.is_empty() {
+                    println!("Excluding tags: {:?}", settings.excluded_tags);
+                }
+            }
+
             // Extract validation data from notes
-            let validation_data = zrt_tagging::extraction::extract_training_data(&directory)?;
+            let mut validation_data = zrt_tagging::extraction::extract_training_data(&directory)?;
+
+            // Apply tag exclusions to validation data
+            if !settings.excluded_tags.is_empty() {
+                validation_data.exclude_tags(&settings.excluded_tags);
+                println!(
+                    "After exclusions: {} notes with tags",
+                    validation_data.notes.len()
+                );
+            }
 
             if validation_data.notes.is_empty() {
                 println!("No notes found in directory: {}", directory.display());
@@ -406,14 +481,6 @@ fn suggest_tags_for_file(
 }
 
 #[cfg(feature = "tagging")]
-#[expect(
-    clippy::default_numeric_fallback,
-    reason = "Development: simple counter"
-)]
-#[expect(
-    clippy::arithmetic_side_effects,
-    reason = "Development: controlled counting"
-)]
 #[inline]
 fn suggest_tags_for_directory(
     predictor: &zrt_tagging::Predictor,
@@ -421,7 +488,9 @@ fn suggest_tags_for_directory(
 ) -> Result<()> {
     use walkdir::WalkDir;
 
-    let mut processed_count = 0;
+    // Collect all files with their max confidence scores
+    let mut file_predictions: Vec<(std::path::PathBuf, f32, Vec<zrt_tagging::Prediction>)> =
+        Vec::new();
 
     for entry in WalkDir::new(directory)
         .follow_links(false)
@@ -448,10 +517,18 @@ fn suggest_tags_for_directory(
             continue;
         }
 
-        match suggest_tags_for_file(predictor, path) {
-            Ok(()) => {
-                processed_count += 1;
-                println!(); // Add spacing between files
+        match get_file_predictions(predictor, path) {
+            Ok(predictions) => {
+                #[expect(
+                    clippy::separated_literal_suffix,
+                    reason = "Development: explicit float type"
+                )]
+                let max_confidence = predictions
+                    .iter()
+                    .map(|p| p.confidence)
+                    .fold(0.0_f32, f32::max);
+
+                file_predictions.push((path.to_path_buf(), max_confidence, predictions));
             }
             Err(e) => {
                 println!("Warning: Failed to process {}: {}", path.display(), e);
@@ -459,8 +536,50 @@ fn suggest_tags_for_directory(
         }
     }
 
-    println!("Processed {processed_count} files");
+    // Sort files by highest confidence (descending)
+    file_predictions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(core::cmp::Ordering::Equal));
+
+    // Display files in confidence order
+    #[expect(clippy::ref_patterns, reason = "Development: destructuring preference")]
+    for &(ref file_path, max_confidence, ref predictions) in &file_predictions {
+        println!(
+            "\n{} (max confidence: {:.3})",
+            file_path.display(),
+            max_confidence
+        );
+
+        if predictions.is_empty() {
+            println!("  No tag suggestions above threshold");
+        } else {
+            println!("  Suggested tags:");
+            for prediction in predictions {
+                println!(
+                    "    {} (confidence: {:.3})",
+                    prediction.tag, prediction.confidence
+                );
+            }
+        }
+    }
+
+    println!("\nProcessed {} files", file_predictions.len());
     Ok(())
+}
+
+#[cfg(feature = "tagging")]
+#[inline]
+fn get_file_predictions(
+    predictor: &zrt_tagging::Predictor,
+    file_path: &std::path::Path,
+) -> Result<Vec<zrt_tagging::Prediction>> {
+    // Read file content
+    let content = std::fs::read_to_string(file_path)
+        .context(format!("Failed to read file: {}", file_path.display()))?;
+
+    // Extract content (remove frontmatter if present)
+    let (_, body) = extract_frontmatter_content(&content)?;
+
+    // Get predictions
+    predictor.predict(&body)
 }
 
 #[cfg(feature = "tagging")]
@@ -753,6 +872,44 @@ mod tests {
                 assert_eq!(threshold, Some(0.8));
             } else {
                 panic!("Expected Suggest subcommand");
+            }
+        } else {
+            panic!("Expected Predict command");
+        }
+    }
+
+    #[cfg(feature = "tagging")]
+    #[test]
+    fn test_predict_suggest_exclude_tags_parsing() {
+        let args = Args::parse_from([
+            "program", "predict", "suggest", "-e", "draft", "private", "temp",
+        ]);
+        if let Commands::Predict { command } = args.command {
+            if let PredictCommands::Suggest { exclude_tags, .. } = command {
+                assert_eq!(
+                    exclude_tags,
+                    vec!["draft".to_owned(), "private".to_owned(), "temp".to_owned()]
+                );
+            } else {
+                panic!("Expected Suggest subcommand");
+            }
+        } else {
+            panic!("Expected Predict command");
+        }
+    }
+
+    #[cfg(feature = "tagging")]
+    #[test]
+    fn test_predict_train_exclude_tags_parsing() {
+        let args = Args::parse_from(["program", "predict", "train", "-e", "archived", "deleted"]);
+        if let Commands::Predict { command } = args.command {
+            if let PredictCommands::Train { exclude_tags, .. } = command {
+                assert_eq!(
+                    exclude_tags,
+                    vec!["archived".to_owned(), "deleted".to_owned()]
+                );
+            } else {
+                panic!("Expected Train subcommand");
             }
         } else {
             panic!("Expected Predict command");

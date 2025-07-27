@@ -54,6 +54,11 @@ impl Predictor {
 
         // Run prediction through each classifier
         for (tag, classifier) in &self.classifiers {
+            // Skip excluded tags
+            if self.settings.excluded_tags.contains(tag) {
+                continue;
+            }
+
             let confidence = classifier
                 .predict(&embedding)
                 .with_context(|| format!("Failed to predict for tag: {tag}"))?;
