@@ -16,6 +16,7 @@ pub struct Settings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum PredictorType {
     TfIdf,
     MlEmbedding,
