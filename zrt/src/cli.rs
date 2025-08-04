@@ -740,8 +740,10 @@ fn validate_model_performance(
             }
         }
 
-        // Per-tag statistics
-        for tag in &note.tags {
+        // Per-tag statistics (sorted for deterministic iteration)
+        let mut sorted_tags: Vec<_> = note.tags.iter().collect();
+        sorted_tags.sort_unstable();
+        for tag in sorted_tags {
             let metrics = tag_stats.entry(tag.clone()).or_default();
             metrics.actual_count += 1;
 

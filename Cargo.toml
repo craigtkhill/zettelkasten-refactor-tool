@@ -64,7 +64,7 @@ option_if_let_else = "deny"
 wildcard_enum_match_arm = "allow"
 
 # Hard/Complex
-iter_over_hash_type = "allow"
+iter_over_hash_type = "deny"
 arithmetic_side_effects = "allow"
 integer_division = "allow"
 integer_division_remainder_used = "allow"
