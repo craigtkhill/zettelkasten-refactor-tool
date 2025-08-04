@@ -459,20 +459,42 @@ fn suggest_tags_for_file(
     let content = std::fs::read_to_string(file_path)
         .context(format!("Failed to read file: {}", file_path.display()))?;
 
-    // Extract content (remove frontmatter if present)
-    let (_, body) = extract_frontmatter_content(&content)?;
+    // Extract content and frontmatter
+    let (frontmatter, body) = extract_frontmatter_content(&content)?;
+
+    // Parse existing tags from frontmatter
+    let existing_tags = if let Some(fm) = frontmatter {
+        parse_tags_from_frontmatter(&fm).unwrap_or_default()
+    } else {
+        std::collections::HashSet::new()
+    };
 
     // Get predictions
     let predictions = predictor.predict(&body)?;
 
-    if !predictions.is_empty() {
-        println!("Suggested tags:");
-        for prediction in predictions {
+    // Filter out tags that already exist in the file
+    let filtered_predictions: Vec<_> = predictions
+        .into_iter()
+        .filter(|p| !existing_tags.contains(&p.tag))
+        .collect();
+
+    if !existing_tags.is_empty() {
+        let tags_list: Vec<String> = existing_tags.iter().cloned().collect();
+        println!("Existing tags: {}", tags_list.join(", "));
+    }
+
+    if !filtered_predictions.is_empty() {
+        println!("Suggested new tags:");
+        for prediction in filtered_predictions {
             println!(
                 "  {} (confidence: {:.3})",
                 prediction.tag, prediction.confidence
             );
         }
+    } else if !existing_tags.is_empty() {
+        println!("No new tag suggestions (all predicted tags already exist)");
+    } else {
+        println!("No tag suggestions found");
     }
 
     Ok(())
@@ -486,9 +508,10 @@ fn suggest_tags_for_directory(
 ) -> Result<()> {
     use walkdir::WalkDir;
 
-    // Collect all markdown files and their content for batch processing
+    // Collect all markdown files, their content, and existing tags for batch processing
     let mut files_to_process: Vec<(String, String)> = Vec::new();
     let mut file_paths: Vec<std::path::PathBuf> = Vec::new();
+    let mut existing_tags_map: std::collections::HashMap<String, std::collections::HashSet<String>> = std::collections::HashMap::new();
 
     for entry in WalkDir::new(directory)
         .follow_links(false)
@@ -518,11 +541,21 @@ fn suggest_tags_for_directory(
         // Read file content
         match std::fs::read_to_string(path) {
             Ok(content) => {
-                // Extract content (remove frontmatter if present)
+                // Extract content and frontmatter
                 match extract_frontmatter_content(&content) {
-                    Ok((_, body)) => {
-                        files_to_process.push((path.to_string_lossy().to_string(), body));
+                    Ok((frontmatter, body)) => {
+                        let file_path_str = path.to_string_lossy().to_string();
+                        
+                        // Parse existing tags from frontmatter
+                        let existing_tags = if let Some(fm) = frontmatter {
+                            parse_tags_from_frontmatter(&fm).unwrap_or_default()
+                        } else {
+                            std::collections::HashSet::new()
+                        };
+                        
+                        files_to_process.push((file_path_str.clone(), body));
                         file_paths.push(path.to_path_buf());
+                        existing_tags_map.insert(file_path_str, existing_tags);
                     }
                     Err(e) => {
                         println!("Warning: Failed to parse {}: {}", path.display(), e);
@@ -538,23 +571,33 @@ fn suggest_tags_for_directory(
     // Use batch prediction for efficiency (especially for EmbeddingKnn)
     let batch_results = predictor.predict_batch(&files_to_process)?;
 
-    // Convert batch results to the expected format with confidence scores
+    // Convert batch results to the expected format with confidence scores, filtering existing tags
     let mut file_predictions: Vec<(std::path::PathBuf, f32, Vec<zrt_tagging::Prediction>)> =
         Vec::new();
 
     for (file_path_str, predictions) in batch_results {
-        // Find the corresponding PathBuf
+        // Find the corresponding PathBuf and existing tags
         if let Some(path_buf) = file_paths.iter().find(|p| p.to_string_lossy() == file_path_str) {
-            #[expect(
-                clippy::separated_literal_suffix,
-                reason = "Development: explicit float type"
-            )]
-            let max_confidence = predictions
-                .iter()
-                .map(|p| p.confidence)
-                .fold(0.0_f32, f32::max);
+            let existing_tags = existing_tags_map.get(&file_path_str).cloned().unwrap_or_default();
+            
+            // Filter out tags that already exist in the file
+            let filtered_predictions: Vec<zrt_tagging::Prediction> = predictions
+                .into_iter()
+                .filter(|p| !existing_tags.contains(&p.tag))
+                .collect();
 
-            file_predictions.push((path_buf.clone(), max_confidence, predictions));
+            if !filtered_predictions.is_empty() {
+                #[expect(
+                    clippy::separated_literal_suffix,
+                    reason = "Development: explicit float type"
+                )]
+                let max_confidence = filtered_predictions
+                    .iter()
+                    .map(|p| p.confidence)
+                    .fold(0.0_f32, f32::max);
+
+                file_predictions.push((path_buf.clone(), max_confidence, filtered_predictions));
+            }
         }
     }
 
@@ -587,6 +630,35 @@ fn suggest_tags_for_directory(
     Ok(())
 }
 
+
+#[cfg(feature = "tagging")]
+#[inline]
+fn parse_tags_from_frontmatter(frontmatter: &str) -> Result<std::collections::HashSet<String>> {
+    use serde_yaml_ng as serde_yaml;
+    
+    let yaml: serde_yaml::Value = serde_yaml::from_str(frontmatter)
+        .context("Failed to parse YAML frontmatter")?;
+    
+    let mut tags = std::collections::HashSet::new();
+    
+    if let Some(tags_value) = yaml.get("tags") {
+        match tags_value {
+            serde_yaml::Value::Sequence(tag_list) => {
+                for tag in tag_list {
+                    if let Some(tag_str) = tag.as_str() {
+                        tags.insert(tag_str.to_string());
+                    }
+                }
+            }
+            serde_yaml::Value::String(single_tag) => {
+                tags.insert(single_tag.clone());
+            }
+            _ => {}
+        }
+    }
+    
+    Ok(tags)
+}
 
 #[cfg(feature = "tagging")]
 #[expect(
