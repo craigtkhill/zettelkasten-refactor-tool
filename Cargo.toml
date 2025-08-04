@@ -39,6 +39,7 @@ shadow_reuse = "allow"
 single_call_fn = "allow"
 separated_literal_suffix = "allow"
 multiple_crate_versions = "allow"
+pattern_type_mismatch = "allow"
 # following can be allowed only for prototyping - ordered by complexity
 
 # Easy/Quick fixes
@@ -60,7 +61,6 @@ module_name_repetitions = "deny"
 cast_possible_wrap = "deny"
 cast_precision_loss = "deny"
 option_if_let_else = "deny"
-pattern_type_mismatch = "allow"
 wildcard_enum_match_arm = "allow"
 
 # Hard/Complex

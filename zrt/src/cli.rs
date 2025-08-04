@@ -607,7 +607,7 @@ fn suggest_tags_for_directory(
         .filter(|(_, _, predictions)| !predictions.is_empty())
         .collect();
 
-    for &(file_path, _, predictions) in &files_with_predictions {
+    for (file_path, _, predictions) in &files_with_predictions {
         let tags_string: Vec<String> = predictions
             .iter()
             .map(|p| format!("{} ({:.3})", p.tag, p.confidence))
