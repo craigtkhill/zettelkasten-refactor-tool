@@ -12,7 +12,7 @@
     clippy::arbitrary_source_item_ordering,
     reason = "Development: logical grouping over alphabetical"
 )]
-use anyhow::{Context as _, Result};
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -287,14 +287,6 @@ fn run_init() -> Result<()> {
 }
 
 #[cfg(feature = "tagging")]
-#[expect(
-    clippy::too_many_lines,
-    reason = "Development: comprehensive command handler"
-)]
-#[expect(
-    clippy::use_debug,
-    reason = "Development: debugging output for excluded tags"
-)]
 #[inline]
 fn run_tag_command(command: TagCommands) -> Result<()> {
     match command {
@@ -587,14 +579,10 @@ fn suggest_tags_for_directory(
                 .collect();
 
             if !filtered_predictions.is_empty() {
-                #[expect(
-                    clippy::separated_literal_suffix,
-                    reason = "Development: explicit float type"
-                )]
                 let max_confidence = filtered_predictions
                     .iter()
                     .map(|p| p.confidence)
-                    .fold(0.0_f32, f32::max);
+                    .fold(0.0f32, f32::max);
 
                 file_predictions.push((path_buf.clone(), max_confidence, filtered_predictions));
             }
@@ -661,18 +649,6 @@ fn parse_tags_from_frontmatter(frontmatter: &str) -> Result<std::collections::Ha
 }
 
 #[cfg(feature = "tagging")]
-#[expect(
-    clippy::option_if_let_else,
-    reason = "Development: clearer control flow"
-)]
-#[expect(
-    clippy::indexing_slicing,
-    reason = "Development: bounds already checked"
-)]
-#[expect(
-    clippy::arithmetic_side_effects,
-    reason = "Development: controlled arithmetic"
-)]
 #[inline]
 fn extract_frontmatter_content(content: &str) -> Result<(Option<String>, String)> {
     if !content.starts_with("---") {
@@ -717,50 +693,6 @@ impl TagMetrics {
 }
 
 #[cfg(feature = "tagging")]
-#[expect(
-    clippy::too_many_lines,
-    reason = "Development: comprehensive validation function"
-)]
-#[expect(
-    clippy::default_numeric_fallback,
-    reason = "Development: simple metrics"
-)]
-#[expect(
-    clippy::arithmetic_side_effects,
-    reason = "Development: controlled arithmetic"
-)]
-#[expect(
-    clippy::cast_precision_loss,
-    reason = "Development: metrics calculation"
-)]
-#[expect(
-    clippy::as_conversions,
-    reason = "Development: safe numeric conversions"
-)]
-#[expect(
-    clippy::indexing_slicing,
-    reason = "Development: bounds controlled by iteration"
-)]
-#[expect(
-    clippy::iter_over_hash_type,
-    reason = "Development: HashMap iteration acceptable"
-)]
-#[expect(
-    clippy::unwrap_or_default,
-    reason = "Development: explicit construction clearer"
-)]
-#[expect(
-    clippy::pattern_type_mismatch,
-    reason = "Development: destructuring preference"
-)]
-#[expect(
-    clippy::uninlined_format_args,
-    reason = "Development: explicit args clearer"
-)]
-#[expect(
-    clippy::cast_lossless,
-    reason = "Development: explicit casting for clarity"
-)]
 fn validate_model_performance(
     predictor: &zrt_tagging::UnifiedPredictor,
     validation_data: &zrt_tagging::extraction::TrainingData,
@@ -943,27 +875,27 @@ mod tests {
 
     #[cfg(feature = "tagging")]
     #[test]
-    fn test_predict_suggest_parsing() {
-        let args = Args::parse_from(["program", "predict", "suggest", "-t", "0.8"]);
-        if let Commands::Predict { command } = args.command {
-            if let PredictCommands::Suggest { threshold, .. } = command {
+    fn test_tag_suggest_parsing() {
+        let args = Args::parse_from(["program", "tag", "suggest", "-t", "0.8"]);
+        if let Commands::Tag { command } = args.command {
+            if let TagCommands::Suggest { threshold, .. } = command {
                 assert_eq!(threshold, Some(0.8));
             } else {
                 panic!("Expected Suggest subcommand");
             }
         } else {
-            panic!("Expected Predict command");
+            panic!("Expected Tag command");
         }
     }
 
     #[cfg(feature = "tagging")]
     #[test]
-    fn test_predict_suggest_exclude_tags_parsing() {
+    fn test_tag_suggest_exclude_tags_parsing() {
         let args = Args::parse_from([
-            "program", "predict", "suggest", "-e", "draft", "private", "temp",
+            "program", "tag", "suggest", "-e", "draft", "private", "temp",
         ]);
-        if let Commands::Predict { command } = args.command {
-            if let PredictCommands::Suggest { exclude_tags, .. } = command {
+        if let Commands::Tag { command } = args.command {
+            if let TagCommands::Suggest { exclude_tags, .. } = command {
                 assert_eq!(
                     exclude_tags,
                     vec!["draft".to_owned(), "private".to_owned(), "temp".to_owned()]
@@ -972,16 +904,16 @@ mod tests {
                 panic!("Expected Suggest subcommand");
             }
         } else {
-            panic!("Expected Predict command");
+            panic!("Expected Tag command");
         }
     }
 
     #[cfg(feature = "tagging")]
     #[test]
-    fn test_predict_train_exclude_tags_parsing() {
-        let args = Args::parse_from(["program", "predict", "train", "-e", "archived", "deleted"]);
-        if let Commands::Predict { command } = args.command {
-            if let PredictCommands::Train { exclude_tags, .. } = command {
+    fn test_tag_train_exclude_tags_parsing() {
+        let args = Args::parse_from(["program", "tag", "train", "-e", "archived", "deleted"]);
+        if let Commands::Tag { command } = args.command {
+            if let TagCommands::Train { exclude_tags, .. } = command {
                 assert_eq!(
                     exclude_tags,
                     vec!["archived".to_owned(), "deleted".to_owned()]
@@ -990,7 +922,7 @@ mod tests {
                 panic!("Expected Train subcommand");
             }
         } else {
-            panic!("Expected Predict command");
+            panic!("Expected Tag command");
         }
     }
 }

@@ -79,8 +79,8 @@ pub fn count_word_stats(dir: &PathBuf, exclude_dirs: &[&str], tag: &str) -> Resu
                 has_tag = false;
                 content_without_frontmatter = content.clone();
             }
-            let word_count = u64::try_from(content_without_frontmatter.split_whitespace().count())
-                .unwrap_or(u64::MAX); // Fallback to max value if conversion fails
+            let word_count = u32::try_from(content_without_frontmatter.split_whitespace().count())
+                .unwrap_or(u32::MAX); // Fallback to max value if conversion fails
             stats.total_files = stats.total_files.saturating_add(1);
             stats.total_words = stats.total_words.saturating_add(word_count);
 

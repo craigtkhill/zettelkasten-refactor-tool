@@ -39,10 +39,6 @@ impl Predictor {
     ///
     /// # Errors
     /// Returns an error if prediction fails
-    #[expect(
-        clippy::missing_inline_in_public_items,
-        reason = "Development: complex function"
-    )]
     pub fn predict(&self, content: &str) -> Result<Vec<Prediction>> {
         // Generate embedding for the content
         let embedding = self
@@ -89,10 +85,6 @@ impl Predictor {
     ///
     /// # Errors
     /// Returns an error if training fails
-    #[expect(
-        clippy::missing_inline_in_public_items,
-        reason = "Development: complex training function"
-    )]
     pub fn train(&mut self, training_data: &TrainingData) -> Result<()> {
         // Set random seed if specified
         if let Some(seed) = self.settings.training.random_seed {
@@ -194,14 +186,6 @@ impl Predictor {
     ///
     /// # Errors
     /// Returns an error if loading fails
-    #[expect(
-        clippy::missing_inline_in_public_items,
-        reason = "Development: file I/O function"
-    )]
-    #[expect(
-        clippy::default_numeric_fallback,
-        reason = "Development: simple counter"
-    )]
     pub fn load_classifiers(&mut self) -> Result<()> {
         let model_dir = &self.settings.model_path;
 
@@ -238,10 +222,6 @@ impl Predictor {
 }
 
 impl Default for Predictor {
-    #[expect(
-        clippy::expect_used,
-        reason = "Development: default should panic on failure"
-    )]
     #[inline]
     fn default() -> Self {
         Self::new(Settings::default()).expect("Failed to create default predictor")

@@ -127,10 +127,6 @@ impl Model {
 }
 
 impl Default for Model {
-    #[expect(
-        clippy::expect_used,
-        reason = "Default implementation should panic on failure"
-    )]
     #[inline]
     fn default() -> Self {
         Self::new().expect("Failed to initialize default embedding model")

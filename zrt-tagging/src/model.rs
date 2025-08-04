@@ -45,23 +45,6 @@ impl TagClassifier {
     ///
     /// # Errors
     /// Returns an error if training fails
-    #[expect(
-        clippy::cast_precision_loss,
-        reason = "Development: count conversions are acceptable"
-    )]
-    #[expect(
-        clippy::as_conversions,
-        reason = "Development: safe numeric conversions"
-    )]
-    #[expect(
-        clippy::integer_division_remainder_used,
-        reason = "Development: progress tracking"
-    )]
-    #[expect(clippy::integer_division, reason = "Development: progress calculation")]
-    #[expect(
-        clippy::missing_inline_in_public_items,
-        reason = "Development: training functions don't need inlining"
-    )]
     pub fn train(
         &mut self,
         embeddings: &[Vec<f32>],
@@ -192,14 +175,6 @@ impl TagClassifier {
     }
 
     /// Computes weighted binary cross-entropy loss
-    #[expect(
-        clippy::default_numeric_fallback,
-        reason = "Development: explicit float types"
-    )]
-    #[expect(
-        clippy::unseparated_literal_suffix,
-        reason = "Development: scientific notation clarity"
-    )]
     fn weighted_binary_cross_entropy(
         &self,
         predictions: &Tensor,

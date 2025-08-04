@@ -178,10 +178,6 @@ fn clean_tag(tag: &str) -> String {
 ///
 /// # Errors
 /// Returns an error if directory traversal or file reading fails
-#[expect(
-    clippy::missing_inline_in_public_items,
-    reason = "Development: file I/O function"
-)]
 pub fn extract_training_data(directory: &Path) -> Result<TrainingData> {
     let mut training_data = TrainingData::new();
 

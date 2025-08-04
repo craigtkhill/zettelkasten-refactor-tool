@@ -2,8 +2,8 @@
 
 #[derive(Debug, Default)]
 pub struct SinglePatternStats {
-    pub files_with_pattern: u64,
-    pub total_files: u64,
+    pub files_with_pattern: u32,
+    pub total_files: u32,
 }
 
 impl SinglePatternStats {
@@ -17,13 +17,11 @@ impl SinglePatternStats {
     }
     #[inline]
     #[must_use]
-    #[expect(clippy::as_conversions, reason = "Precision not critical")]
-    #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
         if self.total_files == 0 {
             return 0.0;
         }
-        (self.files_with_pattern as f64 / self.total_files as f64) * 100.0
+        (f64::from(self.files_with_pattern) / f64::from(self.total_files)) * 100.0
     }
 }
 

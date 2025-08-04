@@ -2,9 +2,9 @@
 
 #[derive(Debug, Default)]
 pub struct ComparisonStats {
-    pub done: u64,
-    pub todo: u64,
-    pub total: u64,
+    pub done: u32,
+    pub todo: u32,
+    pub total: u32,
 }
 
 impl ComparisonStats {
@@ -20,14 +20,12 @@ impl ComparisonStats {
 
     #[inline]
     #[must_use]
-    #[expect(clippy::as_conversions, reason = "Precision not critical")]
-    #[expect(clippy::cast_precision_loss, reason = "Precision not critical")]
     pub fn calculate_percentage(&self) -> f64 {
         let total_tagged = self.done.saturating_add(self.todo);
         if total_tagged == 0 {
             return 0.0;
         }
-        (self.done as f64 / total_tagged as f64) * 100.0
+        (f64::from(self.done) / f64::from(total_tagged)) * 100.0
     }
 }
 

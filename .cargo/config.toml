@@ -1,0 +1,6 @@
+# Cargo configuration for the zettelkasten-refactor-tool workspace
+
+[env]
+# Fix for esaxx-rs C++ compilation on macOS
+# Ensures the C++ standard library headers can be found
+CXXFLAGS = "-stdlib=libc++ -I/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk/usr/include/c++/v1"
