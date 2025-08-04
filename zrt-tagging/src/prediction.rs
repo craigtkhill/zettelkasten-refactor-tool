@@ -88,8 +88,8 @@ impl Predictor {
     pub fn train(&mut self, training_data: &TrainingData) -> Result<()> {
         // Set random seed if specified
         if let Some(seed) = self.settings.training.random_seed {
+            use core::hash::{Hash as _, Hasher as _};
             use std::collections::hash_map::DefaultHasher;
-            use std::hash::{Hash as _, Hasher as _};
 
             // Set seed for reproducible random number generation
             let mut hasher = DefaultHasher::new();

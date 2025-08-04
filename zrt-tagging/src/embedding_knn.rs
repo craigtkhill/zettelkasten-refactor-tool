@@ -142,7 +142,7 @@ impl EmbeddingKnnPredictor {
             .collect();
 
         // Sort by similarity (descending) and take top K
-        similarities.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+        similarities.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(core::cmp::Ordering::Equal));
         similarities.truncate(k);
 
         // Aggregate tags from K nearest neighbors
@@ -175,7 +175,7 @@ impl EmbeddingKnnPredictor {
         predictions.sort_by(|a, b| {
             b.confidence
                 .partial_cmp(&a.confidence)
-                .unwrap_or(std::cmp::Ordering::Equal)
+                .unwrap_or(core::cmp::Ordering::Equal)
         });
         predictions.truncate(max_suggestions);
 
@@ -224,7 +224,8 @@ impl EmbeddingKnnPredictor {
                 .collect();
 
             // Sort by similarity (descending) and take top K
-            similarities.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+            similarities
+                .sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(core::cmp::Ordering::Equal));
             similarities.truncate(k);
 
             // Aggregate tags from K nearest neighbors
@@ -257,7 +258,7 @@ impl EmbeddingKnnPredictor {
             predictions.sort_by(|a, b| {
                 b.confidence
                     .partial_cmp(&a.confidence)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .unwrap_or(core::cmp::Ordering::Equal)
             });
             predictions.truncate(max_suggestions);
 
