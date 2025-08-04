@@ -70,14 +70,14 @@ impl EmbeddingCache {
     }
 
     /// Compute content hash for a file
-    fn compute_content_hash(&self, content: &str) -> String {
+    fn compute_content_hash(content: &str) -> String {
         let mut hasher = Hasher::new();
         hasher.update(content.as_bytes());
         hasher.finalize().to_hex().to_string()
     }
 
     /// Get file modification time as Unix timestamp
-    fn get_file_mtime(&self, path: &Path) -> Result<i64> {
+    fn get_file_mtime(path: &Path) -> Result<i64> {
         let metadata = std::fs::metadata(path)
             .with_context(|| format!("Failed to get metadata for: {}", path.display()))?;
         
@@ -111,7 +111,7 @@ impl EmbeddingCache {
         let mut new_embeddings = Vec::new();
 
         for (file_path, content, tags) in notes {
-            let content_hash = self.compute_content_hash(content);
+            let content_hash = Self::compute_content_hash(content);
             
             // Check if we have a cached embedding with matching hash
             if let Some(cached) = existing_embeddings.get(&content_hash) {
@@ -123,7 +123,7 @@ impl EmbeddingCache {
                 let embedding = self.embedding_model.embed(content)
                     .with_context(|| format!("Failed to embed file: {}", file_path))?;
 
-                let mtime = self.get_file_mtime(Path::new(file_path)).unwrap_or(0);
+                let mtime = Self::get_file_mtime(Path::new(file_path)).unwrap_or(0);
                 let tags_vec: Vec<String> = tags.iter().cloned().collect();
 
                 let cached_emb = CachedEmbedding {

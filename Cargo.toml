@@ -45,7 +45,7 @@ derivable_impls = "deny"
 # Easy/Quick fixes
 cast_lossless = "deny"
 use_self = "deny"
-unused_self = "allow"
+unused_self = "deny"
 unused_trait_names = "allow"
 unwrap_or_default = "allow"
 str_to_string = "allow"

@@ -47,7 +47,7 @@ impl TfIdfPredictor {
 
         // Step 1: Build vocabulary and document frequency
         for doc in documents {
-            let terms = self.tokenize(&doc.content);
+            let terms = Self::tokenize(&doc.content);
             let unique_terms: HashSet<_> = terms.into_iter().collect();
 
             for term in &unique_terms {
@@ -87,7 +87,7 @@ impl TfIdfPredictor {
             let mut count = 0;
 
             for doc_vector in tag_documents {
-                let similarity = self.cosine_similarity(&content_vector, doc_vector);
+                let similarity = Self::cosine_similarity(&content_vector, doc_vector);
                 total_similarity += similarity;
                 count += 1;
             }
@@ -151,7 +151,7 @@ impl TfIdfPredictor {
     }
 
     /// Tokenize text into terms
-    fn tokenize(&self, text: &str) -> Vec<String> {
+    fn tokenize(text: &str) -> Vec<String> {
         text.to_lowercase()
             .split_whitespace()
             .filter_map(|word| {
@@ -169,7 +169,7 @@ impl TfIdfPredictor {
 
     /// Compute TF-IDF vector for a document
     fn compute_tfidf_vector(&self, content: &str) -> Result<HashMap<String, f32>> {
-        let terms = self.tokenize(content);
+        let terms = Self::tokenize(content);
         let mut tf_map = HashMap::new();
 
         // Compute term frequency (TF)
@@ -198,7 +198,7 @@ impl TfIdfPredictor {
     }
 
     /// Compute cosine similarity between two TF-IDF vectors
-    fn cosine_similarity(&self, vec1: &HashMap<String, f32>, vec2: &HashMap<String, f32>) -> f32 {
+    fn cosine_similarity(vec1: &HashMap<String, f32>, vec2: &HashMap<String, f32>) -> f32 {
         let mut dot_product = 0.0;
         let mut norm1 = 0.0;
         let mut norm2 = 0.0;
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn test_tokenize() {
         let predictor = TfIdfPredictor::new();
-        let tokens = predictor.tokenize("Hello, world! This is a test.");
+        let tokens = TfIdfPredictor::tokenize("Hello, world! This is a test.");
         assert_eq!(tokens, vec!["hello", "world", "this", "is", "test"]);
     }
 
@@ -284,7 +284,7 @@ mod tests {
         vec2.insert("hello".to_string(), 1.0);
         vec2.insert("world".to_string(), 1.0);
 
-        let similarity = predictor.cosine_similarity(&vec1, &vec2);
+        let similarity = TfIdfPredictor::cosine_similarity(&vec1, &vec2);
         assert!((similarity - 1.0).abs() < 0.001); // Should be 1.0 (identical vectors)
     }
 }
