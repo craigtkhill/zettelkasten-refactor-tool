@@ -54,7 +54,7 @@ unseparated_literal_suffix = "deny"
 
 # Medium complexity
 uninlined_format_args = "deny"
-use_debug = "allow"
+use_debug = "deny"
 default_numeric_fallback = "allow"
 std_instead_of_core = "allow"
 module_name_repetitions = "allow"

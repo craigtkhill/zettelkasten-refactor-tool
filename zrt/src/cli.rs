@@ -311,7 +311,8 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
                     exclude_tags.into_iter().collect();
                 settings.excluded_tags.extend(additional_excluded);
                 if !settings.excluded_tags.is_empty() {
-                    println!("Excluding tags: {:?}", settings.excluded_tags);
+                    let tags_list: Vec<String> = settings.excluded_tags.iter().cloned().collect();
+                    println!("Excluding tags: {}", tags_list.join(", "));
                 }
             }
 
@@ -367,7 +368,8 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
                     exclude_tags.into_iter().collect();
                 settings.excluded_tags.extend(additional_excluded);
                 if !settings.excluded_tags.is_empty() {
-                    println!("Excluding tags: {:?}", settings.excluded_tags);
+                    let tags_list: Vec<String> = settings.excluded_tags.iter().cloned().collect();
+                    println!("Excluding tags: {}", tags_list.join(", "));
                 }
             }
 
@@ -408,7 +410,8 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
                     exclude_tags.into_iter().collect();
                 settings.excluded_tags.extend(additional_excluded);
                 if !settings.excluded_tags.is_empty() {
-                    println!("Excluding tags: {:?}", settings.excluded_tags);
+                    let tags_list: Vec<String> = settings.excluded_tags.iter().cloned().collect();
+                    println!("Excluding tags: {}", tags_list.join(", "));
                 }
             }
 
