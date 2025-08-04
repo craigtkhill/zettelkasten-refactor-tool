@@ -1,7 +1,7 @@
 use anyhow::{Context as _, Result};
 
 use crate::config::{PredictorType, Settings};
-use crate::embedding_knn::EmbeddingKnnPredictor;
+use crate::embedding_knn::Predictor as EmbeddingKnnPredictor;
 use crate::extraction::TrainingData;
 use crate::prediction::{Prediction, Predictor as MlPredictor};
 use crate::tfidf::{Document, TfIdfPredictor};

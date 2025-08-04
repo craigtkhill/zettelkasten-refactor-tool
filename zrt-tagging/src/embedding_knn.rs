@@ -16,7 +16,7 @@ pub struct EmbeddedNote {
 
 /// KNN-based tag predictor using embeddings
 #[derive(Serialize, Deserialize, Default)]
-pub struct EmbeddingKnnPredictor {
+pub struct Predictor {
     /// All notes with their embeddings and tags
     embedded_notes: Vec<EmbeddedNote>,
     /// Embedding model for generating new embeddings
@@ -31,7 +31,7 @@ pub struct KnnPrediction {
     pub confidence: f32,
 }
 
-impl EmbeddingKnnPredictor {
+impl Predictor {
     /// Create a new KNN predictor
     pub fn new() -> Result<Self> {
         let embedding_model =
@@ -350,7 +350,7 @@ mod tests {
 
     #[test]
     fn test_knn_prediction() -> Result<()> {
-        let mut predictor = EmbeddingKnnPredictor::new()?;
+        let mut predictor = Predictor::new()?;
 
         let notes = vec![
             (
