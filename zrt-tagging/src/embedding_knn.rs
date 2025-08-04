@@ -256,7 +256,7 @@ impl EmbeddingKnnPredictor {
         let content = std::fs::read_to_string(path)
             .with_context(|| format!("Failed to read KNN model from: {}", path.display()))?;
 
-        let mut predictor: EmbeddingKnnPredictor = serde_json::from_str(&content)
+        let mut predictor: Self = serde_json::from_str(&content)
             .with_context(|| format!("Failed to deserialize KNN model from: {}", path.display()))?;
 
         // Reinitialize the embedding model (since it's skipped in serialization)

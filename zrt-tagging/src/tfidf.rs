@@ -139,7 +139,7 @@ impl TfIdfPredictor {
         let content = std::fs::read_to_string(path)
             .with_context(|| format!("Failed to read TF-IDF model from: {}", path.display()))?;
 
-        let predictor: TfIdfPredictor = serde_json::from_str(&content)
+        let predictor: Self = serde_json::from_str(&content)
             .with_context(|| format!("Failed to deserialize TF-IDF model from: {}", path.display()))?;
 
         Ok(predictor)
