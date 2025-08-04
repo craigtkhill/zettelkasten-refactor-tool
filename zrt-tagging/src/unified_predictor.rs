@@ -68,7 +68,7 @@ impl UnifiedPredictor {
             PredictorType::EmbeddingKnn => {
                 println!("Training Embedding KNN predictor...");
                 let mut knn_predictor = EmbeddingKnnPredictor::new()?;
-                
+
                 // Convert TrainingData to the format expected by KNN predictor
                 let notes: Vec<(String, String, std::collections::HashSet<String>)> = training_data
                     .notes
@@ -77,12 +77,14 @@ impl UnifiedPredictor {
                     .collect();
 
                 // Use cached training for much better performance
-                knn_predictor.train_with_cache(&notes, &self.settings.model_path)
+                knn_predictor
+                    .train_with_cache(&notes, &self.settings.model_path)
                     .context("Failed to train KNN predictor with cache")?;
 
                 // Save the trained KNN model
                 let model_path = self.settings.model_path.join("knn_model.json");
-                knn_predictor.save(&model_path)
+                knn_predictor
+                    .save(&model_path)
                     .context("Failed to save KNN model")?;
 
                 self.knn_predictor = Some(knn_predictor);
@@ -126,9 +128,11 @@ impl UnifiedPredictor {
                 ml_predictor.predict(content)?
             }
             PredictorType::EmbeddingKnn => {
-                let knn_predictor = self.knn_predictor.as_ref()
+                let knn_predictor = self
+                    .knn_predictor
+                    .as_ref()
                     .ok_or_else(|| anyhow::anyhow!("KNN predictor not trained"))?;
-                
+
                 let knn_predictions = knn_predictor.predict(
                     content,
                     5, // K neighbors
@@ -152,7 +156,10 @@ impl UnifiedPredictor {
     }
 
     /// Predict tags for multiple files using cached embeddings (efficient for EmbeddingKnn)
-    pub fn predict_batch(&self, files: &[(String, String)]) -> Result<Vec<(String, Vec<Prediction>)>> {
+    pub fn predict_batch(
+        &self,
+        files: &[(String, String)],
+    ) -> Result<Vec<(String, Vec<Prediction>)>> {
         match self.settings.predictor_type {
             PredictorType::TfIdf | PredictorType::MlEmbedding => {
                 // For TfIdf and MlEmbedding, just use single predictions
@@ -164,9 +171,11 @@ impl UnifiedPredictor {
                 Ok(results)
             }
             PredictorType::EmbeddingKnn => {
-                let knn_predictor = self.knn_predictor.as_ref()
+                let knn_predictor = self
+                    .knn_predictor
+                    .as_ref()
                     .ok_or_else(|| anyhow::anyhow!("KNN predictor not trained"))?;
-                
+
                 // Use cached embeddings for batch prediction
                 let predictions = knn_predictor.predict_batch(
                     files,
@@ -202,11 +211,11 @@ impl UnifiedPredictor {
         match self.settings.predictor_type {
             PredictorType::TfIdf => {
                 let model_path = self.settings.model_path.join("tfidf_model.json");
-                
+
                 if model_path.exists() {
-                    let tfidf_predictor = TfIdfPredictor::load(&model_path)
-                        .context("Failed to load TF-IDF model")?;
-                    
+                    let tfidf_predictor =
+                        TfIdfPredictor::load(&model_path).context("Failed to load TF-IDF model")?;
+
                     self.tfidf_predictor = Some(tfidf_predictor);
                     println!("Loaded TF-IDF model from: {}", model_path.display());
                 } else {
@@ -228,11 +237,11 @@ impl UnifiedPredictor {
             }
             PredictorType::EmbeddingKnn => {
                 let model_path = self.settings.model_path.join("knn_model.json");
-                
+
                 if model_path.exists() {
                     let knn_predictor = EmbeddingKnnPredictor::load(&model_path)
                         .context("Failed to load KNN model")?;
-                    
+
                     self.knn_predictor = Some(knn_predictor);
                     println!("Loaded KNN model from: {}", model_path.display());
                 } else {

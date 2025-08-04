@@ -47,7 +47,7 @@ cast_lossless = "deny"
 use_self = "deny"
 unused_self = "deny"
 unused_trait_names = "deny"
-unwrap_or_default = "allow"
+unwrap_or_default = "deny"
 str_to_string = "allow"
 unseparated_literal_suffix = "allow"
 

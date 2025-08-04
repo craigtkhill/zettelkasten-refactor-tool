@@ -27,15 +27,16 @@ impl EmbeddingCache {
     /// Create a new embedding cache
     pub fn new(cache_dir: &Path) -> Result<Self> {
         let cache_path = cache_dir.join("embeddings.json");
-        
+
         // Ensure cache directory exists
         if let Some(parent) = cache_path.parent() {
-            std::fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create cache directory: {}", parent.display()))?;
+            std::fs::create_dir_all(parent).with_context(|| {
+                format!("Failed to create cache directory: {}", parent.display())
+            })?;
         }
 
-        let embedding_model = EmbeddingModel::new()
-            .context("Failed to initialize embedding model")?;
+        let embedding_model =
+            EmbeddingModel::new().context("Failed to initialize embedding model")?;
 
         Ok(Self {
             cache_path,
@@ -46,12 +47,15 @@ impl EmbeddingCache {
     /// Load existing cache or create empty vector
     fn load_cache(&self) -> Result<Vec<CachedEmbedding>> {
         if self.cache_path.exists() {
-            let content = std::fs::read_to_string(&self.cache_path)
-                .with_context(|| format!("Failed to read cache file: {}", self.cache_path.display()))?;
-            
-            let embeddings: Vec<CachedEmbedding> = serde_json::from_str(&content)
-                .with_context(|| format!("Failed to parse cache file: {}", self.cache_path.display()))?;
-            
+            let content = std::fs::read_to_string(&self.cache_path).with_context(|| {
+                format!("Failed to read cache file: {}", self.cache_path.display())
+            })?;
+
+            let embeddings: Vec<CachedEmbedding> =
+                serde_json::from_str(&content).with_context(|| {
+                    format!("Failed to parse cache file: {}", self.cache_path.display())
+                })?;
+
             Ok(embeddings)
         } else {
             Ok(Vec::new())
@@ -60,11 +64,12 @@ impl EmbeddingCache {
 
     /// Save embeddings to cache
     fn save_cache(&self, embeddings: &[CachedEmbedding]) -> Result<()> {
-        let json = serde_json::to_string_pretty(embeddings)
-            .context("Failed to serialize embeddings")?;
+        let json =
+            serde_json::to_string_pretty(embeddings).context("Failed to serialize embeddings")?;
 
-        std::fs::write(&self.cache_path, json)
-            .with_context(|| format!("Failed to write cache file: {}", self.cache_path.display()))?;
+        std::fs::write(&self.cache_path, json).with_context(|| {
+            format!("Failed to write cache file: {}", self.cache_path.display())
+        })?;
 
         Ok(())
     }
@@ -80,8 +85,9 @@ impl EmbeddingCache {
     fn get_file_mtime(path: &Path) -> Result<i64> {
         let metadata = std::fs::metadata(path)
             .with_context(|| format!("Failed to get metadata for: {}", path.display()))?;
-        
-        let mtime = metadata.modified()
+
+        let mtime = metadata
+            .modified()
             .context("Failed to get modification time")?
             .duration_since(SystemTime::UNIX_EPOCH)
             .context("Invalid modification time")?
@@ -92,12 +98,12 @@ impl EmbeddingCache {
 
     /// Get or compute embeddings for a list of notes
     pub fn get_embeddings(
-        &mut self, 
-        notes: &[(String, String, HashSet<String>)]
+        &mut self,
+        notes: &[(String, String, HashSet<String>)],
     ) -> Result<Vec<CachedEmbedding>> {
         println!("Loading embedding cache...");
         let mut cached_embeddings = self.load_cache()?;
-        
+
         // Create lookup map from existing cache
         let mut existing_embeddings: HashMap<String, CachedEmbedding> = HashMap::new();
         for cached in &cached_embeddings {
@@ -112,7 +118,7 @@ impl EmbeddingCache {
 
         for (file_path, content, tags) in notes {
             let content_hash = Self::compute_content_hash(content);
-            
+
             // Check if we have a cached embedding with matching hash
             if let Some(cached) = existing_embeddings.get(&content_hash) {
                 // Use cached embedding
@@ -120,7 +126,9 @@ impl EmbeddingCache {
             } else {
                 // Need to compute new embedding
                 println!("Computing embedding for: {}", file_path);
-                let embedding = self.embedding_model.embed(content)
+                let embedding = self
+                    .embedding_model
+                    .embed(content)
                     .with_context(|| format!("Failed to embed file: {}", file_path))?;
 
                 let mtime = Self::get_file_mtime(Path::new(file_path)).unwrap_or(0);
@@ -153,7 +161,7 @@ impl EmbeddingCache {
     /// Get cache statistics
     pub fn get_stats(&self) -> Result<CacheStats> {
         let cached_embeddings = self.load_cache()?;
-        
+
         Ok(CacheStats {
             total_embeddings: cached_embeddings.len(),
             cache_size_mb: if self.cache_path.exists() {
@@ -167,8 +175,9 @@ impl EmbeddingCache {
     /// Clear the entire cache
     pub fn clear(&self) -> Result<()> {
         if self.cache_path.exists() {
-            std::fs::remove_file(&self.cache_path)
-                .with_context(|| format!("Failed to remove cache file: {}", self.cache_path.display()))?;
+            std::fs::remove_file(&self.cache_path).with_context(|| {
+                format!("Failed to remove cache file: {}", self.cache_path.display())
+            })?;
         }
         Ok(())
     }
@@ -199,7 +208,7 @@ mod tests {
             ),
             (
                 "test2.md".to_string(),
-                "cooking pasta recipes".to_string(), 
+                "cooking pasta recipes".to_string(),
                 ["cooking", "food"].iter().map(|s| s.to_string()).collect(),
             ),
         ];

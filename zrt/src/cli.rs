@@ -693,12 +693,6 @@ struct TagMetrics {
     true_positives: usize,
 }
 
-#[cfg(feature = "tagging")]
-impl TagMetrics {
-    fn new() -> Self {
-        Self::default()
-    }
-}
 
 #[cfg(feature = "tagging")]
 fn validate_model_performance(
@@ -747,7 +741,7 @@ fn validate_model_performance(
 
         // Per-tag statistics
         for tag in &note.tags {
-            let metrics = tag_stats.entry(tag.clone()).or_insert_with(TagMetrics::new);
+            let metrics = tag_stats.entry(tag.clone()).or_default();
             metrics.actual_count += 1;
 
             // Check if this tag was predicted
@@ -763,7 +757,7 @@ fn validate_model_performance(
             if !note.tags.contains(&prediction.tag) {
                 let metrics = tag_stats
                     .entry(prediction.tag.clone())
-                    .or_insert_with(TagMetrics::new);
+                    .or_default();
                 metrics.false_positives += 1;
             }
         }

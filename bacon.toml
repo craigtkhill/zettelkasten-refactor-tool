@@ -31,6 +31,12 @@ on_success = "job:workspace-test"
 command = ["cargo", "test", "--workspace"]
 need_stdout = true
 watch = ["*/src/", "tests/"]
+on_success = "job:workspace-fmt"
+
+[jobs.workspace-fmt]
+command = ["cargo", "fmt", "--workspace"]
+need_stdout = false
+watch = ["*/src/", "tests/"]
 
 # === CI/RELEASE PIPELINE ===
 [jobs.ci]

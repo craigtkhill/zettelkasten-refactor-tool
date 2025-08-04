@@ -121,7 +121,10 @@ mod tests {
         assert_eq!(settings.training.learning_rate, 0.001);
         assert_eq!(settings.training.train_split, 0.8);
         assert_eq!(settings.training.random_seed, Some(42));
-        assert!(matches!(settings.predictor_type, PredictorType::EmbeddingKnn));
+        assert!(matches!(
+            settings.predictor_type,
+            PredictorType::EmbeddingKnn
+        ));
     }
 
     #[test]

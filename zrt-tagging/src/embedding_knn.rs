@@ -15,8 +15,7 @@ pub struct EmbeddedNote {
 }
 
 /// KNN-based tag predictor using embeddings
-#[derive(Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct EmbeddingKnnPredictor {
     /// All notes with their embeddings and tags
     embedded_notes: Vec<EmbeddedNote>,
@@ -35,9 +34,9 @@ pub struct KnnPrediction {
 impl EmbeddingKnnPredictor {
     /// Create a new KNN predictor
     pub fn new() -> Result<Self> {
-        let embedding_model = EmbeddingModel::new()
-            .context("Failed to initialize embedding model")?;
-            
+        let embedding_model =
+            EmbeddingModel::new().context("Failed to initialize embedding model")?;
+
         Ok(Self {
             embedded_notes: Vec::new(),
             embedding_model: Some(embedding_model),
@@ -47,16 +46,19 @@ impl EmbeddingKnnPredictor {
     /// Train the predictor by storing embeddings for all notes
     pub fn train(&mut self, notes: &[(String, String, HashSet<String>)]) -> Result<()> {
         println!("Generating embeddings for {} notes...", notes.len());
-        
-        let embedding_model = self.embedding_model.as_ref()
+
+        let embedding_model = self
+            .embedding_model
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("Embedding model not initialized"))?;
 
         self.embedded_notes.clear();
-        
+
         for (path, content, tags) in notes {
-            let embedding = embedding_model.embed(content)
+            let embedding = embedding_model
+                .embed(content)
                 .with_context(|| format!("Failed to embed note: {}", path))?;
-                
+
             self.embedded_notes.push(EmbeddedNote {
                 path: path.clone(),
                 embedding,
@@ -64,19 +66,27 @@ impl EmbeddingKnnPredictor {
             });
         }
 
-        println!("Generated embeddings for {} notes", self.embedded_notes.len());
+        println!(
+            "Generated embeddings for {} notes",
+            self.embedded_notes.len()
+        );
         Ok(())
     }
 
     /// Train the predictor using cached embeddings (much faster!)
-    pub fn train_with_cache(&mut self, notes: &[(String, String, HashSet<String>)], cache_dir: &Path) -> Result<()> {
+    pub fn train_with_cache(
+        &mut self,
+        notes: &[(String, String, HashSet<String>)],
+        cache_dir: &Path,
+    ) -> Result<()> {
         println!("Training with embedding cache for {} notes...", notes.len());
-        
-        let mut cache = EmbeddingCache::new(cache_dir)
-            .context("Failed to initialize embedding cache")?;
+
+        let mut cache =
+            EmbeddingCache::new(cache_dir).context("Failed to initialize embedding cache")?;
 
         // Get embeddings (cached or newly computed)
-        let cached_embeddings = cache.get_embeddings(notes)
+        let cached_embeddings = cache
+            .get_embeddings(notes)
             .context("Failed to get cached embeddings")?;
 
         // Convert cached embeddings to our format
@@ -111,15 +121,19 @@ impl EmbeddingKnnPredictor {
             return Ok(Vec::new());
         }
 
-        let embedding_model = self.embedding_model.as_ref()
+        let embedding_model = self
+            .embedding_model
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("Embedding model not initialized"))?;
 
         // Generate embedding for the input content
-        let query_embedding = embedding_model.embed(content)
+        let query_embedding = embedding_model
+            .embed(content)
             .context("Failed to generate embedding for query")?;
 
         // Calculate similarities to all notes
-        let mut similarities: Vec<(f32, &EmbeddedNote)> = self.embedded_notes
+        let mut similarities: Vec<(f32, &EmbeddedNote)> = self
+            .embedded_notes
             .iter()
             .map(|note| {
                 let similarity = cosine_similarity(&query_embedding, &note.embedding);
@@ -132,7 +146,8 @@ impl EmbeddingKnnPredictor {
         similarities.truncate(k);
 
         // Aggregate tags from K nearest neighbors
-        let mut tag_scores: std::collections::HashMap<String, f32> = std::collections::HashMap::new();
+        let mut tag_scores: std::collections::HashMap<String, f32> =
+            std::collections::HashMap::new();
         let mut total_weight = 0.0;
 
         for (similarity, note) in &similarities {
@@ -146,14 +161,22 @@ impl EmbeddingKnnPredictor {
         let mut predictions: Vec<KnnPrediction> = tag_scores
             .into_iter()
             .map(|(tag, score)| {
-                let confidence = if total_weight > 0.0 { score / total_weight } else { 0.0 };
+                let confidence = if total_weight > 0.0 {
+                    score / total_weight
+                } else {
+                    0.0
+                };
                 KnnPrediction { tag, confidence }
             })
             .filter(|p| p.confidence >= threshold)
             .collect();
 
         // Sort by confidence (descending) and limit results
-        predictions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        predictions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         predictions.truncate(max_suggestions);
 
         Ok(predictions)
@@ -174,7 +197,7 @@ impl EmbeddingKnnPredictor {
 
         // Create cache to get embeddings efficiently
         let mut cache = EmbeddingCache::new(cache_dir)?;
-        
+
         // Convert files to the format expected by cache
         let notes: Vec<(String, String, HashSet<String>)> = files
             .iter()
@@ -186,12 +209,13 @@ impl EmbeddingKnnPredictor {
 
         // Predict for each file using cached embeddings
         let mut results = Vec::new();
-        
+
         for cached in cached_embeddings {
             let query_embedding = &cached.embedding;
-            
+
             // Calculate similarities to all notes
-            let mut similarities: Vec<(f32, &EmbeddedNote)> = self.embedded_notes
+            let mut similarities: Vec<(f32, &EmbeddedNote)> = self
+                .embedded_notes
                 .iter()
                 .map(|note| {
                     let similarity = cosine_similarity(query_embedding, &note.embedding);
@@ -204,7 +228,8 @@ impl EmbeddingKnnPredictor {
             similarities.truncate(k);
 
             // Aggregate tags from K nearest neighbors
-            let mut tag_scores: std::collections::HashMap<String, f32> = std::collections::HashMap::new();
+            let mut tag_scores: std::collections::HashMap<String, f32> =
+                std::collections::HashMap::new();
             let mut total_weight = 0.0;
 
             for (similarity, note) in &similarities {
@@ -218,14 +243,22 @@ impl EmbeddingKnnPredictor {
             let mut predictions: Vec<KnnPrediction> = tag_scores
                 .into_iter()
                 .map(|(tag, score)| {
-                    let confidence = if total_weight > 0.0 { score / total_weight } else { 0.0 };
+                    let confidence = if total_weight > 0.0 {
+                        score / total_weight
+                    } else {
+                        0.0
+                    };
                     KnnPrediction { tag, confidence }
                 })
                 .filter(|p| p.confidence >= threshold)
                 .collect();
 
             // Sort by confidence (descending) and limit results
-            predictions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+            predictions.sort_by(|a, b| {
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
             predictions.truncate(max_suggestions);
 
             results.push((cached.file_path, predictions));
@@ -242,8 +275,7 @@ impl EmbeddingKnnPredictor {
                 .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
         }
 
-        let json = serde_json::to_string_pretty(self)
-            .context("Failed to serialize KNN model")?;
+        let json = serde_json::to_string_pretty(self).context("Failed to serialize KNN model")?;
 
         std::fs::write(path, json)
             .with_context(|| format!("Failed to write KNN model to: {}", path.display()))?;
@@ -260,8 +292,8 @@ impl EmbeddingKnnPredictor {
             .with_context(|| format!("Failed to deserialize KNN model from: {}", path.display()))?;
 
         // Reinitialize the embedding model (since it's skipped in serialization)
-        predictor.embedding_model = Some(EmbeddingModel::new()
-            .context("Failed to reinitialize embedding model")?);
+        predictor.embedding_model =
+            Some(EmbeddingModel::new().context("Failed to reinitialize embedding model")?);
 
         Ok(predictor)
     }
@@ -276,7 +308,6 @@ impl EmbeddingKnnPredictor {
         self.embedded_notes.len()
     }
 }
-
 
 /// Calculate cosine similarity between two vectors
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
@@ -319,7 +350,7 @@ mod tests {
     #[test]
     fn test_knn_prediction() -> Result<()> {
         let mut predictor = EmbeddingKnnPredictor::new()?;
-        
+
         let notes = vec![
             (
                 "note1.md".to_string(),
@@ -341,7 +372,7 @@ mod tests {
         predictor.train(&notes)?;
 
         let predictions = predictor.predict("deep learning neural networks", 2, 0.0, 5)?;
-        
+
         // Should predict AI-related tags with higher confidence
         assert!(!predictions.is_empty());
         let ai_prediction = predictions.iter().find(|p| p.tag == "ai");

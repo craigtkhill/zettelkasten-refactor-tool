@@ -63,7 +63,7 @@ impl TfIdfPredictor {
             for tag in &doc.tags {
                 self.tag_profiles
                     .entry(tag.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(tf_idf_vector.clone());
             }
         }
@@ -125,8 +125,8 @@ impl TfIdfPredictor {
                 .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
         }
 
-        let json = serde_json::to_string_pretty(self)
-            .context("Failed to serialize TF-IDF model")?;
+        let json =
+            serde_json::to_string_pretty(self).context("Failed to serialize TF-IDF model")?;
 
         std::fs::write(path, json)
             .with_context(|| format!("Failed to write TF-IDF model to: {}", path.display()))?;
@@ -139,8 +139,12 @@ impl TfIdfPredictor {
         let content = std::fs::read_to_string(path)
             .with_context(|| format!("Failed to read TF-IDF model from: {}", path.display()))?;
 
-        let predictor: Self = serde_json::from_str(&content)
-            .with_context(|| format!("Failed to deserialize TF-IDF model from: {}", path.display()))?;
+        let predictor: Self = serde_json::from_str(&content).with_context(|| {
+            format!(
+                "Failed to deserialize TF-IDF model from: {}",
+                path.display()
+            )
+        })?;
 
         Ok(predictor)
     }
