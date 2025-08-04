@@ -34,3 +34,6 @@ html/
 # AI
 CLAUDE.md
 .claude/
+
+# ZRT test artifacts
+.zrt/

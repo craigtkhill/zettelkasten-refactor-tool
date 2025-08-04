@@ -4,8 +4,9 @@
 # Fail if coverage is below this percentage
 fail_under = 100
 
-# Generate HTML reports by default
+# Generate HTML reports by default and put them in target/tarpaulin
 out = ["Html"]
+output-dir = "target/tarpaulin"
 
 # Directories to ignore in coverage calculations
 exclude-files = [

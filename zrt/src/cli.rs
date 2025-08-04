@@ -876,6 +876,12 @@ fn validate_model_performance(
 }
 
 #[cfg(test)]
+mod evaluation_tests;
+
+#[cfg(test)]
+mod integration_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
