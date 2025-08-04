@@ -93,7 +93,7 @@ impl TfIdfPredictor {
             }
 
             let avg_similarity = if count > 0_i32 {
-                total_similarity / count as f32
+                total_similarity / f32::from(u16::try_from(count).unwrap_or(u16::MAX))
             } else {
                 0.0
             };
@@ -181,15 +181,19 @@ impl TfIdfPredictor {
             *tf_map.entry(term.clone()).or_insert(0_i32) += 1_i32;
         }
 
-        let total_terms = terms.len() as f32;
+        let total_terms = f32::from(u16::try_from(terms.len()).unwrap_or(u16::MAX));
         let mut tfidf_vector = HashMap::new();
 
         // Compute TF-IDF for each term
         for (term, count) in tf_map {
             if self.vocabulary.contains(&term) {
-                let tf = count as f32 / total_terms;
-                let df = self.document_frequency.get(&term).copied().unwrap_or(1) as f32;
-                let idf = (self.total_documents as f32 / df).ln();
+                let tf = f32::from(u16::try_from(count).unwrap_or(u16::MAX)) / total_terms;
+                let df = f32::from(
+                    u16::try_from(self.document_frequency.get(&term).copied().unwrap_or(1))
+                        .unwrap_or(u16::MAX),
+                );
+                let idf =
+                    (f32::from(u16::try_from(self.total_documents).unwrap_or(u16::MAX)) / df).ln();
                 let tfidf = tf * idf;
 
                 if tfidf > 0.0 {

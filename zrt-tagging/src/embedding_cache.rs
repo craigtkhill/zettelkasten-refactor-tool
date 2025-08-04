@@ -167,7 +167,11 @@ impl EmbeddingCache {
         Ok(CacheStats {
             total_embeddings: cached_embeddings.len(),
             cache_size_mb: if self.cache_path.exists() {
-                std::fs::metadata(&self.cache_path)?.len() as f64 / 1_048_576.0
+                let size_bytes = std::fs::metadata(&self.cache_path)?.len();
+                // Convert to MB using integer division to avoid precision loss for large files
+                f64::from(u32::try_from(size_bytes / 0x0010_0000).unwrap_or(u32::MAX))
+                    + f64::from(u32::try_from(size_bytes % 0x0010_0000).unwrap_or(0))
+                        / f64::from(0x0010_0000_u32)
             } else {
                 0.0
             },

@@ -736,7 +736,8 @@ fn validate_model_performance(
                     .filter(|pred| note.tags.contains(&pred.tag))
                     .count();
 
-                precision_at_k[i] += correct_in_k as f64 / k.min(note.tags.len()) as f64;
+                precision_at_k[i] += f64::from(u32::try_from(correct_in_k).unwrap_or(u32::MAX))
+                    / f64::from(u32::try_from(k.min(note.tags.len())).unwrap_or(u32::MAX));
                 count_at_k[i] += 1_i32;
             }
         }
@@ -771,7 +772,8 @@ fn validate_model_performance(
     };
 
     let overall_recall = if total_actual_tags > 0_usize {
-        f64::from(correct_predictions) / total_actual_tags as f64
+        f64::from(correct_predictions)
+            / f64::from(u32::try_from(total_actual_tags).unwrap_or(u32::MAX))
     } else {
         0.0_f64
     };
@@ -805,13 +807,17 @@ fn validate_model_performance(
         .filter(|(_, metrics)| metrics.actual_count >= 3) // Only tags with enough examples
         .map(|(tag, metrics)| {
             let precision = if metrics.true_positives + metrics.false_positives > 0_usize {
-                metrics.true_positives as f64
-                    / (metrics.true_positives + metrics.false_positives) as f64
+                f64::from(u32::try_from(metrics.true_positives).unwrap_or(u32::MAX))
+                    / f64::from(
+                        u32::try_from(metrics.true_positives + metrics.false_positives)
+                            .unwrap_or(u32::MAX),
+                    )
             } else {
                 0.0_f64
             };
             let recall = if metrics.actual_count > 0_usize {
-                metrics.true_positives as f64 / metrics.actual_count as f64
+                f64::from(u32::try_from(metrics.true_positives).unwrap_or(u32::MAX))
+                    / f64::from(u32::try_from(metrics.actual_count).unwrap_or(u32::MAX))
             } else {
                 0.0_f64
             };

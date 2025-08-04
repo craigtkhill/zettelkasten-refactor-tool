@@ -76,9 +76,11 @@ impl TagClassifier {
             ));
         }
 
-        let total = labels.len() as f32;
-        let pos_weight = total / (2.0 * positive_count as f32);
-        let neg_weight = total / (2.0 * negative_count as f32);
+        let total = f32::from(u16::try_from(labels.len()).unwrap_or(u16::MAX));
+        let pos_weight =
+            total / (2.0 * f32::from(u16::try_from(positive_count).unwrap_or(u16::MAX)));
+        let neg_weight =
+            total / (2.0 * f32::from(u16::try_from(negative_count).unwrap_or(u16::MAX)));
 
         // Convert training data to tensors
         let batch_size = embeddings.len();
