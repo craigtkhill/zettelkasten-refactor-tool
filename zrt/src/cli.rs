@@ -763,13 +763,13 @@ fn validate_model_performance(
 
     // Calculate overall metrics
     let overall_precision = if total_predicted_tags > 0 {
-        correct_predictions as f64 / total_predictions as f64
+        f64::from(correct_predictions) / f64::from(total_predictions)
     } else {
         0.0
     };
 
     let overall_recall = if total_actual_tags > 0 {
-        correct_predictions as f64 / total_actual_tags as f64
+        f64::from(correct_predictions) / total_actual_tags as f64
     } else {
         0.0
     };
@@ -792,7 +792,7 @@ fn validate_model_performance(
             println!(
                 "Precision@{}: {:.3}",
                 k,
-                precision_at_k[i] / count_at_k[i] as f64
+                precision_at_k[i] / f64::from(count_at_k[i])
             );
         }
     }
