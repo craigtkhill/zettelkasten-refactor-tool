@@ -680,7 +680,7 @@ fn extract_frontmatter_content(content: &str) -> Result<(Option<String>, String)
         || Ok((None, content.to_owned())),
         |end| {
             let frontmatter = lines[1..end].join("\n");
-            let body = lines[end + 1..].join("\n");
+            let body = lines[end.checked_add(1).unwrap_or(end)..].join("\n");
             Ok((Some(frontmatter), body))
         },
     )
@@ -706,8 +706,8 @@ fn validate_model_performance(
 
     let mut total_predictions = 0_i32;
     let mut correct_predictions = 0_i32;
-    let mut total_actual_tags = 0;
-    let mut total_predicted_tags = 0;
+    let mut total_actual_tags = 0_usize;
+    let mut total_predicted_tags = 0_usize;
 
     // Track precision@k metrics
     let k_values = [1, 3, 5];
@@ -722,8 +722,12 @@ fn validate_model_performance(
         // Get predictions for this note
         let predictions = predictor.predict(&note.content)?;
 
-        total_predicted_tags += predictions.len();
-        total_actual_tags += note.tags.len();
+        total_predicted_tags = total_predicted_tags
+            .checked_add(predictions.len())
+            .unwrap_or(total_predicted_tags);
+        total_actual_tags = total_actual_tags
+            .checked_add(note.tags.len())
+            .unwrap_or(total_actual_tags);
 
         // Calculate precision@k
         for (i, &k) in k_values.iter().enumerate() {
@@ -736,7 +740,7 @@ fn validate_model_performance(
 
                 precision_at_k[i] += f64::from(u32::try_from(correct_in_k).unwrap_or(u32::MAX))
                     / f64::from(u32::try_from(k.min(note.tags.len())).unwrap_or(u32::MAX));
-                count_at_k[i] += 1_i32;
+                count_at_k[i] = count_at_k[i].checked_add(1_i32).unwrap_or(count_at_k[i]);
             }
         }
 
@@ -745,21 +749,34 @@ fn validate_model_performance(
         sorted_tags.sort_unstable();
         for tag in sorted_tags {
             let metrics = tag_stats.entry(tag.clone()).or_default();
-            metrics.actual_count += 1;
+            metrics.actual_count = metrics
+                .actual_count
+                .checked_add(1)
+                .unwrap_or(metrics.actual_count);
 
             // Check if this tag was predicted
             if predictions.iter().any(|pred| &pred.tag == tag) {
-                metrics.true_positives += 1;
-                correct_predictions += 1_i32;
+                metrics.true_positives = metrics
+                    .true_positives
+                    .checked_add(1)
+                    .unwrap_or(metrics.true_positives);
+                correct_predictions = correct_predictions
+                    .checked_add(1_i32)
+                    .unwrap_or(correct_predictions);
             }
-            total_predictions += 1_i32;
+            total_predictions = total_predictions
+                .checked_add(1_i32)
+                .unwrap_or(total_predictions);
         }
 
         // Count false positives
         for prediction in &predictions {
             if !note.tags.contains(&prediction.tag) {
                 let metrics = tag_stats.entry(prediction.tag.clone()).or_default();
-                metrics.false_positives += 1;
+                metrics.false_positives = metrics
+                    .false_positives
+                    .checked_add(1)
+                    .unwrap_or(metrics.false_positives);
             }
         }
     }
@@ -806,11 +823,21 @@ fn validate_model_performance(
         .iter()
         .filter(|(_, metrics)| metrics.actual_count >= 3) // Only tags with enough examples
         .map(|(tag, metrics)| {
-            let precision = if metrics.true_positives + metrics.false_positives > 0_usize {
+            let precision = if metrics
+                .true_positives
+                .checked_add(metrics.false_positives)
+                .unwrap_or(0_usize)
+                > 0_usize
+            {
                 f64::from(u32::try_from(metrics.true_positives).unwrap_or(u32::MAX))
                     / f64::from(
-                        u32::try_from(metrics.true_positives + metrics.false_positives)
-                            .unwrap_or(u32::MAX),
+                        u32::try_from(
+                            metrics
+                                .true_positives
+                                .checked_add(metrics.false_positives)
+                                .unwrap_or(0_usize),
+                        )
+                        .unwrap_or(u32::MAX),
                     )
             } else {
                 0.0_f64
