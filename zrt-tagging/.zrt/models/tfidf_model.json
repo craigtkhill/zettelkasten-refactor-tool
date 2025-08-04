@@ -1,14 +1,21 @@
 {
   "document_frequency": {
+    "cooking": 1,
+    "algorithms": 1,
+    "pasta": 1,
     "recipes": 1,
     "learning": 1,
-    "pasta": 1,
-    "machine": 1,
-    "algorithms": 1,
-    "cooking": 1
+    "machine": 1
   },
   "total_documents": 2,
   "tag_profiles": {
+    "cooking": [
+      {
+        "pasta": 0.23104906,
+        "recipes": 0.23104906,
+        "cooking": 0.23104906
+      }
+    ],
     "tech": [
       {
         "learning": 0.23104906,
@@ -23,27 +30,20 @@
         "algorithms": 0.23104906
       }
     ],
-    "cooking": [
-      {
-        "recipes": 0.23104906,
-        "pasta": 0.23104906,
-        "cooking": 0.23104906
-      }
-    ],
     "food": [
       {
-        "recipes": 0.23104906,
         "pasta": 0.23104906,
+        "recipes": 0.23104906,
         "cooking": 0.23104906
       }
     ]
   },
   "vocabulary": [
+    "algorithms",
     "machine",
-    "cooking",
+    "pasta",
     "recipes",
     "learning",
-    "pasta",
-    "algorithms"
+    "cooking"
   ]
 }

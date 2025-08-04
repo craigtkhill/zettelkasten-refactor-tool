@@ -91,7 +91,9 @@ impl EmbeddingCache {
             .context("Failed to get modification time")?
             .duration_since(SystemTime::UNIX_EPOCH)
             .context("Invalid modification time")?
-            .as_secs() as i64;
+            .as_secs()
+            .try_into()
+            .context("Modification time too large for i64")?;
 
         Ok(mtime)
     }
