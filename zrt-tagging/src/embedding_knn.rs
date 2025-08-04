@@ -16,6 +16,7 @@ pub struct EmbeddedNote {
 
 /// KNN-based tag predictor using embeddings
 #[derive(Serialize, Deserialize)]
+#[derive(Default)]
 pub struct EmbeddingKnnPredictor {
     /// All notes with their embeddings and tags
     embedded_notes: Vec<EmbeddedNote>,
@@ -276,14 +277,6 @@ impl EmbeddingKnnPredictor {
     }
 }
 
-impl Default for EmbeddingKnnPredictor {
-    fn default() -> Self {
-        Self {
-            embedded_notes: Vec::new(),
-            embedding_model: None,
-        }
-    }
-}
 
 /// Calculate cosine similarity between two vectors
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
