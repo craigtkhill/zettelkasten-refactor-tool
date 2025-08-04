@@ -642,7 +642,7 @@ fn parse_tags_from_frontmatter(frontmatter: &str) -> Result<std::collections::Ha
             serde_yaml::Value::Sequence(tag_list) => {
                 for tag in tag_list {
                     if let Some(tag_str) = tag.as_str() {
-                        tags.insert(tag_str.to_string());
+                        tags.insert(tag_str.to_owned());
                     }
                 }
             }
