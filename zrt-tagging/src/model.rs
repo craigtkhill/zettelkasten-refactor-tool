@@ -183,7 +183,7 @@ impl TagClassifier {
         neg_weight: f32,
     ) -> Result<Tensor> {
         // BCE = -(pos_weight * y * log(p) + neg_weight * (1-y) * log(1-p))
-        let eps = 1e-7f32; // Small epsilon to prevent log(0)
+        let eps = 1e-7_f32; // Small epsilon to prevent log(0)
 
         let predictions_clamped = predictions
             .clamp(eps, 1.0 - eps)

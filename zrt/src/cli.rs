@@ -591,7 +591,7 @@ fn suggest_tags_for_directory(
                 let max_confidence = filtered_predictions
                     .iter()
                     .map(|p| p.confidence)
-                    .fold(0.0f32, f32::max);
+                    .fold(0.0_f32, f32::max);
 
                 file_predictions.push((path_buf.clone(), max_confidence, filtered_predictions));
             }

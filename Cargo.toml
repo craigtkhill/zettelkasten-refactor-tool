@@ -39,6 +39,7 @@ question_mark_used = "allow"
 self_named_module_files = "allow"
 shadow_reuse = "allow"
 single_call_fn = "allow"
+separated_literal_suffix = "allow"
 # following can be allowed only for prototyping - ordered by complexity
 derivable_impls = "deny"
 
@@ -49,7 +50,7 @@ unused_self = "deny"
 unused_trait_names = "deny"
 unwrap_or_default = "deny"
 str_to_string = "deny"
-unseparated_literal_suffix = "allow"
+unseparated_literal_suffix = "deny"
 
 # Medium complexity
 uninlined_format_args = "allow"
