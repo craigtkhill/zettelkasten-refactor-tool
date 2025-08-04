@@ -12,7 +12,7 @@ glob = "0.3.2"
 toml = "0.8.20"
 walkdir = "2.5.0"
 
-[workspace.lints.clippy]
+[workspace.lints.clippy]    
 cargo = { priority = -1, level = "deny" }
 complexity = { priority = -1, level = "deny" }
 correctness = { priority = -1, level = "deny" }
@@ -68,7 +68,7 @@ iter_over_hash_type = "deny"
 arithmetic_side_effects = "deny"
 integer_division = "deny"
 integer_division_remainder_used = "deny"
-indexing_slicing = "allow"
+indexing_slicing = "deny"
 expect_used = "allow"
 as_conversions = "allow"
 exhaustive_enums = "allow"

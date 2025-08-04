@@ -679,8 +679,9 @@ fn extract_frontmatter_content(content: &str) -> Result<(Option<String>, String)
     end_index.map_or_else(
         || Ok((None, content.to_owned())),
         |end| {
-            let frontmatter = lines[1..end].join("\n");
-            let body = lines[end.checked_add(1).unwrap_or(end)..].join("\n");
+            let frontmatter = lines.get(1..end).unwrap_or(&[]).join("\n");
+            let start_idx = end.checked_add(1).unwrap_or(end);
+            let body = lines.get(start_idx..).unwrap_or(&[]).join("\n");
             Ok((Some(frontmatter), body))
         },
     )
@@ -738,9 +739,13 @@ fn validate_model_performance(
                     .filter(|pred| note.tags.contains(&pred.tag))
                     .count();
 
-                precision_at_k[i] += f64::from(u32::try_from(correct_in_k).unwrap_or(u32::MAX))
-                    / f64::from(u32::try_from(k.min(note.tags.len())).unwrap_or(u32::MAX));
-                count_at_k[i] = count_at_k[i].checked_add(1_i32).unwrap_or(count_at_k[i]);
+                if let Some(precision_ref) = precision_at_k.get_mut(i) {
+                    *precision_ref += f64::from(u32::try_from(correct_in_k).unwrap_or(u32::MAX))
+                        / f64::from(u32::try_from(k.min(note.tags.len())).unwrap_or(u32::MAX));
+                }
+                if let Some(count_ref) = count_at_k.get_mut(i) {
+                    *count_ref = count_ref.checked_add(1_i32).unwrap_or(*count_ref);
+                }
             }
         }
 
@@ -809,12 +814,10 @@ fn validate_model_performance(
 
     println!("\n=== Precision@K ===");
     for (i, &k) in k_values.iter().enumerate() {
-        if count_at_k[i] > 0_i32 {
-            println!(
-                "Precision@{}: {:.3}",
-                k,
-                precision_at_k[i] / f64::from(count_at_k[i])
-            );
+        if let (Some(&count), Some(&precision)) = (count_at_k.get(i), precision_at_k.get(i)) {
+            if count > 0_i32 {
+                println!("Precision@{}: {:.3}", k, precision / f64::from(count));
+            }
         }
     }
 
