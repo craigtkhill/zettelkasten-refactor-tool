@@ -12,7 +12,7 @@
     clippy::arbitrary_source_item_ordering,
     reason = "Development: logical grouping over alphabetical"
 )]
-use anyhow::{Context, Result};
+use anyhow::{Context as _, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -503,7 +503,10 @@ fn suggest_tags_for_directory(
     // Collect all markdown files, their content, and existing tags for batch processing
     let mut files_to_process: Vec<(String, String)> = Vec::new();
     let mut file_paths: Vec<std::path::PathBuf> = Vec::new();
-    let mut existing_tags_map: std::collections::HashMap<String, std::collections::HashSet<String>> = std::collections::HashMap::new();
+    let mut existing_tags_map: std::collections::HashMap<
+        String,
+        std::collections::HashSet<String>,
+    > = std::collections::HashMap::new();
 
     for entry in WalkDir::new(directory)
         .follow_links(false)
@@ -537,14 +540,14 @@ fn suggest_tags_for_directory(
                 match extract_frontmatter_content(&content) {
                     Ok((frontmatter, body)) => {
                         let file_path_str = path.to_string_lossy().to_string();
-                        
+
                         // Parse existing tags from frontmatter
                         let existing_tags = if let Some(fm) = frontmatter {
                             parse_tags_from_frontmatter(&fm).unwrap_or_default()
                         } else {
                             std::collections::HashSet::new()
                         };
-                        
+
                         files_to_process.push((file_path_str.clone(), body));
                         file_paths.push(path.to_path_buf());
                         existing_tags_map.insert(file_path_str, existing_tags);
@@ -569,9 +572,15 @@ fn suggest_tags_for_directory(
 
     for (file_path_str, predictions) in batch_results {
         // Find the corresponding PathBuf and existing tags
-        if let Some(path_buf) = file_paths.iter().find(|p| p.to_string_lossy() == file_path_str) {
-            let existing_tags = existing_tags_map.get(&file_path_str).cloned().unwrap_or_default();
-            
+        if let Some(path_buf) = file_paths
+            .iter()
+            .find(|p| p.to_string_lossy() == file_path_str)
+        {
+            let existing_tags = existing_tags_map
+                .get(&file_path_str)
+                .cloned()
+                .unwrap_or_default();
+
             // Filter out tags that already exist in the file
             let filtered_predictions: Vec<zrt_tagging::Prediction> = predictions
                 .into_iter()
@@ -618,17 +627,16 @@ fn suggest_tags_for_directory(
     Ok(())
 }
 
-
 #[cfg(feature = "tagging")]
 #[inline]
 fn parse_tags_from_frontmatter(frontmatter: &str) -> Result<std::collections::HashSet<String>> {
     use serde_yaml_ng as serde_yaml;
-    
-    let yaml: serde_yaml::Value = serde_yaml::from_str(frontmatter)
-        .context("Failed to parse YAML frontmatter")?;
-    
+
+    let yaml: serde_yaml::Value =
+        serde_yaml::from_str(frontmatter).context("Failed to parse YAML frontmatter")?;
+
     let mut tags = std::collections::HashSet::new();
-    
+
     if let Some(tags_value) = yaml.get("tags") {
         match tags_value {
             serde_yaml::Value::Sequence(tag_list) => {
@@ -644,7 +652,7 @@ fn parse_tags_from_frontmatter(frontmatter: &str) -> Result<std::collections::Ha
             _ => {}
         }
     }
-    
+
     Ok(tags)
 }
 
