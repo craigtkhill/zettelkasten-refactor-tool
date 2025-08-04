@@ -196,7 +196,7 @@ impl Predictor {
             ));
         }
 
-        let mut loaded_count = 0;
+        let mut loaded_count = 0_i32;
 
         // Load all .safetensors files in the model directory
         for entry in std::fs::read_dir(model_dir)
@@ -211,7 +211,7 @@ impl Predictor {
                         .with_context(|| format!("Failed to load classifier for tag: {tag}"))?;
 
                     self.classifiers.insert(tag.to_owned(), classifier);
-                    loaded_count += 1;
+                    loaded_count += 1_i32;
                 }
             }
         }

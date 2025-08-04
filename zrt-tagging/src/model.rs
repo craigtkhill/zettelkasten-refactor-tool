@@ -192,7 +192,7 @@ impl TagClassifier {
         let log_pred = predictions_clamped
             .log()
             .context("Failed to compute log of predictions")?;
-        let log_one_minus_pred = (1.0 - &predictions_clamped)?
+        let log_one_minus_pred = (1.0_f64 - &predictions_clamped)?
             .log()
             .context("Failed to compute log of (1 - predictions)")?;
 
@@ -200,7 +200,7 @@ impl TagClassifier {
             .broadcast_mul(&log_pred)?
             .broadcast_mul(&Tensor::new(pos_weight, &self.device)?)?;
 
-        let neg_loss = (1.0 - targets)?
+        let neg_loss = (1.0_f64 - targets)?
             .broadcast_mul(&log_one_minus_pred)?
             .broadcast_mul(&Tensor::new(neg_weight, &self.device)?)?;
 

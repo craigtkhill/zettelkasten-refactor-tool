@@ -84,15 +84,15 @@ impl TfIdfPredictor {
         for (tag, tag_documents) in &self.tag_profiles {
             // Compute average similarity to all documents with this tag
             let mut total_similarity = 0.0;
-            let mut count = 0;
+            let mut count = 0_i32;
 
             for doc_vector in tag_documents {
                 let similarity = Self::cosine_similarity(&content_vector, doc_vector);
                 total_similarity += similarity;
-                count += 1;
+                count += 1_i32;
             }
 
-            let avg_similarity = if count > 0 {
+            let avg_similarity = if count > 0_i32 {
                 total_similarity / count as f32
             } else {
                 0.0
@@ -178,7 +178,7 @@ impl TfIdfPredictor {
 
         // Compute term frequency (TF)
         for term in &terms {
-            *tf_map.entry(term.clone()).or_insert(0) += 1;
+            *tf_map.entry(term.clone()).or_insert(0_i32) += 1_i32;
         }
 
         let total_terms = terms.len() as f32;

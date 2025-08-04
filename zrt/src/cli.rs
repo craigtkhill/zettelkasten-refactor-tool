@@ -706,15 +706,15 @@ fn validate_model_performance(
         validation_data.notes.len()
     );
 
-    let mut total_predictions = 0;
-    let mut correct_predictions = 0;
+    let mut total_predictions = 0_i32;
+    let mut correct_predictions = 0_i32;
     let mut total_actual_tags = 0;
     let mut total_predicted_tags = 0;
 
     // Track precision@k metrics
     let k_values = [1, 3, 5];
-    let mut precision_at_k = [0.0; 3];
-    let mut count_at_k = [0; 3];
+    let mut precision_at_k = [0.0_f64; 3];
+    let mut count_at_k = [0_i32; 3];
 
     // Per-tag metrics
     let mut tag_stats: std::collections::HashMap<String, TagMetrics> =
@@ -737,7 +737,7 @@ fn validate_model_performance(
                     .count();
 
                 precision_at_k[i] += correct_in_k as f64 / k.min(note.tags.len()) as f64;
-                count_at_k[i] += 1;
+                count_at_k[i] += 1_i32;
             }
         }
 
@@ -749,9 +749,9 @@ fn validate_model_performance(
             // Check if this tag was predicted
             if predictions.iter().any(|pred| &pred.tag == tag) {
                 metrics.true_positives += 1;
-                correct_predictions += 1;
+                correct_predictions += 1_i32;
             }
-            total_predictions += 1;
+            total_predictions += 1_i32;
         }
 
         // Count false positives
@@ -764,22 +764,22 @@ fn validate_model_performance(
     }
 
     // Calculate overall metrics
-    let overall_precision = if total_predicted_tags > 0 {
+    let overall_precision = if total_predicted_tags > 0_usize {
         f64::from(correct_predictions) / f64::from(total_predictions)
     } else {
-        0.0
+        0.0_f64
     };
 
-    let overall_recall = if total_actual_tags > 0 {
+    let overall_recall = if total_actual_tags > 0_usize {
         f64::from(correct_predictions) / total_actual_tags as f64
     } else {
-        0.0
+        0.0_f64
     };
 
-    let f1_score = if overall_precision + overall_recall > 0.0 {
-        2.0 * (overall_precision * overall_recall) / (overall_precision + overall_recall)
+    let f1_score = if overall_precision + overall_recall > 0.0_f64 {
+        2.0_f64 * (overall_precision * overall_recall) / (overall_precision + overall_recall)
     } else {
-        0.0
+        0.0_f64
     };
 
     // Print results
@@ -790,7 +790,7 @@ fn validate_model_performance(
 
     println!("\n=== Precision@K ===");
     for (i, &k) in k_values.iter().enumerate() {
-        if count_at_k[i] > 0 {
+        if count_at_k[i] > 0_i32 {
             println!(
                 "Precision@{}: {:.3}",
                 k,
@@ -804,21 +804,21 @@ fn validate_model_performance(
         .iter()
         .filter(|(_, metrics)| metrics.actual_count >= 3) // Only tags with enough examples
         .map(|(tag, metrics)| {
-            let precision = if metrics.true_positives + metrics.false_positives > 0 {
+            let precision = if metrics.true_positives + metrics.false_positives > 0_usize {
                 metrics.true_positives as f64
                     / (metrics.true_positives + metrics.false_positives) as f64
             } else {
-                0.0
+                0.0_f64
             };
-            let recall = if metrics.actual_count > 0 {
+            let recall = if metrics.actual_count > 0_usize {
                 metrics.true_positives as f64 / metrics.actual_count as f64
             } else {
-                0.0
+                0.0_f64
             };
-            let f1 = if precision + recall > 0.0 {
-                2.0 * (precision * recall) / (precision + recall)
+            let f1 = if precision + recall > 0.0_f64 {
+                2.0_f64 * (precision * recall) / (precision + recall)
             } else {
-                0.0
+                0.0_f64
             };
             (tag, f1, precision, recall, metrics.actual_count)
         })
