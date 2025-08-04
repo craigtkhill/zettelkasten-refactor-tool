@@ -136,7 +136,8 @@ impl TagClassifier {
                 .context("Failed in backward pass")?;
 
             // Print progress occasionally
-            if epoch % (config.epochs.checked_div(10).unwrap_or(1)).max(1) == 0 {
+            let progress_interval = (config.epochs.checked_div(10).unwrap_or(1)).max(1);
+            if epoch.checked_rem(progress_interval).unwrap_or(1) == 0 {
                 let loss_value = loss
                     .to_scalar::<f32>()
                     .context("Failed to extract loss value")?;
