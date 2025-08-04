@@ -458,11 +458,9 @@ fn suggest_tags_for_file(
     let (frontmatter, body) = extract_frontmatter_content(&content)?;
 
     // Parse existing tags from frontmatter
-    let existing_tags = if let Some(fm) = frontmatter {
+    let existing_tags = frontmatter.map_or_else(std::collections::HashSet::new, |fm| {
         parse_tags_from_frontmatter(&fm).unwrap_or_default()
-    } else {
-        std::collections::HashSet::new()
-    };
+    });
 
     // Get predictions
     let predictions = predictor.predict(&body)?;
@@ -545,11 +543,10 @@ fn suggest_tags_for_directory(
                         let file_path_str = path.to_string_lossy().to_string();
 
                         // Parse existing tags from frontmatter
-                        let existing_tags = if let Some(fm) = frontmatter {
-                            parse_tags_from_frontmatter(&fm).unwrap_or_default()
-                        } else {
-                            std::collections::HashSet::new()
-                        };
+                        let existing_tags = frontmatter
+                            .map_or_else(std::collections::HashSet::new, |fm| {
+                                parse_tags_from_frontmatter(&fm).unwrap_or_default()
+                            });
 
                         files_to_process.push((file_path_str.clone(), body));
                         file_paths.push(path.to_path_buf());
@@ -679,13 +676,14 @@ fn extract_frontmatter_content(content: &str) -> Result<(Option<String>, String)
         }
     }
 
-    if let Some(end) = end_index {
-        let frontmatter = lines[1..end].join("\n");
-        let body = lines[end + 1..].join("\n");
-        Ok((Some(frontmatter), body))
-    } else {
-        Ok((None, content.to_owned()))
-    }
+    end_index.map_or_else(
+        || Ok((None, content.to_owned())),
+        |end| {
+            let frontmatter = lines[1..end].join("\n");
+            let body = lines[end + 1..].join("\n");
+            Ok((Some(frontmatter), body))
+        },
+    )
 }
 
 #[cfg(feature = "tagging")]
