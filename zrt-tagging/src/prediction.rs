@@ -221,12 +221,9 @@ impl Predictor {
     }
 }
 
-impl Default for Predictor {
-    #[inline]
-    fn default() -> Self {
-        Self::new(Settings::default()).expect("Failed to create default predictor")
-    }
-}
+// Default implementation removed for safety-critical code.
+// Predictor initialization can fail, which conflicts with Default's infallible contract.
+// Use Predictor::new() directly for proper error handling.
 
 #[cfg(test)]
 mod tests {

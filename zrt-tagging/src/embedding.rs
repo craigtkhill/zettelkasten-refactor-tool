@@ -126,9 +126,6 @@ impl Model {
     }
 }
 
-impl Default for Model {
-    #[inline]
-    fn default() -> Self {
-        Self::new().expect("Failed to initialize default embedding model")
-    }
-}
+// Default implementation removed for safety-critical code.
+// Model initialization can fail, which conflicts with Default's infallible contract.
+// Use Model::new() directly for proper error handling.
