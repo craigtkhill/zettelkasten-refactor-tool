@@ -1,13 +1,13 @@
 //! Tests for safety-critical ML model evaluation functionality
-//! 
+//!
 //! This module tests the arithmetic safety patterns, bounds checking,
 //! and mathematical operations we've implemented for safety-critical code.
 
 #[cfg(test)]
 mod tests {
-    use tempfile::TempDir;
-    use std::collections::HashSet;
     use anyhow::Result;
+    use std::collections::HashSet;
+    use tempfile::TempDir;
 
     #[cfg(feature = "tagging")]
     use zrt_tagging::{
@@ -37,7 +37,7 @@ mod tests {
     fn test_validate_model_performance_arithmetic_safety() -> Result<()> {
         // Test our safety-critical arithmetic patterns
         let _temp_dir = TempDir::new()?;
-        
+
         // Create test notes with known tags
         let validation_data = TrainingData {
             notes: vec![
@@ -47,25 +47,34 @@ mod tests {
                     tags: ["tag1", "tag2"].iter().map(|s| s.to_string()).collect(),
                 },
                 NoteData {
-                    path: "note2.md".to_owned(), 
+                    path: "note2.md".to_owned(),
                     content: "test content 2".to_owned(),
                     tags: ["tag2", "tag3"].iter().map(|s| s.to_string()).collect(),
                 },
             ],
-            all_tags: ["tag1", "tag2", "tag3"].iter().map(|s| s.to_string()).collect(),
+            all_tags: ["tag1", "tag2", "tag3"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         };
 
         // Mock predictor that returns specific predictions to test arithmetic
         let predictor = MockPredictor::new(vec![
-            Prediction { tag: "tag1".to_owned(), confidence: 0.9 },
-            Prediction { tag: "tag2".to_owned(), confidence: 0.8 },  
+            Prediction {
+                tag: "tag1".to_owned(),
+                confidence: 0.9,
+            },
+            Prediction {
+                tag: "tag2".to_owned(),
+                confidence: 0.8,
+            },
         ]);
 
         // This should exercise our checked arithmetic operations
         let result = std::panic::catch_unwind(|| {
             // This would normally call validate_model_performance, but since it prints to stdout
             // we need to test the arithmetic operations it uses directly
-            
+
             // Test checked addition patterns
             let mut total_predicted_tags = 0_usize;
             let mut total_actual_tags = 0_usize;
@@ -74,12 +83,12 @@ mod tests {
 
             for note in &validation_data.notes {
                 let predictions = predictor.predict(&note.content).unwrap();
-                
+
                 // Test our safety-critical checked arithmetic
                 total_predicted_tags = total_predicted_tags
                     .checked_add(predictions.len())
                     .unwrap_or(total_predicted_tags);
-                    
+
                 total_actual_tags = total_actual_tags
                     .checked_add(note.tags.len())
                     .unwrap_or(total_actual_tags);
@@ -95,12 +104,12 @@ mod tests {
                 // This tests the bounds-checked array access pattern we implemented
                 let mut precision_at_k = [0.0_f64; 3];
                 let mut count_at_k = [0_i32; 3];
-                
+
                 if let Some(precision_ref) = precision_at_k.get_mut(0) {
                     *precision_ref += f64::from(u32::try_from(correct_in_k).unwrap_or(u32::MAX))
                         / f64::from(u32::try_from(k.min(note.tags.len())).unwrap_or(u32::MAX));
                 }
-                
+
                 if let Some(count_ref) = count_at_k.get_mut(0) {
                     *count_ref = count_ref.checked_add(1_i32).unwrap_or(*count_ref);
                 }
@@ -134,17 +143,20 @@ mod tests {
 
             // Verify our arithmetic worked correctly
             assert_eq!(total_predicted_tags, 4); // 2 predictions per note × 2 notes
-            assert_eq!(total_actual_tags, 4);   // 2 tags per note × 2 notes
+            assert_eq!(total_actual_tags, 4); // 2 tags per note × 2 notes
             assert!(overall_precision >= 0.0 && overall_precision <= 1.0);
             assert!(overall_recall >= 0.0 && overall_recall <= 1.0);
         });
 
-        assert!(result.is_ok(), "Safety-critical arithmetic should not panic");
+        assert!(
+            result.is_ok(),
+            "Safety-critical arithmetic should not panic"
+        );
         Ok(())
     }
 
     #[cfg(feature = "tagging")]
-    #[test] 
+    #[test]
     fn test_arithmetic_overflow_protection() {
         // Test that our checked arithmetic handles potential overflow
         let _max_usize = usize::MAX;
@@ -159,7 +171,7 @@ mod tests {
         count = count.checked_add(5).unwrap_or(count);
         assert_eq!(count, usize::MAX - 1); // Should remain unchanged
 
-        // Test i32 overflow protection  
+        // Test i32 overflow protection
         let mut i32_count = i32::MAX - 1;
         i32_count = i32_count.checked_add(10).unwrap_or(i32_count);
         assert_eq!(i32_count, i32::MAX - 1);
@@ -169,7 +181,7 @@ mod tests {
     fn test_bounds_checked_array_access() {
         // Test our bounds-checked array access patterns
         let mut test_array = [0_i32; 3];
-        
+
         // Safe access within bounds
         if let Some(element) = test_array.get_mut(0) {
             *element = 42;
@@ -211,7 +223,7 @@ mod tests {
         let result2 = if nonzero_denominator > 0_usize {
             numerator / f64::from(u32::try_from(nonzero_denominator).unwrap_or(u32::MAX))
         } else {
-            0.0_f64  
+            0.0_f64
         };
         assert_eq!(result2, 20.0);
     }
@@ -237,7 +249,7 @@ mod tests {
         let should_print = epoch.checked_rem(progress_interval).unwrap_or(1) == 0;
         assert!(!should_print); // 25 % 10 != 0
 
-        let epoch2 = 30_usize; 
+        let epoch2 = 30_usize;
         let should_print2 = epoch2.checked_rem(progress_interval).unwrap_or(1) == 0;
         assert!(should_print2); // 30 % 10 == 0
     }
@@ -249,7 +261,7 @@ mod tests {
         let divisor = 10_u64;
         let zero_divisor = 0_u64;
 
-        // Safe division operation  
+        // Safe division operation
         let result1 = dividend.checked_div(divisor).unwrap_or(0);
         assert_eq!(result1, 10);
 
@@ -270,13 +282,13 @@ mod tests {
         // Test our deterministic hash iteration pattern
         let mut test_tags: HashSet<String> = HashSet::new();
         test_tags.insert("zebra".to_owned());
-        test_tags.insert("alpha".to_owned()); 
+        test_tags.insert("alpha".to_owned());
         test_tags.insert("beta".to_owned());
 
         // Test that our sorted iteration is deterministic
         let mut sorted_tags: Vec<_> = test_tags.iter().collect();
         sorted_tags.sort_unstable();
-        
+
         let collected: Vec<String> = sorted_tags.iter().map(|s| (*s).clone()).collect();
         assert_eq!(collected, vec!["alpha", "beta", "zebra"]);
 

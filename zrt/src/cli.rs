@@ -17,13 +17,11 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 use crate::core::scanner::{
-    count_files, count_word_stats, count_words, scan_directory_only_tag, scan_directory_single,
-    scan_directory_two,
+    count_file_metrics, count_files, count_word_stats, count_words, scan_directory_only_tag,
+    scan_directory_single, scan_directory_two,
 };
-use crate::utils::print_top_files;
-
-#[cfg(feature = "tagging")]
-use zrt_tagging::Settings;
+use crate::settings::{SortBy, ZrtConfig};
+use crate::utils::{print_file_metrics, print_top_files};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -62,23 +60,32 @@ pub enum Commands {
         exclude: String,
     },
 
-    /// Show files ordered by word count
-    Words {
+    /// Show files ordered by word count (alias: wc)
+    #[command(alias = "wc")]
+    Wordcount {
         /// Directory to scan (defaults to current directory)
         #[arg(short = 'd', long = "dir", default_value = ".")]
         directory: PathBuf,
 
-        /// Filter out files containing this tag
-        #[arg(short = 'f', long = "filter")]
-        filter_out: Option<String>,
+        /// Filter out files containing these tags (space-separated)
+        #[arg(short = 'f', long = "filter", num_args = 0..)]
+        filter_out: Vec<String>,
 
         /// Number of files to show
         #[arg(short = 'n', long = "num", default_value = "10")]
         top: usize,
 
-        /// Directories to exclude (comma-separated)
-        #[arg(short, long, default_value = ".git")]
-        exclude: String,
+        /// Directories to exclude (space-separated)
+        #[arg(short, long, num_args = 0.., default_values = &[".git"])]
+        exclude: Vec<String>,
+
+        /// Only show files exceeding configured thresholds
+        #[arg(long)]
+        exceeds: bool,
+
+        /// Sort by words or lines (overrides config)
+        #[arg(long, value_enum)]
+        sort_by: Option<SortBy>,
 
         /// Show suggested tags for each file
         #[cfg(feature = "tagging")]
@@ -204,17 +211,54 @@ pub fn run(args: Args) -> Result<()> {
             );
             Ok(())
         }
-        Commands::Words {
+        Commands::Wordcount {
             directory,
             filter_out,
             top,
             exclude,
+            exceeds,
+            sort_by,
             #[cfg(feature = "tagging")]
             suggest_tags,
         } => {
-            let exclude_dirs: Vec<&str> = exclude.split(',').collect();
-            let files = count_words(&directory, &exclude_dirs, filter_out.as_deref())?;
-            print_top_files(&files, top);
+            let exclude_dirs: Vec<&str> = exclude.iter().map(String::as_str).collect();
+            let filter_tags: Vec<&str> = filter_out.iter().map(String::as_str).collect();
+
+            if exceeds {
+                let config = ZrtConfig::load_or_default();
+                let sort_preference = sort_by.unwrap_or(config.refactor.sort_by);
+
+                let metrics = count_file_metrics(
+                    &directory,
+                    &exclude_dirs,
+                    &filter_tags,
+                    Some((
+                        config.refactor.word_threshold,
+                        config.refactor.line_threshold,
+                    )),
+                )?;
+
+                print_file_metrics(
+                    &metrics,
+                    top,
+                    sort_preference,
+                    Some((
+                        config.refactor.word_threshold,
+                        config.refactor.line_threshold,
+                    )),
+                );
+            } else {
+                let files = count_words(
+                    &directory,
+                    &exclude_dirs,
+                    if filter_tags.is_empty() {
+                        None
+                    } else {
+                        Some(filter_tags[0])
+                    },
+                )?;
+                print_top_files(&files, top);
+            }
 
             #[cfg(feature = "tagging")]
             if suggest_tags {
@@ -273,15 +317,16 @@ fn run_init() -> Result<()> {
     std::fs::create_dir_all(zrt_dir)?;
     std::fs::create_dir_all(zrt_dir.join("models"))?;
 
-    #[cfg(feature = "tagging")]
-    {
-        let config = Settings::default();
-        config.save_to_file(&zrt_dir.join("config.toml"))?;
-    }
+    // Create config with both refactor and tagging settings
+    let config = ZrtConfig::default();
+    config.save_to_file(&zrt_dir.join("config.toml"))?;
 
     println!("Initialized ZRT directory at .zrt/");
+    println!("Created default configuration at .zrt/config.toml");
+    println!("  - Refactor thresholds: 250+ words, 30+ lines");
+
     #[cfg(feature = "tagging")]
-    println!("Created default tagging configuration at .zrt/config.toml");
+    println!("  - Tagging configuration included");
 
     Ok(())
 }
@@ -902,12 +947,23 @@ mod tests {
     }
 
     #[test]
-    fn test_words_command_parsing() {
-        let args = Args::parse_from(["program", "words", "-n", "5"]);
-        if let Commands::Words { top, .. } = args.command {
+    fn test_wordcount_command_parsing() {
+        let args = Args::parse_from(["program", "wordcount", "-n", "5"]);
+        if let Commands::Wordcount { top, .. } = args.command {
             assert_eq!(top, 5);
         } else {
-            panic!("Expected Words command");
+            panic!("Expected Wordcount command");
+        }
+    }
+
+    #[test]
+    fn test_wordcount_alias_parsing() {
+        let args = Args::parse_from(["program", "wc", "-n", "5", "--exceeds"]);
+        if let Commands::Wordcount { top, exceeds, .. } = args.command {
+            assert_eq!(top, 5);
+            assert!(exceeds);
+        } else {
+            panic!("Expected Wordcount command");
         }
     }
 

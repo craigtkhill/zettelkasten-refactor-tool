@@ -12,69 +12,70 @@ glob = "0.3.2"
 toml = "0.8.20"
 walkdir = "2.5.0"
 
-[workspace.lints.clippy]    
-cargo = { priority = -1, level = "deny" }
-complexity = { priority = -1, level = "deny" }
+[workspace.lints.clippy]
 correctness = { priority = -1, level = "deny" }
-perf = { priority = -1, level = "deny" }
 suspicious = { priority = -1, level = "deny" }
+complexity = { priority = -1, level = "deny" }
+perf = { priority = -1, level = "deny" }
+cargo = { priority = -1, level = "deny" }
 style = { priority = -1, level = "deny" }
-pedantic = { priority = -1, level = "deny" }
-restriction = { priority = -1, level = "deny" }
-nursery = { priority = -1, level = "deny" }
-
-# cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
-blanket_clippy_restriction_lints = "allow"
-exhaustive_structs = "allow"
-filetype_is_file = "allow"
-float_arithmetic = "allow"
-implicit_return = "allow"
-min_ident_chars = "allow"
-missing_docs_in_private_items = "allow"
-print_stdout = "allow"
-pub_use = "allow"
-question_mark_used = "allow"
-self_named_module_files = "allow"
-shadow_reuse = "allow"
-single_call_fn = "allow"
-separated_literal_suffix = "allow"
 multiple_crate_versions = "allow"
-pattern_type_mismatch = "allow"
-# following can be allowed only for prototyping - ordered by complexity
+# pedantic = { priority = -1, level = "deny" }
+# nursery = { priority = -1, level = "deny" }
+# restriction = { priority = -1, level = "deny" }
 
-# Easy/Quick fixes
-derivable_impls = "deny"
-cast_lossless = "deny"
-use_self = "deny"
-unused_self = "deny"
-unused_trait_names = "deny"
-unwrap_or_default = "deny"
-str_to_string = "deny"
-unseparated_literal_suffix = "deny"
+# # cargo clippy 2>&1 | grep https://rust-lang.github.io/rust-clippy/master/index.html | sed 's/^.*#//' | sort | uniq | xargs -I % echo '% = "allow"' >> Cargo.toml
+# blanket_clippy_restriction_lints = "allow"
+# exhaustive_structs = "allow"
+# filetype_is_file = "allow"
+# float_arithmetic = "allow"
+# implicit_return = "allow"
+# min_ident_chars = "allow"
+# missing_docs_in_private_items = "allow"
+# print_stdout = "allow"
+# pub_use = "allow"
+# question_mark_used = "allow"
+# self_named_module_files = "allow"
+# shadow_reuse = "allow"
+# single_call_fn = "allow"
+# separated_literal_suffix = "allow"
 
-# Medium complexity
-uninlined_format_args = "deny"
-use_debug = "deny"
-default_numeric_fallback = "deny"
-std_instead_of_core = "deny"
-module_name_repetitions = "deny"
-cast_possible_wrap = "deny"
-cast_precision_loss = "deny"
-option_if_let_else = "deny"
-wildcard_enum_match_arm = "allow"
+# pattern_type_mismatch = "allow"
+# # following can be allowed only for prototyping - ordered by complexity
 
-# Hard/Complex
-iter_over_hash_type = "deny"
-arithmetic_side_effects = "deny"
-integer_division = "deny"
-integer_division_remainder_used = "deny"
-indexing_slicing = "deny"
-expect_used = "deny"
-as_conversions = "deny"
-exhaustive_enums = "deny"
+# # Easy/Quick fixes
+# derivable_impls = "deny"
+# cast_lossless = "deny"
+# use_self = "deny"
+# unused_self = "deny"
+# unused_trait_names = "deny"
+# unwrap_or_default = "deny"
+# str_to_string = "deny"
+# unseparated_literal_suffix = "deny"
 
-# Very complex/structural
-missing_const_for_fn = "allow"
-missing_inline_in_public_items = "allow"
-too_many_lines = "allow"
-arbitrary_source_item_ordering = "allow"
+# # Medium complexity
+# uninlined_format_args = "deny"
+# use_debug = "deny"
+# default_numeric_fallback = "deny"
+# std_instead_of_core = "deny"
+# module_name_repetitions = "deny"
+# cast_possible_wrap = "deny"
+# cast_precision_loss = "deny"
+# option_if_let_else = "deny"
+# wildcard_enum_match_arm = "allow"
+
+# # Hard/Complex
+# iter_over_hash_type = "deny"
+# arithmetic_side_effects = "deny"
+# integer_division = "deny"
+# integer_division_remainder_used = "deny"
+# indexing_slicing = "deny"
+# expect_used = "deny"
+# as_conversions = "deny"
+# exhaustive_enums = "deny"
+
+# # Very complex/structural
+# missing_const_for_fn = "allow"
+# missing_inline_in_public_items = "allow"
+# too_many_lines = "allow"
+# arbitrary_source_item_ordering = "allow"

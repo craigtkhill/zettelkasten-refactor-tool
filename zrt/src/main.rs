@@ -3,6 +3,7 @@
 mod cli;
 mod core;
 mod models;
+mod settings;
 mod utils;
 
 use anyhow::Result;

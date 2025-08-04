@@ -1,29 +1,29 @@
 //! Integration tests for CLI command execution and ML functionality
-//! 
+//!
 //! These tests aim to improve test coverage by exercising the actual CLI
 //! command paths, especially the ML model validation and tag suggestion features.
 
 #[cfg(test)]
 mod tests {
-    use tempfile::TempDir;
+    use anyhow::Result;
     use std::fs;
     use std::path::PathBuf;
-    use anyhow::Result;
+    use tempfile::TempDir;
 
     #[cfg(feature = "tagging")]
     use zrt_tagging::{
+        Settings,
         extraction::{NoteData, TrainingData},
         prediction::Prediction,
-        Settings,
     };
 
-    use crate::cli::{
-        extract_frontmatter_content,
-        parse_tags_from_frontmatter,
-        run_init,
-    };
+    use crate::cli::{extract_frontmatter_content, parse_tags_from_frontmatter, run_init};
 
-    fn create_test_markdown_file(dir: &std::path::Path, filename: &str, content: &str) -> Result<PathBuf> {
+    fn create_test_markdown_file(
+        dir: &std::path::Path,
+        filename: &str,
+        content: &str,
+    ) -> Result<PathBuf> {
         let file_path = dir.join(filename);
         fs::write(&file_path, content)?;
         Ok(file_path)
@@ -31,32 +31,32 @@ mod tests {
 
     #[test]
     fn test_run_init_creates_directory() -> Result<()> {
-        let temp_dir = TempDir::new()?; 
+        let temp_dir = TempDir::new()?;
         let old_dir = std::env::current_dir()?;
-        
+
         // Change to temp directory
         std::env::set_current_dir(temp_dir.path())?;
-        
+
         // Run init
         let result = run_init();
-        
+
         // Check results while still in temp directory
         let zrt_exists = std::path::Path::new(".zrt").exists();
         let models_exists = std::path::Path::new(".zrt/models").exists();
-        
+
         #[cfg(feature = "tagging")]
         let config_exists = std::path::Path::new(".zrt/config.toml").exists();
-        
+
         // Restore directory
         std::env::set_current_dir(old_dir)?;
-        
+
         assert!(result.is_ok());
         assert!(zrt_exists);
         assert!(models_exists);
-        
+
         #[cfg(feature = "tagging")]
         assert!(config_exists);
-        
+
         Ok(())
     }
 
@@ -64,22 +64,22 @@ mod tests {
     fn test_run_init_already_exists() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let old_dir = std::env::current_dir()?;
-        
+
         // Create .zrt directory first
         fs::create_dir_all(temp_dir.path().join(".zrt"))?;
-        
+
         // Change to temp directory
         std::env::set_current_dir(temp_dir.path())?;
-        
+
         // Run init
         let result = run_init();
-        
+
         // Restore directory
         std::env::set_current_dir(old_dir)?;
-        
+
         // Should succeed but not overwrite
         assert!(result.is_ok());
-        
+
         Ok(())
     }
 
@@ -203,13 +203,13 @@ mod tests {
         create_test_markdown_file(
             temp_dir.path(),
             "test1.md",
-            "---\ntags: [ml, ai]\n---\nMachine learning content"
+            "---\ntags: [ml, ai]\n---\nMachine learning content",
         )?;
 
         create_test_markdown_file(
             temp_dir.path(),
             "test2.md",
-            "---\ntags: [rust]\n---\nRust programming content"
+            "---\ntags: [rust]\n---\nRust programming content",
         )?;
 
         // Create a non-markdown file (should be filtered out)
@@ -219,7 +219,7 @@ mod tests {
         create_test_markdown_file(
             temp_dir.path(),
             ".hidden.md",
-            "---\ntags: [hidden]\n---\nHidden content"
+            "---\ntags: [hidden]\n---\nHidden content",
         )?;
 
         // Create a subdirectory with files
@@ -228,7 +228,7 @@ mod tests {
         create_test_markdown_file(
             &subdir,
             "nested.md",
-            "---\ntags: [nested]\n---\nNested content"
+            "---\ntags: [nested]\n---\nNested content",
         )?;
 
         // Test the file filtering logic by simulating the directory walking
@@ -266,11 +266,31 @@ mod tests {
         // Should find 3 markdown files (test1.md, test2.md, subdir/nested.md)
         // but exclude .hidden.md and README.txt
         assert_eq!(markdown_files.len(), 3);
-        assert!(markdown_files.iter().any(|p| p.file_name().unwrap() == "test1.md"));
-        assert!(markdown_files.iter().any(|p| p.file_name().unwrap() == "test2.md"));
-        assert!(markdown_files.iter().any(|p| p.file_name().unwrap() == "nested.md"));
-        assert!(!markdown_files.iter().any(|p| p.file_name().unwrap() == ".hidden.md"));
-        assert!(!markdown_files.iter().any(|p| p.file_name().unwrap() == "README.txt"));
+        assert!(
+            markdown_files
+                .iter()
+                .any(|p| p.file_name().unwrap() == "test1.md")
+        );
+        assert!(
+            markdown_files
+                .iter()
+                .any(|p| p.file_name().unwrap() == "test2.md")
+        );
+        assert!(
+            markdown_files
+                .iter()
+                .any(|p| p.file_name().unwrap() == "nested.md")
+        );
+        assert!(
+            !markdown_files
+                .iter()
+                .any(|p| p.file_name().unwrap() == ".hidden.md")
+        );
+        assert!(
+            !markdown_files
+                .iter()
+                .any(|p| p.file_name().unwrap() == "README.txt")
+        );
 
         Ok(())
     }
@@ -294,7 +314,10 @@ mod tests {
                 NoteData {
                     path: "note3.md".to_owned(),
                     content: "Programming tutorial".to_owned(),
-                    tags: ["programming", "tutorial"].iter().map(|s| s.to_string()).collect(),
+                    tags: ["programming", "tutorial"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
                 },
             ],
             all_tags: ["ml", "ai", "research", "programming", "tutorial"]
@@ -313,15 +336,21 @@ mod tests {
         for note in &validation_data.notes {
             // Mock predictions for testing
             let mock_predictions = vec![
-                Prediction { tag: "ai".to_owned(), confidence: 0.9 },
-                Prediction { tag: "programming".to_owned(), confidence: 0.8 },
+                Prediction {
+                    tag: "ai".to_owned(),
+                    confidence: 0.9,
+                },
+                Prediction {
+                    tag: "programming".to_owned(),
+                    confidence: 0.8,
+                },
             ];
 
             // Test the safety-critical arithmetic from validate_model_performance
             total_predicted_tags = total_predicted_tags
                 .checked_add(mock_predictions.len())
                 .unwrap_or(total_predicted_tags);
-            
+
             total_actual_tags = total_actual_tags
                 .checked_add(note.tags.len())
                 .unwrap_or(total_actual_tags);
@@ -333,7 +362,7 @@ mod tests {
                         .checked_add(1_i32)
                         .unwrap_or(correct_predictions);
                 }
-                total_predictions = total_predictions  
+                total_predictions = total_predictions
                     .checked_add(1_i32)
                     .unwrap_or(total_predictions);
             }
@@ -361,7 +390,7 @@ mod tests {
 
         // Verify arithmetic results are reasonable
         assert_eq!(total_predicted_tags, 6); // 2 predictions per note × 3 notes
-        assert_eq!(total_actual_tags, 6);   // 2 tags per note × 3 notes  
+        assert_eq!(total_actual_tags, 6); // 2 tags per note × 3 notes  
         assert!(overall_precision >= 0.0 && overall_precision <= 1.0);
         assert!(overall_recall >= 0.0 && overall_recall <= 1.0);
         assert!(f1_score >= 0.0 && f1_score <= 1.0);
@@ -373,7 +402,7 @@ mod tests {
         let safe_precision = if zero_predicted > 0_usize {
             f64::from(correct_predictions) / f64::from(total_predictions)
         } else {
-            0.0_f64  // Should use this fallback
+            0.0_f64 // Should use this fallback
         };
         assert_eq!(safe_precision, 0.0);
 
@@ -381,7 +410,7 @@ mod tests {
             f64::from(correct_predictions)
                 / f64::from(u32::try_from(zero_actual).unwrap_or(u32::MAX))
         } else {
-            0.0_f64  // Should use this fallback
+            0.0_f64 // Should use this fallback
         };
         assert_eq!(safe_recall, 0.0);
 
@@ -397,12 +426,23 @@ mod tests {
         let mut count_at_k = [0_i32; 3];
 
         // Mock data
-        let note_tags: std::collections::HashSet<String> = 
-            ["ml", "ai", "research"].iter().map(|s| s.to_string()).collect();
+        let note_tags: std::collections::HashSet<String> = ["ml", "ai", "research"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
         let mock_predictions = vec![
-            Prediction { tag: "ai".to_owned(), confidence: 0.9 },
-            Prediction { tag: "programming".to_owned(), confidence: 0.8 },
-            Prediction { tag: "ml".to_owned(), confidence: 0.7 },
+            Prediction {
+                tag: "ai".to_owned(),
+                confidence: 0.9,
+            },
+            Prediction {
+                tag: "programming".to_owned(),
+                confidence: 0.8,
+            },
+            Prediction {
+                tag: "ml".to_owned(),
+                confidence: 0.7,
+            },
         ];
 
         // Test the bounds-checked array access pattern from validate_model_performance
@@ -469,7 +509,7 @@ mod tests {
             // Process actual tags (deterministic iteration)
             let mut sorted_actual: Vec<_> = actual_tags.iter().collect();
             sorted_actual.sort_unstable();
-            
+
             for &tag in sorted_actual {
                 let metrics = tag_stats.entry(tag.to_owned()).or_default();
                 metrics.actual_count = metrics
@@ -500,7 +540,8 @@ mod tests {
 
         // Test the precision/recall calculation patterns
         for (_tag, metrics) in &tag_stats {
-            if metrics.actual_count >= 3 { // Same filter as actual code
+            if metrics.actual_count >= 3 {
+                // Same filter as actual code
                 let precision = if metrics
                     .true_positives
                     .checked_add(metrics.false_positives)

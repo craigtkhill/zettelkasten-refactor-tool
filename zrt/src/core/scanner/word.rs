@@ -7,7 +7,7 @@ use walkdir::WalkDir;
 
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
-use crate::models::{FileWordCount, WordCountStats};
+use crate::models::{FileMetrics, FileWordCount, WordCountStats};
 use crate::utils::parse_frontmatter;
 
 /// Calculates word count statistics for files with and without a specific tag.
@@ -160,6 +160,111 @@ pub fn count_words(
     }
 
     files.sort_by(|a, b| b.words.cmp(&a.words));
+    Ok(files)
+}
+
+/// Counts words and lines in files, optionally filtering by thresholds and tags.
+///
+/// # Arguments
+///
+/// * `dir` - The directory path to scan
+/// * `exclude_dirs` - A list of directory names to exclude from the scan
+/// * `filter_tags` - A list of tags to exclude files containing these tags
+/// * `thresholds` - Optional (word_threshold, line_threshold) to filter results
+///
+/// # Returns
+///
+/// * `Ok(Vec<FileMetrics>)` - A vector of file metrics with word counts, line counts, and tags
+///
+/// # Errors
+///
+/// This function may return an error if:
+/// * The directory cannot be accessed or read
+/// * File system operations fail during traversal
+/// * Files cannot be read as UTF-8 text
+/// * The ignore patterns file cannot be parsed
+/// * Frontmatter parsing fails
+#[inline]
+pub fn count_file_metrics(
+    dir: &PathBuf,
+    exclude_dirs: &[&str],
+    filter_tags: &[&str],
+    thresholds: Option<(usize, usize)>,
+) -> Result<Vec<FileMetrics>> {
+    let absolute_dir = if dir.is_absolute() {
+        dir.clone()
+    } else {
+        env::current_dir()?.join(dir)
+    };
+
+    let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+    let mut files = Vec::new();
+
+    for entry in WalkDir::new(&absolute_dir)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
+    {
+        let entry = entry?;
+        if !entry.file_type().is_file() {
+            continue;
+        }
+
+        let path = entry.path();
+        if let Ok(content) = fs::read_to_string(path) {
+            let mut file_tags = Vec::new();
+            let content_without_frontmatter: String;
+
+            // Parse frontmatter and extract tags
+            if let Ok(frontmatter) = parse_frontmatter(&content) {
+                if let Some(tags) = frontmatter.tags {
+                    file_tags = tags;
+                }
+
+                // Remove frontmatter from content for accurate word/line counting
+                let lines: Vec<&str> = content.lines().collect();
+                if lines.len() > 2 && lines.first().is_some_and(|line| *line == "---") {
+                    if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
+                        content_without_frontmatter =
+                            lines.get(end_index.saturating_add(2)..).map_or_else(
+                                || content.clone(),
+                                |content_slice| content_slice.join("\n"),
+                            );
+                    } else {
+                        content_without_frontmatter = content.clone();
+                    }
+                } else {
+                    content_without_frontmatter = content.clone();
+                }
+            } else {
+                content_without_frontmatter = content.clone();
+            }
+
+            // Skip files that contain any of the filtered tags
+            if !filter_tags.is_empty()
+                && file_tags
+                    .iter()
+                    .any(|tag| filter_tags.contains(&tag.as_str()))
+            {
+                continue;
+            }
+
+            let word_count = content_without_frontmatter.split_whitespace().count();
+            let line_count = content_without_frontmatter.lines().count();
+
+            let metrics = FileMetrics::new(path.to_path_buf(), word_count, line_count, file_tags);
+
+            // If thresholds are provided, only include files that exceed them
+            if let Some((word_threshold, line_threshold)) = thresholds {
+                if metrics.exceeds_thresholds(word_threshold, line_threshold) {
+                    files.push(metrics);
+                }
+            } else {
+                files.push(metrics);
+            }
+        }
+    }
+
     Ok(files)
 }
 
