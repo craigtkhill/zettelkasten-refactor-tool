@@ -98,7 +98,7 @@ impl Predictor {
 
             // Note: This is a basic seed setting. For full determinism, you'd need
             // to control the ML framework's random state as well.
-            println!("Using random seed: {}", seed);
+            println!("Using random seed: {seed}");
         }
 
         println!("Starting training with {} notes", training_data.notes.len());

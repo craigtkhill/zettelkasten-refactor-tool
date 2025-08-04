@@ -57,7 +57,7 @@ impl EmbeddingKnnPredictor {
         for (path, content, tags) in notes {
             let embedding = embedding_model
                 .embed(content)
-                .with_context(|| format!("Failed to embed note: {}", path))?;
+                .with_context(|| format!("Failed to embed note: {path}"))?;
 
             self.embedded_notes.push(EmbeddedNote {
                 path: path.clone(),

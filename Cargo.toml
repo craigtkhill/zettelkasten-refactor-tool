@@ -53,7 +53,7 @@ str_to_string = "deny"
 unseparated_literal_suffix = "deny"
 
 # Medium complexity
-uninlined_format_args = "allow"
+uninlined_format_args = "deny"
 use_debug = "allow"
 default_numeric_fallback = "allow"
 std_instead_of_core = "allow"

@@ -125,11 +125,11 @@ impl EmbeddingCache {
                 results.push(cached.clone());
             } else {
                 // Need to compute new embedding
-                println!("Computing embedding for: {}", file_path);
+                println!("Computing embedding for: {file_path}");
                 let embedding = self
                     .embedding_model
                     .embed(content)
-                    .with_context(|| format!("Failed to embed file: {}", file_path))?;
+                    .with_context(|| format!("Failed to embed file: {file_path}"))?;
 
                 let mtime = Self::get_file_mtime(Path::new(file_path)).unwrap_or(0);
                 let tags_vec: Vec<String> = tags.iter().cloned().collect();

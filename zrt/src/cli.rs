@@ -781,9 +781,9 @@ fn validate_model_performance(
 
     // Print results
     println!("\n=== Overall Performance ===");
-    println!("Precision: {:.3}", overall_precision);
-    println!("Recall: {:.3}", overall_recall);
-    println!("F1 Score: {:.3}", f1_score);
+    println!("Precision: {overall_precision:.3}");
+    println!("Recall: {overall_recall:.3}");
+    println!("F1 Score: {f1_score:.3}");
 
     println!("\n=== Precision@K ===");
     for (i, &k) in k_values.iter().enumerate() {
@@ -825,18 +825,12 @@ fn validate_model_performance(
 
     println!("\n=== Top Performing Tags ===");
     for (tag, f1, precision, recall, count) in tag_performance.iter().take(5) {
-        println!(
-            "{}: F1={:.3}, P={:.3}, R={:.3} (n={})",
-            tag, f1, precision, recall, count
-        );
+        println!("{tag}: F1={f1:.3}, P={precision:.3}, R={recall:.3} (n={count})");
     }
 
     println!("\n=== Bottom Performing Tags ===");
     for (tag, f1, precision, recall, count) in tag_performance.iter().rev().take(5) {
-        println!(
-            "{}: F1={:.3}, P={:.3}, R={:.3} (n={})",
-            tag, f1, precision, recall, count
-        );
+        println!("{tag}: F1={f1:.3}, P={precision:.3}, R={recall:.3} (n={count})");
     }
 
     Ok(())
