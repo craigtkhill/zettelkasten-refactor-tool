@@ -693,7 +693,6 @@ struct TagMetrics {
     true_positives: usize,
 }
 
-
 #[cfg(feature = "tagging")]
 fn validate_model_performance(
     predictor: &zrt_tagging::UnifiedPredictor,
@@ -755,9 +754,7 @@ fn validate_model_performance(
         // Count false positives
         for prediction in &predictions {
             if !note.tags.contains(&prediction.tag) {
-                let metrics = tag_stats
-                    .entry(prediction.tag.clone())
-                    .or_default();
+                let metrics = tag_stats.entry(prediction.tag.clone()).or_default();
                 metrics.false_positives += 1;
             }
         }

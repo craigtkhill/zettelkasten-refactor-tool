@@ -34,7 +34,7 @@ watch = ["*/src/", "tests/"]
 on_success = "job:workspace-fmt"
 
 [jobs.workspace-fmt]
-command = ["cargo", "fmt", "--workspace"]
+command = ["cargo", "fmt"]
 need_stdout = false
 watch = ["*/src/", "tests/"]
 

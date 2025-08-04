@@ -235,30 +235,6 @@ mod tests {
     use crate::extraction::{NoteData, TrainingData};
     use std::collections::HashSet;
 
-    // Mock embedding model for testing (avoids downloading real model)
-    struct MockEmbeddingModel;
-
-    impl MockEmbeddingModel {
-        fn embed(&self, text: &str) -> Result<Vec<f32>> {
-            // Create a simple hash-based embedding for testing
-            let mut embedding = vec![0.0; 10]; // 10-dimensional embeddings for tests
-
-            // Simple hash function based on text content
-            let hash = text.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
-
-            for (i, val) in embedding.iter_mut().enumerate() {
-                let component_hash = hash.wrapping_add(i as u32);
-                *val = (component_hash % 1000) as f32 / 1000.0; // Normalize to [0, 1]
-            }
-
-            Ok(embedding)
-        }
-
-        const fn embedding_dim() -> usize {
-            10
-        }
-    }
-
     fn create_mock_training_data() -> TrainingData {
         let mut training_data = TrainingData::new();
 

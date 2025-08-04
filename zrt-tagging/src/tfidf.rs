@@ -239,7 +239,6 @@ mod tests {
 
     #[test]
     fn test_tokenize() {
-        let predictor = TfIdfPredictor::new();
         let tokens = TfIdfPredictor::tokenize("Hello, world! This is a test.");
         assert_eq!(tokens, vec!["hello", "world", "this", "is", "test"]);
     }
@@ -278,8 +277,6 @@ mod tests {
 
     #[test]
     fn test_cosine_similarity() {
-        let predictor = TfIdfPredictor::new();
-
         let mut vec1 = HashMap::new();
         vec1.insert("hello".to_string(), 1.0);
         vec1.insert("world".to_string(), 1.0);
