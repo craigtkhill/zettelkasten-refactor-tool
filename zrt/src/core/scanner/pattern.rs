@@ -52,7 +52,7 @@ pub fn scan_directory_single(dir: &PathBuf, pattern: &str) -> Result<SinglePatte
         stats.total_files = stats.total_files.saturating_add(1);
 
         let path = entry.path();
-        if contains_tag(path, pattern)? {
+        if let Ok(true) = contains_tag(path, pattern) {
             stats.files_with_pattern = stats.files_with_pattern.saturating_add(1);
         }
     }
@@ -103,7 +103,7 @@ pub fn scan_directory_only_tag(dir: &PathBuf, tag: &str) -> Result<SinglePattern
         stats.total_files = stats.total_files.saturating_add(1);
 
         let path = entry.path();
-        if has_only_tag(path, tag)? {
+        if let Ok(true) = has_only_tag(path, tag) {
             stats.files_with_pattern = stats.files_with_pattern.saturating_add(1);
             matching_files.push(path.to_path_buf()); // Add this line
         }
@@ -165,10 +165,10 @@ pub fn scan_directory_two(
         stats.total = stats.total.saturating_add(1);
 
         let path = entry.path();
-        if contains_tag(path, done_tag)? {
+        if let Ok(true) = contains_tag(path, done_tag) {
             stats.done = stats.done.saturating_add(1);
         }
-        if contains_tag(path, todo_tag)? {
+        if let Ok(true) = contains_tag(path, todo_tag) {
             stats.todo = stats.todo.saturating_add(1);
         }
     }
@@ -245,6 +245,56 @@ mod tests {
         assert_eq!(
             stats.files_with_pattern, 1,
             "Should find 1 file with only 'refactored' tag"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scan_directory_only_tag_with_non_utf8_files() -> Result<()> {
+        let dir = setup_test_directory()?;
+        
+        // Add files with various tag combinations
+        create_test_file(
+            &dir,
+            "only_refactored.md",
+            "---\ntags: [refactored]\n---\nContent",
+        )?;
+        
+        // Create a binary file with invalid UTF-8 bytes
+        let binary_path = dir.path().join("binary.md");
+        std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
+        
+        // This should not panic and should skip the non-UTF-8 file
+        let stats = scan_directory_only_tag(&dir.path().to_path_buf(), "refactored")?;
+        
+        assert_eq!(stats.total_files, 6, "Should count all files including non-UTF-8"); // 4 original + 2 new
+        assert_eq!(
+            stats.files_with_pattern, 1,
+            "Should find 1 file with only 'refactored' tag, skipping non-UTF-8"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scan_directory_single_with_non_utf8_files() -> Result<()> {
+        let dir = setup_test_directory()?;
+        
+        // Add files with specific tags
+        create_test_file(&dir, "todo1.md", "---\ntags: [todo]\n---\nItem one")?;
+        
+        // Create a binary file with invalid UTF-8 bytes
+        let binary_path = dir.path().join("binary.md");
+        std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
+        
+        // This should not panic and should skip the non-UTF-8 file
+        let stats = scan_directory_single(&dir.path().to_path_buf(), "todo")?;
+        
+        assert_eq!(stats.total_files, 6, "Should count all files including non-UTF-8"); // 4 original + 2 new
+        assert_eq!(
+            stats.files_with_pattern, 1,
+            "Should find 1 file with 'todo' tag, skipping non-UTF-8"
         );
 
         Ok(())

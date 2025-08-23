@@ -326,4 +326,29 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_non_utf8_files_are_skipped() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        
+        // Create a valid UTF-8 markdown file
+        create_test_file(&temp_dir, "valid.md", "---\ntags: [test]\n---\nValid content")?;
+        
+        // Create a binary file with invalid UTF-8 bytes
+        let binary_path = temp_dir.path().join("binary.md");
+        std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
+        
+        // These functions should not panic and should skip the invalid UTF-8 file
+        let word_stats = count_word_stats(&temp_dir.path().to_path_buf(), &[], "test")?;
+        assert_eq!(word_stats.total_files, 1, "Should only count UTF-8 files");
+        assert_eq!(word_stats.tagged_files, 1, "Should find the tagged UTF-8 file");
+        
+        let word_counts = count_words(&temp_dir.path().to_path_buf(), &[], None)?;
+        assert_eq!(word_counts.len(), 1, "Should only process UTF-8 files");
+        
+        let file_metrics = count_file_metrics(&temp_dir.path().to_path_buf(), &[], &[], None)?;
+        assert_eq!(file_metrics.len(), 1, "Should only process UTF-8 files");
+        
+        Ok(())
+    }
 }

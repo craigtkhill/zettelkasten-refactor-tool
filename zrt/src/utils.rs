@@ -322,4 +322,22 @@ Content";
 
         Ok(())
     }
+
+    #[test]
+    fn test_non_utf8_files_return_false() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        
+        // Create a binary file with invalid UTF-8 bytes
+        let binary_path = temp_dir.path().join("binary.md");
+        std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
+        
+        // These functions should not panic and should return false for non-UTF-8 files
+        let contains_result = contains_tag(&binary_path, "test");
+        assert!(contains_result.is_err(), "Should return error for non-UTF-8 file");
+        
+        let has_only_result = has_only_tag(&binary_path, "test");
+        assert!(has_only_result.is_err(), "Should return error for non-UTF-8 file");
+        
+        Ok(())
+    }
 }
