@@ -317,9 +317,18 @@ fn run_init() -> Result<()> {
     std::fs::create_dir_all(zrt_dir)?;
     std::fs::create_dir_all(zrt_dir.join("models"))?;
 
-    // Create config with both refactor and tagging settings
-    let config = ZrtConfig::default();
-    config.save_to_file(&zrt_dir.join("config.toml"))?;
+    // Create config with ML tagging settings
+    #[cfg(feature = "tagging")]
+    {
+        let config = zrt_tagging::Settings::default();
+        config.save_to_file(&zrt_dir.join("config.toml"))?;
+    }
+    
+    #[cfg(not(feature = "tagging"))]
+    {
+        let config = ZrtConfig::default();
+        config.save_to_file(&zrt_dir.join("config.toml"))?;
+    }
 
     println!("Initialized ZRT directory at .zrt/");
     println!("Created default configuration at .zrt/config.toml");
