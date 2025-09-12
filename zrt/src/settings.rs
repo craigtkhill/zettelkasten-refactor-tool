@@ -42,8 +42,8 @@ impl Default for RefactorConfig {
     #[inline]
     fn default() -> Self {
         Self {
-            word_threshold: 250,
-            line_threshold: 30,
+            word_threshold: 300,
+            line_threshold: 60,
             max_suggestions: 20,
             exclude_tags: Vec::new(), // Empty by default
             sort_by: SortBy::Words,

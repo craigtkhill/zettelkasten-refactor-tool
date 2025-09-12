@@ -317,22 +317,20 @@ fn run_init() -> Result<()> {
     std::fs::create_dir_all(zrt_dir)?;
     std::fs::create_dir_all(zrt_dir.join("models"))?;
 
-    // Create config with ML tagging settings
+    // Create config with both refactor and tagging settings
+    let config = ZrtConfig::default();
+    config.save_to_file(&zrt_dir.join("config.toml"))?;
+    
     #[cfg(feature = "tagging")]
     {
-        let config = zrt_tagging::Settings::default();
-        config.save_to_file(&zrt_dir.join("config.toml"))?;
-    }
-    
-    #[cfg(not(feature = "tagging"))]
-    {
-        let config = ZrtConfig::default();
-        config.save_to_file(&zrt_dir.join("config.toml"))?;
+        // Also create ML tagging config in flat format for tag commands
+        let ml_config = zrt_tagging::Settings::default();
+        ml_config.save_to_file(&zrt_dir.join("ml_config.toml"))?;
     }
 
     println!("Initialized ZRT directory at .zrt/");
     println!("Created default configuration at .zrt/config.toml");
-    println!("  - Refactor thresholds: 250+ words, 30+ lines");
+    println!("  - Refactor thresholds: 300+ words, 60+ lines");
 
     #[cfg(feature = "tagging")]
     println!("  - Tagging configuration included");
@@ -350,12 +348,15 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
         } => {
             println!("Training model with data from: {}", directory.display());
 
-            // Load configuration
-            let config_path = std::path::Path::new(".zrt/config.toml");
-            let mut settings = if config_path.exists() {
-                zrt_tagging::Settings::load_from_file(config_path)?
+            // Load configuration - try ML config first, fall back to main config
+            let ml_config_path = std::path::Path::new(".zrt/ml_config.toml");
+            let main_config_path = std::path::Path::new(".zrt/config.toml");
+            let mut settings = if ml_config_path.exists() {
+                zrt_tagging::Settings::load_from_file(ml_config_path)?
+            } else if main_config_path.exists() {
+                zrt_tagging::Settings::load_from_file(main_config_path)?
             } else {
-                println!("No config found at .zrt/config.toml, using defaults");
+                println!("No config found, using defaults");
                 zrt_tagging::Settings::default()
             };
 
@@ -401,12 +402,15 @@ fn run_tag_command(command: TagCommands) -> Result<()> {
             top,
             exclude_tags,
         } => {
-            // Load configuration
-            let config_path = std::path::Path::new(".zrt/config.toml");
-            let mut settings = if config_path.exists() {
-                zrt_tagging::Settings::load_from_file(config_path)?
+            // Load configuration - try ML config first, fall back to main config
+            let ml_config_path = std::path::Path::new(".zrt/ml_config.toml");
+            let main_config_path = std::path::Path::new(".zrt/config.toml");
+            let mut settings = if ml_config_path.exists() {
+                zrt_tagging::Settings::load_from_file(ml_config_path)?
+            } else if main_config_path.exists() {
+                zrt_tagging::Settings::load_from_file(main_config_path)?
             } else {
-                println!("No config found at .zrt/config.toml, using defaults");
+                println!("No config found, using defaults");
                 zrt_tagging::Settings::default()
             };
 
