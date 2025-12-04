@@ -12,7 +12,7 @@
     clippy::arbitrary_source_item_ordering,
     reason = "Development: logical grouping over alphabetical"
 )]
-use anyhow::{Context as _, Result};
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -48,9 +48,9 @@ pub enum Commands {
 
     /// Show word count statistics for files with a specific tag
     Stats {
-        /// Directory to scan (defaults to current directory)
-        #[arg(short = 'd', long = "dir", default_value = ".")]
-        directory: PathBuf,
+        /// Directories to scan (space-separated, defaults to current directory)
+        #[arg(short = 'd', long = "dir", num_args = 0.., default_values = &["."])]
+        directories: Vec<PathBuf>,
 
         /// Tag to analyze
         tag: String,
@@ -194,12 +194,12 @@ pub fn run(args: Args) -> Result<()> {
             Ok(())
         }
         Commands::Stats {
-            directory,
+            directories,
             tag,
             exclude,
         } => {
             let exclude_dirs: Vec<&str> = exclude.split(',').collect();
-            let stats = count_word_stats(&directory, &exclude_dirs, &tag)?;
+            let stats = count_word_stats(&directories, &exclude_dirs, &tag)?;
 
             println!("Files with tag '{}': {}", tag, stats.tagged_files);
             println!("Words in tagged files: {}", stats.tagged_words);

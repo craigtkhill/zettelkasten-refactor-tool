@@ -17,7 +17,10 @@ mod tests {
         prediction::Prediction,
     };
 
-    use crate::cli::{extract_frontmatter_content, parse_tags_from_frontmatter, run_init};
+    use crate::cli::run_init;
+
+    #[cfg(feature = "tagging")]
+    use crate::cli::{extract_frontmatter_content, parse_tags_from_frontmatter};
 
     fn create_test_markdown_file(
         dir: &std::path::Path,

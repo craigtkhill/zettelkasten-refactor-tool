@@ -126,8 +126,8 @@ mod tests {
     fn test_refactor_config_default() {
         let config = RefactorConfig::default();
 
-        assert_eq!(config.word_threshold, 250);
-        assert_eq!(config.line_threshold, 30);
+        assert_eq!(config.word_threshold, 300);
+        assert_eq!(config.line_threshold, 60);
         assert_eq!(config.max_suggestions, 20);
         assert!(config.exclude_tags.is_empty());
         assert!(matches!(config.sort_by, SortBy::Words));
@@ -137,8 +137,8 @@ mod tests {
     fn test_zrt_config_default() {
         let config = ZrtConfig::default();
 
-        assert_eq!(config.refactor.word_threshold, 250);
-        assert_eq!(config.refactor.line_threshold, 30);
+        assert_eq!(config.refactor.word_threshold, 300);
+        assert_eq!(config.refactor.line_threshold, 60);
 
         #[cfg(feature = "tagging")]
         assert!(config.tagging.is_some());
@@ -179,7 +179,7 @@ mod tests {
     fn test_config_load_or_default() {
         // This should return default since .zrt/config.toml likely doesn't exist in test env
         let config = ZrtConfig::load_or_default();
-        assert_eq!(config.refactor.word_threshold, 250);
+        assert_eq!(config.refactor.word_threshold, 300);
     }
 
     #[test]
