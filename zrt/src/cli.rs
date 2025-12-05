@@ -63,9 +63,9 @@ pub enum Commands {
     /// Show files ordered by word count (alias: wc)
     #[command(alias = "wc")]
     Wordcount {
-        /// Directory to scan (defaults to current directory)
-        #[arg(short = 'd', long = "dir", default_value = ".")]
-        directory: PathBuf,
+        /// Directories to scan (space-separated, defaults to current directory)
+        #[arg(short = 'd', long = "dir", num_args = 0.., default_values = &["."])]
+        directories: Vec<PathBuf>,
 
         /// Filter out files containing these tags (space-separated)
         #[arg(short = 'f', long = "filter", num_args = 0..)]
@@ -212,7 +212,7 @@ pub fn run(args: Args) -> Result<()> {
             Ok(())
         }
         Commands::Wordcount {
-            directory,
+            directories,
             filter_out,
             top,
             exclude,
@@ -229,7 +229,7 @@ pub fn run(args: Args) -> Result<()> {
                 let sort_preference = sort_by.unwrap_or(config.refactor.sort_by);
 
                 let metrics = count_file_metrics(
-                    &directory,
+                    &directories,
                     &exclude_dirs,
                     &filter_tags,
                     Some((
@@ -249,7 +249,7 @@ pub fn run(args: Args) -> Result<()> {
                 );
             } else {
                 let files = count_words(
-                    &directory,
+                    &directories,
                     &exclude_dirs,
                     if filter_tags.is_empty() {
                         None
