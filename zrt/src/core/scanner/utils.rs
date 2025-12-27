@@ -1,5 +1,17 @@
 use crate::core::ignore::Patterns;
-use crate::utils::is_hidden;
+
+/// Checks if a directory entry is hidden (starts with '.' except for temp directories)
+#[inline]
+#[must_use]
+pub fn is_hidden(entry: &walkdir::DirEntry) -> bool {
+    entry.file_name().to_str().is_some_and(|s| {
+        // Don't consider temp directories as hidden
+        if s.starts_with(".tmp") {
+            return false;
+        }
+        s.starts_with('.')
+    })
+}
 
 /// Determines if a directory entry should be excluded from processing based on
 /// multiple criteria including:
@@ -49,6 +61,46 @@ mod tests {
     use crate::core::scanner::test_utils::setup_test_directory;
     use anyhow::Result;
     use walkdir::WalkDir;
+
+    #[test]
+    fn test_is_hidden() -> Result<()> {
+        use std::fs::File;
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new()?;
+
+        // Create test files
+        File::create(temp_dir.path().join(".hidden"))?;
+        File::create(temp_dir.path().join(".tmp_file"))?;
+        File::create(temp_dir.path().join("normal.txt"))?;
+
+        // Test each file using WalkDir
+        let mut entries: Vec<_> = WalkDir::new(temp_dir.path())
+            .into_iter()
+            .filter_map(core::result::Result::ok)
+            .collect();
+        entries.sort_by_key(|e| e.path().to_path_buf());
+
+        // Test hidden file
+        let hidden = entries.iter().find(|e| e.file_name() == ".hidden").unwrap();
+        assert!(is_hidden(hidden));
+
+        // Test temp file
+        let temp = entries
+            .iter()
+            .find(|e| e.file_name() == ".tmp_file")
+            .unwrap();
+        assert!(!is_hidden(temp));
+
+        // Test normal file
+        let normal = entries
+            .iter()
+            .find(|e| e.file_name() == "normal.txt")
+            .unwrap();
+        assert!(!is_hidden(normal));
+
+        Ok(())
+    }
 
     #[test]
     fn test_should_exclude() -> Result<()> {

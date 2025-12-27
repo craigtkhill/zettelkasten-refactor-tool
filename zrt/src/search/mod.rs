@@ -4,9 +4,9 @@ use anyhow::Result;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
+use crate::core::frontmatter::parse_frontmatter;
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
-use crate::utils::parse_frontmatter;
 
 // ============================================
 // TESTS

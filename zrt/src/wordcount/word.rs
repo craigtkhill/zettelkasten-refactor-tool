@@ -4,10 +4,9 @@ use std::fs;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-use crate::core::frontmatter::strip_frontmatter;
+use crate::core::frontmatter::{parse_frontmatter, strip_frontmatter};
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
-use crate::utils::parse_frontmatter;
 use crate::wordcount::models::{FileMetrics, FileWordCount, WordCountStats};
 
 /// Calculates word count statistics for files with and without a specific tag.
