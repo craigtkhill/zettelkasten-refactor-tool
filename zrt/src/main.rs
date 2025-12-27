@@ -7,6 +7,7 @@ mod init;
 mod models;
 mod search;
 mod utils;
+mod wordcount;
 
 use anyhow::Result;
 use clap::Parser as _;

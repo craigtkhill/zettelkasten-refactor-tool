@@ -1,11 +1,7 @@
 // src/cli.rs
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
 
-use crate::core::scanner::{count_file_metrics, count_words};
-use crate::init::{SortBy, ZrtConfig};
-use crate::utils::{print_file_metrics, print_top_files};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -21,31 +17,7 @@ pub enum Commands {
 
     /// Show files ordered by word count (alias: wc)
     #[command(alias = "wc")]
-    Wordcount {
-        /// Directories to scan (space-separated, defaults to current directory)
-        #[arg(short = 'd', long = "dir", num_args = 0.., default_values = &["."])]
-        directories: Vec<PathBuf>,
-
-        /// Filter out files containing these tags (space-separated)
-        #[arg(short = 'f', long = "filter", num_args = 0..)]
-        filter_out: Vec<String>,
-
-        /// Number of files to show
-        #[arg(short = 'n', long = "num", default_value = "10")]
-        top: usize,
-
-        /// Directories to exclude (space-separated)
-        #[arg(short, long, num_args = 0.., default_values = &[".git"])]
-        exclude: Vec<String>,
-
-        /// Only show files exceeding configured thresholds
-        #[arg(long)]
-        exceeds: bool,
-
-        /// Sort by words or lines (overrides config)
-        #[arg(long, value_enum)]
-        sort_by: Option<SortBy>,
-    },
+    Wordcount(crate::wordcount::cli::WordcountArgs),
 
     /// Search for files by tag criteria
     Search(crate::search::cli::SearchArgs),
@@ -58,82 +30,9 @@ pub enum Commands {
 pub fn run(args: Args) -> Result<()> {
     match args.command {
         Commands::Init(args) => crate::init::cli::run(args),
-        Commands::Wordcount {
-            directories,
-            filter_out,
-            top,
-            exclude,
-            exceeds,
-            sort_by,
-        } => {
-            let exclude_dirs: Vec<&str> = exclude.iter().map(String::as_str).collect();
-            let filter_tags: Vec<&str> = filter_out.iter().map(String::as_str).collect();
-
-            if exceeds {
-                let config = ZrtConfig::load_or_default();
-                let sort_preference = sort_by.unwrap_or(config.refactor.sort_by);
-
-                let metrics = count_file_metrics(
-                    &directories,
-                    &exclude_dirs,
-                    &filter_tags,
-                    Some((
-                        config.refactor.word_threshold,
-                        config.refactor.line_threshold,
-                    )),
-                )?;
-
-                print_file_metrics(
-                    &metrics,
-                    top,
-                    sort_preference,
-                    Some((
-                        config.refactor.word_threshold,
-                        config.refactor.line_threshold,
-                    )),
-                );
-            } else {
-                let files = count_words(
-                    &directories,
-                    &exclude_dirs,
-                    if filter_tags.is_empty() {
-                        None
-                    } else {
-                        Some(filter_tags[0])
-                    },
-                )?;
-                print_top_files(&files, top);
-            }
-
-            Ok(())
-        }
+        Commands::Wordcount(args) => crate::wordcount::cli::run(args),
         Commands::Search(args) => crate::search::cli::run(args),
         Commands::Count(args) => crate::count::cli::run(args),
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_wordcount_command_parsing() {
-        let args = Args::parse_from(["program", "wordcount", "-n", "5"]);
-        if let Commands::Wordcount { top, .. } = args.command {
-            assert_eq!(top, 5);
-        } else {
-            panic!("Expected Wordcount command");
-        }
-    }
-
-    #[test]
-    fn test_wordcount_alias_parsing() {
-        let args = Args::parse_from(["program", "wc", "-n", "5", "--exceeds"]);
-        if let Commands::Wordcount { top, exceeds, .. } = args.command {
-            assert_eq!(top, 5);
-            assert!(exceeds);
-        } else {
-            panic!("Expected Wordcount command");
-        }
-    }
-}

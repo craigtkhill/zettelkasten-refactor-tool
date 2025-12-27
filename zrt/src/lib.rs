@@ -11,6 +11,7 @@ pub mod init;
 pub mod models;
 pub mod search;
 pub mod utils;
+pub mod wordcount;
 
 pub use core::ignore::{Patterns, load_ignore_patterns};
 pub use core::scanner::{
