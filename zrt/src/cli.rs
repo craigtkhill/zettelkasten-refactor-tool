@@ -12,16 +12,19 @@ pub struct Args {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Initialize ZRT configuration
+    #[command(alias = "i")]
     Init(crate::init::cli::InitArgs),
 
-    /// Show files ordered by word count (alias: wc)
+    /// Show files ordered by word count
     #[command(alias = "wc")]
     Wordcount(crate::wordcount::cli::WordcountArgs),
 
     /// Search for files by tag criteria
+    #[command(alias = "s")]
     Search(crate::search::cli::SearchArgs),
 
     /// Count files, words, or calculate percentage by tags
+    #[command(alias = "c")]
     Count(crate::count::cli::CountArgs),
 }
 
