@@ -187,9 +187,15 @@ pub fn count_files(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Result<
     let mut count = 0;
 
     for dir in dirs {
-        let ignore_patterns = load_ignore_patterns(dir)?;
+        let absolute_dir = if dir.is_absolute() {
+            dir.clone()
+        } else {
+            std::env::current_dir()?.join(dir)
+        };
 
-        for entry in WalkDir::new(dir)
+        let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+
+        for entry in WalkDir::new(&absolute_dir)
             .follow_links(true)
             .into_iter()
             .filter_entry(|e| !should_exclude(e, exclude, Some(&ignore_patterns)))
@@ -206,11 +212,13 @@ pub fn count_files(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Result<
             }
 
             // Check if file has any of the specified tags
-            let content = std::fs::read_to_string(entry.path())?;
-            if let Ok(frontmatter) = parse_frontmatter(&content) {
-                if let Some(file_tags) = frontmatter.tags {
-                    if tags.iter().any(|tag| file_tags.iter().any(|ft| ft == tag)) {
-                        count += 1;
+            // Skip files that can't be read (binary files, permission issues, etc.)
+            if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                if let Ok(frontmatter) = parse_frontmatter(&content) {
+                    if let Some(file_tags) = frontmatter.tags {
+                        if tags.iter().any(|tag| file_tags.iter().any(|ft| ft == tag)) {
+                            count += 1;
+                        }
                     }
                 }
             }
@@ -225,9 +233,15 @@ pub fn count_words(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Result<
     let mut total_words = 0;
 
     for dir in dirs {
-        let ignore_patterns = load_ignore_patterns(dir)?;
+        let absolute_dir = if dir.is_absolute() {
+            dir.clone()
+        } else {
+            std::env::current_dir()?.join(dir)
+        };
 
-        for entry in WalkDir::new(dir)
+        let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+
+        for entry in WalkDir::new(&absolute_dir)
             .follow_links(true)
             .into_iter()
             .filter_entry(|e| !should_exclude(e, exclude, Some(&ignore_patterns)))
@@ -237,22 +251,24 @@ pub fn count_words(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Result<
                 continue;
             }
 
-            let content = std::fs::read_to_string(entry.path())?;
-            let body = strip_frontmatter(&content);
+            // Skip files that can't be read (binary files, permission issues, etc.)
+            if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                let body = strip_frontmatter(&content);
 
-            // If no tags specified, count all words
-            if tags.is_empty() {
-                let words = body.split_whitespace().count();
-                total_words += words;
-                continue;
-            }
+                // If no tags specified, count all words
+                if tags.is_empty() {
+                    let words = body.split_whitespace().count();
+                    total_words += words;
+                    continue;
+                }
 
-            // Check if file has any of the specified tags
-            if let Ok(frontmatter) = parse_frontmatter(&content) {
-                if let Some(file_tags) = frontmatter.tags {
-                    if tags.iter().any(|tag| file_tags.iter().any(|ft| ft == tag)) {
-                        let words = body.split_whitespace().count();
-                        total_words += words;
+                // Check if file has any of the specified tags
+                if let Ok(frontmatter) = parse_frontmatter(&content) {
+                    if let Some(file_tags) = frontmatter.tags {
+                        if tags.iter().any(|tag| file_tags.iter().any(|ft| ft == tag)) {
+                            let words = body.split_whitespace().count();
+                            total_words += words;
+                        }
                     }
                 }
             }

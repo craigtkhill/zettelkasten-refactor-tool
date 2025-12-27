@@ -129,6 +129,16 @@ mod tests {
         assert_eq!(files.len(), 1);
         Ok(())
     }
+
+    #[test]
+    fn test_yaml_list_format() -> Result<()> {
+        let dir = TempDir::new()?;
+        create_test_file(&dir, "file.md", "---\ntags:\n  - refactored\n---\nContent")?;
+
+        let files = search_exactly(&[dir.path().to_path_buf()], &["refactored"], &[])?;
+        assert_eq!(files.len(), 1, "Should find file with YAML list format tags");
+        Ok(())
+    }
 }
 
 // ============================================
@@ -144,9 +154,15 @@ pub fn search_exactly(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Resu
     let mut matching_files = Vec::new();
 
     for dir in dirs {
-        let ignore_patterns = load_ignore_patterns(dir)?;
+        let absolute_dir = if dir.is_absolute() {
+            dir.clone()
+        } else {
+            std::env::current_dir()?.join(dir)
+        };
 
-        for entry in WalkDir::new(dir)
+        let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
+
+        for entry in WalkDir::new(&absolute_dir)
             .follow_links(true)
             .into_iter()
             .filter_entry(|e| !should_exclude(e, exclude, Some(&ignore_patterns)))
@@ -156,14 +172,14 @@ pub fn search_exactly(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Resu
                 continue;
             }
 
-            let content = std::fs::read_to_string(entry.path())?;
-            if let Ok(frontmatter) = parse_frontmatter(&content) {
-                if let Some(file_tags) = frontmatter.tags {
-                    // Check if file has exactly the specified tags
-                    if file_tags.len() == tags.len()
-                        && tags.iter().all(|tag| file_tags.contains(&tag.to_string()))
-                    {
-                        matching_files.push(entry.path().display().to_string());
+            if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                if let Ok(frontmatter) = parse_frontmatter(&content) {
+                    if let Some(file_tags) = frontmatter.tags {
+                        if file_tags.len() == tags.len()
+                            && tags.iter().all(|tag| file_tags.contains(&tag.to_string()))
+                        {
+                            matching_files.push(entry.path().display().to_string());
+                        }
                     }
                 }
             }
