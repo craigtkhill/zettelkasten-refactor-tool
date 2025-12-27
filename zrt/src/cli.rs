@@ -17,8 +17,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 use crate::core::scanner::{
-    count_file_metrics, count_files, count_word_stats, count_words, scan_directory_only_tag,
-    scan_directory_single, scan_directory_two,
+    count_file_metrics, count_word_stats, count_words, scan_directory_only_tag,
 };
 use crate::settings::{SortBy, ZrtConfig};
 use crate::utils::{print_file_metrics, print_top_files};
@@ -34,17 +33,6 @@ pub struct Args {
 pub enum Commands {
     /// Initialize ZRT configuration
     Init,
-
-    /// Count files in directory
-    Count {
-        /// Directory to scan (defaults to current directory)
-        #[arg(short = 'd', long = "dir", default_value = ".")]
-        directory: PathBuf,
-
-        /// Directories to exclude (comma-separated)
-        #[arg(short, long, default_value = ".git")]
-        exclude: String,
-    },
 
     /// Show word count statistics for files with a specific tag
     Stats {
@@ -88,29 +76,6 @@ pub enum Commands {
         sort_by: Option<SortBy>,
     },
 
-    /// Search for files with a specific pattern/tag
-    Search {
-        /// Directory to scan (defaults to current directory)
-        #[arg(short = 'd', long = "dir", default_value = ".")]
-        directory: PathBuf,
-
-        /// Pattern to search for
-        pattern: String,
-    },
-
-    /// Compare two tags
-    Compare {
-        /// Directory to scan (defaults to current directory)
-        #[arg(short = 'd', long = "dir", default_value = ".")]
-        directory: PathBuf,
-
-        /// First tag (done)
-        done_tag: String,
-
-        /// Second tag (todo)
-        todo_tag: String,
-    },
-
     /// Show files that have only a specific tag
     Only {
         /// Directories to scan (space-separated, defaults to current directory)
@@ -126,12 +91,6 @@ pub enum Commands {
 pub fn run(args: Args) -> Result<()> {
     match args.command {
         Commands::Init => run_init(),
-        Commands::Count { directory, exclude } => {
-            let exclude_dirs: Vec<&str> = exclude.split(',').collect();
-            let count = count_files(&directory, &exclude_dirs)?;
-            println!("{count}");
-            Ok(())
-        }
         Commands::Stats {
             directories,
             tag,
@@ -199,27 +158,6 @@ pub fn run(args: Args) -> Result<()> {
 
             Ok(())
         }
-        Commands::Search { directory, pattern } => {
-            let stats = scan_directory_single(&directory, &pattern)?;
-            println!("Total files: {}", stats.total_files);
-            println!(
-                "Files with pattern '{}': {}",
-                pattern, stats.files_with_pattern
-            );
-            println!("Percentage: {:.2}%", stats.calculate_percentage());
-            Ok(())
-        }
-        Commands::Compare {
-            directory,
-            done_tag,
-            todo_tag,
-        } => {
-            let stats = scan_directory_two(&directory, &done_tag, &todo_tag)?;
-            println!("{} files: {}", done_tag, stats.done);
-            println!("{} files: {}", todo_tag, stats.todo);
-            println!("Done percentage: {:.2}%", stats.calculate_percentage());
-            Ok(())
-        }
         Commands::Only { directories, tag } => {
             let stats = scan_directory_only_tag(&directories, &tag)?;
             println!("Total files: {}", stats.total_files);
@@ -264,16 +202,6 @@ mod tests {
     fn test_init_command_parsing() {
         let args = Args::parse_from(["program", "init"]);
         matches!(args.command, Commands::Init);
-    }
-
-    #[test]
-    fn test_count_command_parsing() {
-        let args = Args::parse_from(["program", "count", "-d", "test"]);
-        if let Commands::Count { directory, .. } = args.command {
-            assert_eq!(directory, PathBuf::from("test"));
-        } else {
-            panic!("Expected Count command");
-        }
     }
 
     #[test]

@@ -37,10 +37,10 @@ pub mod utils;
 // Re-export main types and functions for convenience
 pub use core::ignore::{Patterns, load_ignore_patterns};
 pub use core::scanner::{
-    count_file_metrics, count_files, count_words, scan_directory_single, scan_directory_two,
+    count_file_metrics, count_words, scan_directory_only_tag,
 };
 pub use models::{
-    ComparisonStats, FileMetrics, FileWordCount, Frontmatter, SinglePatternStats, WordCountStats,
+    FileMetrics, FileWordCount, Frontmatter, SinglePatternStats, WordCountStats,
 };
 pub use settings::{RefactorConfig, SortBy, ZrtConfig};
 pub use utils::{contains_tag, is_hidden, parse_frontmatter, print_file_metrics, print_top_files};

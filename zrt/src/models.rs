@@ -1,12 +1,10 @@
 // models.rs
-mod comparison_stats;
 mod file_metrics;
 mod file_word_count;
 mod frontmatter;
 mod single_pattern_stats;
 mod word_count_stats;
 
-pub use comparison_stats::ComparisonStats;
 pub use file_metrics::FileMetrics;
 pub use file_word_count::FileWordCount;
 pub use frontmatter::Frontmatter;
