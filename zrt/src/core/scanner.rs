@@ -1,6 +1,6 @@
 // src/core/scanner.rs
 pub mod pattern;
-mod utils;
+pub mod utils;
 pub mod word;
 
 #[cfg(test)]

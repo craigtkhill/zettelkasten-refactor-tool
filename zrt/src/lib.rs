@@ -6,6 +6,7 @@
 
 pub mod cli;
 pub mod core;
+pub mod count;
 pub mod init;
 pub mod models;
 pub mod utils;

@@ -72,6 +72,9 @@ pub enum Commands {
         /// Tag to filter by
         tag: String,
     },
+
+    /// Count files, words, or calculate percentage by tags
+    Count(crate::count::cli::CountArgs),
 }
 
 #[inline]
@@ -155,6 +158,7 @@ pub fn run(args: Args) -> Result<()> {
             println!("Percentage: {:.2}%", stats.calculate_percentage());
             Ok(())
         }
+        Commands::Count(args) => crate::count::cli::run(args),
     }
 }
 
@@ -182,5 +186,4 @@ mod tests {
             panic!("Expected Wordcount command");
         }
     }
-
 }

@@ -2,6 +2,7 @@
 
 mod cli;
 mod core;
+mod count;
 mod init;
 mod models;
 mod utils;
