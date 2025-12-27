@@ -10,18 +10,16 @@ mod tests {
     #[test]
     fn test_file_metrics_new() {
         let path = PathBuf::from("test.md");
-        let tags = vec!["tag1".to_owned(), "tag2".to_owned()];
-        let metrics = FileMetrics::new(path.clone(), 100, 20, tags.clone());
+        let metrics = FileMetrics::new(path.clone(), 100, 20);
 
         assert_eq!(metrics.path, path);
         assert_eq!(metrics.words, 100);
         assert_eq!(metrics.lines, 20);
-        assert_eq!(metrics.tags, tags);
     }
 
     #[test]
     fn test_exceeds_thresholds() {
-        let metrics = FileMetrics::new(PathBuf::from("test.md"), 100, 20, vec![]);
+        let metrics = FileMetrics::new(PathBuf::from("test.md"), 100, 20);
 
         assert!(metrics.exceeds_thresholds(50, 10)); // Both exceeded
         assert!(metrics.exceeds_thresholds(50, 30)); // Words exceeded
@@ -32,7 +30,7 @@ mod tests {
 
     #[test]
     fn test_conversion_to_file_word_count() {
-        let metrics = FileMetrics::new(PathBuf::from("test.md"), 150, 25, vec!["draft".to_owned()]);
+        let metrics = FileMetrics::new(PathBuf::from("test.md"), 150, 25);
 
         let word_count: FileWordCount = metrics.into();
         assert_eq!(word_count.path, PathBuf::from("test.md"));
@@ -49,7 +47,6 @@ pub struct FileMetrics {
     pub path: PathBuf,
     pub words: usize,
     pub lines: usize,
-    pub tags: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -65,12 +62,11 @@ pub struct FileWordCount {
 impl FileMetrics {
     #[inline]
     #[must_use]
-    pub fn new(path: PathBuf, words: usize, lines: usize, tags: Vec<String>) -> Self {
+    pub fn new(path: PathBuf, words: usize, lines: usize) -> Self {
         Self {
             path,
             words,
             lines,
-            tags,
         }
     }
 

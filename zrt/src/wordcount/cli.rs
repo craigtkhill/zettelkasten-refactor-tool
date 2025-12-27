@@ -111,15 +111,7 @@ pub fn run(args: WordcountArgs) -> Result<()> {
             )),
         )?;
 
-        print_file_metrics(
-            &metrics,
-            args.top,
-            sort_preference,
-            Some((
-                config.refactor.word_threshold,
-                config.refactor.line_threshold,
-            )),
-        );
+        print_file_metrics(&metrics, args.top, sort_preference);
     } else {
         let files = count_words(
             &args.directories,

@@ -187,7 +187,7 @@ pub fn count_file_metrics(
                 let word_count = content_without_frontmatter.split_whitespace().count();
                 let line_count = content_without_frontmatter.lines().count();
 
-                let metrics = FileMetrics::new(path.to_path_buf(), word_count, line_count, file_tags);
+                let metrics = FileMetrics::new(path.to_path_buf(), word_count, line_count);
 
                 // If thresholds are provided, only include files that exceed them
                 if let Some((word_threshold, line_threshold)) = thresholds {

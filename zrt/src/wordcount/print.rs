@@ -39,12 +39,7 @@ pub fn print_top_files(files: &[FileWordCount], top: usize) {
 }
 
 #[inline]
-pub fn print_file_metrics(
-    files: &[FileMetrics],
-    top: usize,
-    sort_by: SortBy,
-    thresholds: Option<(usize, usize)>,
-) {
+pub fn print_file_metrics(files: &[FileMetrics], top: usize, sort_by: SortBy) {
     let mut sorted_files = files.to_vec();
 
     // Sort by the specified criteria
@@ -57,27 +52,8 @@ pub fn print_file_metrics(
         }
     }
 
-    // Print header with thresholds if provided
-    if let Some((word_threshold, line_threshold)) = thresholds {
-        println!(
-            "Files exceeding size thresholds ({word_threshold}+ words, {line_threshold}+ lines):"
-        );
-    }
-
-    // Print files with their metrics
+    // Print files (just paths)
     for file in sorted_files.iter().take(top) {
-        let tags_display = if file.tags.is_empty() {
-            String::new()
-        } else {
-            format!(" [{}]", file.tags.join(", "))
-        };
-
-        println!(
-            "{:8} words  {:4} lines  {}{}",
-            file.words,
-            file.lines,
-            file.path.display(),
-            tags_display
-        );
+        println!("{}", file.path.display());
     }
 }
