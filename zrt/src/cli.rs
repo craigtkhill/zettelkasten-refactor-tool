@@ -1,17 +1,4 @@
 // src/cli.rs
-#![allow(clippy::absolute_paths, reason = "Development: std:: paths are clear")]
-#![allow(
-    clippy::semicolon_outside_block,
-    reason = "Development: formatting preference"
-)]
-#![allow(
-    clippy::unnecessary_wraps,
-    reason = "Development: consistency with future error handling"
-)]
-#![allow(
-    clippy::arbitrary_source_item_ordering,
-    reason = "Development: logical grouping over alphabetical"
-)]
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;

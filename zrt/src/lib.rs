@@ -4,37 +4,12 @@
 //! Provides functionality for scanning directories, counting files and words,
 //! and tracking refactoring progress through front matter tags.
 
-#![allow(
-    clippy::multiple_crate_versions,
-    reason = "ML dependencies have complex version requirements"
-)]
-// Development phase allows - will be removed before release
-#![allow(clippy::absolute_paths, reason = "Development: std:: paths are clear")]
-#![allow(
-    clippy::exhaustive_enums,
-    reason = "Development: CLI enums are internal"
-)]
-#![allow(
-    clippy::missing_errors_doc,
-    reason = "Development: docs will be completed"
-)]
-#![allow(
-    clippy::unnecessary_wraps,
-    reason = "Development: error handling consistency"
-)]
-#![allow(
-    clippy::semicolon_outside_block,
-    reason = "Development: formatting preference"
-)]
-
-// Declare all modules
 pub mod cli;
 pub mod core;
 pub mod init;
 pub mod models;
 pub mod utils;
 
-// Re-export main types and functions for convenience
 pub use core::ignore::{Patterns, load_ignore_patterns};
 pub use core::scanner::{
     count_file_metrics, count_words, scan_directory_only_tag,

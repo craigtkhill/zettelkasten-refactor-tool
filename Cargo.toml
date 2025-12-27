@@ -19,7 +19,6 @@ complexity = { priority = -1, level = "deny" }
 perf = { priority = -1, level = "deny" }
 cargo = { priority = -1, level = "deny" }
 style = { priority = -1, level = "deny" }
-multiple_crate_versions = "allow"
 # pedantic = { priority = -1, level = "deny" }
 # nursery = { priority = -1, level = "deny" }
 # restriction = { priority = -1, level = "deny" }
