@@ -139,9 +139,6 @@ mod tests {
 
         assert_eq!(config.refactor.word_threshold, 300);
         assert_eq!(config.refactor.line_threshold, 60);
-
-        #[cfg(feature = "tagging")]
-        assert!(config.tagging.is_some());
     }
 
     #[test]

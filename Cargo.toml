@@ -1,5 +1,5 @@
 [workspace]
-members = ["zrt", "zrt-tagging"]
+members = ["zrt"]
 resolver = "2"
 
 [workspace.dependencies]
