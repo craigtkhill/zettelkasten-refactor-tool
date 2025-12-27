@@ -62,8 +62,6 @@ mod tests {
 
         assert_eq!(config.word_threshold, 300);
         assert_eq!(config.line_threshold, 60);
-        assert_eq!(config.max_suggestions, 20);
-        assert!(config.exclude_tags.is_empty());
         assert!(matches!(config.sort_by, SortBy::Words));
     }
 
@@ -82,26 +80,12 @@ mod tests {
 
         let mut config = ZrtConfig::default();
         config.refactor.word_threshold = 500;
-        config.refactor.exclude_tags = vec!["draft".to_owned(), "private".to_owned()];
 
         config.save_to_file(&config_path)?;
 
         let loaded_config = ZrtConfig::load_from_file(&config_path)?;
 
         assert_eq!(loaded_config.refactor.word_threshold, 500);
-        assert_eq!(loaded_config.refactor.exclude_tags.len(), 2);
-        assert!(
-            loaded_config
-                .refactor
-                .exclude_tags
-                .contains(&"draft".to_owned())
-        );
-        assert!(
-            loaded_config
-                .refactor
-                .exclude_tags
-                .contains(&"private".to_owned())
-        );
 
         Ok(())
     }
@@ -144,8 +128,6 @@ pub struct ZrtConfig {
 pub struct RefactorConfig {
     pub word_threshold: usize,
     pub line_threshold: usize,
-    pub max_suggestions: usize,
-    pub exclude_tags: Vec<String>,
     pub sort_by: SortBy,
 }
 
@@ -174,8 +156,6 @@ impl Default for RefactorConfig {
         Self {
             word_threshold: 300,
             line_threshold: 60,
-            max_suggestions: 20,
-            exclude_tags: Vec::new(),
             sort_by: SortBy::Words,
         }
     }

@@ -34,8 +34,6 @@ Format: `[IS-TEST-IMPLEMENTED][IS-CODE-IMPLEMENTED] IDENTIFIER: example case`
 ### Configuration Defaults
 - [U][X] REQ-INIT-011: Sets default word_threshold to 300
 - [U][X] REQ-INIT-012: Sets default line_threshold to 60
-- [U][X] REQ-INIT-013: Sets default max_suggestions to 20
-- [U][X] REQ-INIT-014: Sets default exclude_tags to empty list
 - [U][X] REQ-INIT-015: Sets default sort_by to Words
 
 ### Configuration Serialization
