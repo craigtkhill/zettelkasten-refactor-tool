@@ -13,27 +13,6 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-# RustRover
-.idea/
-
 # MacOS
 .DS_Store
 
-# Tarpaulin coverage files
-*.profraw
-tarpaulin-report.html
-cobertura.xml
-coverage/
-
-# Mutation testing files
-mutants.out/
-mutation-report.html
-mutations.json
-html/
-
-# AI
-CLAUDE.md
-.claude/
-
-# ZRT test artifacts
-.zrt/
