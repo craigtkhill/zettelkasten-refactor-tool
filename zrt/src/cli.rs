@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use crate::core::scanner::{
     count_file_metrics, count_word_stats, count_words, scan_directory_only_tag,
 };
-use crate::settings::{SortBy, ZrtConfig};
+use crate::init::{SortBy, ZrtConfig};
 use crate::utils::{print_file_metrics, print_top_files};
 
 #[derive(Parser, Debug)]

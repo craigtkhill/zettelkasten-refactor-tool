@@ -32,7 +32,6 @@ pub mod cli;
 pub mod core;
 pub mod init;
 pub mod models;
-pub mod settings;
 pub mod utils;
 
 // Re-export main types and functions for convenience
@@ -43,5 +42,5 @@ pub use core::scanner::{
 pub use models::{
     FileMetrics, FileWordCount, Frontmatter, SinglePatternStats, WordCountStats,
 };
-pub use settings::{RefactorConfig, SortBy, ZrtConfig};
+pub use init::{RefactorConfig, SortBy, ZrtConfig};
 pub use utils::{contains_tag, is_hidden, parse_frontmatter, print_file_metrics, print_top_files};
