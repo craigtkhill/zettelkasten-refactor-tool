@@ -34,7 +34,7 @@ mod tests {
 #[inline]
 pub fn print_top_files(files: &[FileWordCount], top: usize) {
     for file in files.iter().take(top) {
-        println!("{:8} words  {}", file.words, file.path.display());
+        println!("{}", file.path.display());
     }
 }
 
