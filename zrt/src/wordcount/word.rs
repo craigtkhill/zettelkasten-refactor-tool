@@ -7,101 +7,7 @@ use walkdir::WalkDir;
 use crate::core::filter::utils::should_exclude;
 use crate::core::frontmatter::{parse_frontmatter, strip_frontmatter};
 use crate::core::ignore::load_ignore_patterns;
-use crate::wordcount::models::{FileMetrics, FileWordCount, WordCountStats};
-
-/// Calculates word count statistics for files with and without a specific tag.
-///
-/// # Arguments
-///
-/// * `dirs` - The directory paths to scan. If empty, defaults to current directory.
-/// * `exclude_dirs` - A list of directory names to exclude from the scan
-/// * `tag` - The tag to identify files for separate statistics
-///
-/// # Returns
-///
-/// * `Ok(WordCountStats)` - Word count statistics for tagged and untagged files
-///
-/// # Errors
-///
-/// This function may return an error if:
-/// * A directory cannot be accessed or read
-/// * File system operations fail during traversal
-/// * Files cannot be read as UTF-8 text
-/// * The ignore patterns file cannot be parsed
-/// * Frontmatter parsing fails
-#[inline]
-pub fn count_word_stats(dirs: &[PathBuf], exclude_dirs: &[&str], tag: &str) -> Result<WordCountStats> {
-    let mut stats = WordCountStats::new();
-
-    // Default to current directory if no directories specified
-    let directories: Vec<PathBuf> = if dirs.is_empty() {
-        vec![env::current_dir()?]
-    } else {
-        dirs.to_vec()
-    };
-
-    for dir in directories {
-        let absolute_dir = if dir.is_absolute() {
-            dir.clone()
-        } else {
-            env::current_dir()?.join(dir)
-        };
-
-        let ignore_patterns = load_ignore_patterns(&absolute_dir)?;
-
-        for entry in WalkDir::new(&absolute_dir)
-            .follow_links(true)
-            .into_iter()
-            .filter_entry(|e| !should_exclude(e, exclude_dirs, Some(&ignore_patterns)))
-        {
-            let entry = entry?;
-            if !entry.file_type().is_file() {
-                continue;
-            }
-
-            let path = entry.path();
-            if let Ok(content) = fs::read_to_string(path) {
-                let has_tag;
-                let content_without_frontmatter: String;
-
-                if let Ok(frontmatter) = parse_frontmatter(&content) {
-                    has_tag = frontmatter
-                        .tags
-                        .as_ref()
-                        .is_some_and(|tags| tags.iter().any(|t| t == tag));
-                    let lines: Vec<&str> = content.lines().collect();
-                    if lines.len() > 2 && lines.first().is_some_and(|line| *line == "---") {
-                        if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
-                            content_without_frontmatter =
-                                lines.get(end_index.saturating_add(2)..).map_or_else(
-                                    || content.clone(),
-                                    |content_slice| content_slice.join("\n"),
-                                );
-                        } else {
-                            content_without_frontmatter = content.clone();
-                        }
-                    } else {
-                        content_without_frontmatter = content.clone();
-                    }
-                } else {
-                    has_tag = false;
-                    content_without_frontmatter = content.clone();
-                }
-                let word_count = u32::try_from(content_without_frontmatter.split_whitespace().count())
-                    .unwrap_or(u32::MAX); // Fallback to max value if conversion fails
-                stats.total_files = stats.total_files.saturating_add(1);
-                stats.total_words = stats.total_words.saturating_add(word_count);
-
-                if has_tag {
-                    stats.tagged_files = stats.tagged_files.saturating_add(1);
-                    stats.tagged_words = stats.tagged_words.saturating_add(word_count);
-                }
-            }
-        }
-    }
-
-    Ok(stats)
-}
+use crate::wordcount::models::{FileMetrics, FileWordCount};
 
 /// Counts words in all files within one or more directories and their subdirectories.
 ///
@@ -306,42 +212,6 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
-    fn test_count_word_stats() -> Result<()> {
-        let temp_dir = TempDir::new()?;
-        create_test_file(
-            &temp_dir,
-            "file1.md",
-            "---\ntags: [refactored]\n---\nThis file has five words",
-        )?;
-        create_test_file(
-            &temp_dir,
-            "file2.md",
-            "---\ntags: [other]\n---\nThis file has four words",
-        )?;
-        create_test_file(
-            &temp_dir,
-            "file3.md",
-            "---\ntags: [refactored]\n---\nThis file has five more words",
-        )?;
-        create_test_file(&temp_dir, "file4.md", "No tags in this file")?;
-        let stats = count_word_stats(&[temp_dir.path().to_path_buf()], &[], "refactored")?;
-
-        assert_eq!(stats.total_files, 4, "Should count all 4 files");
-        assert_eq!(
-            stats.tagged_files, 2,
-            "Should find 2 files with 'refactored' tag"
-        );
-        assert_eq!(stats.tagged_words, 11, "Tagged files have 11 words total"); // Updated to 11
-        assert_eq!(stats.total_words, 21, "All files have 21 words total"); // Updated to 21
-        assert_eq!(
-            stats.calculate_percentage(),
-            (11.0 / 21.0) * 100.0,
-            "Percentage calculation should be correct"
-        );
-        Ok(())
-    }
-
-    #[test]
     fn test_count_words() -> Result<()> {
         let dir = setup_test_directory()?;
         let files = count_words(&[dir.path().to_path_buf()], &[], None)?;
@@ -360,202 +230,21 @@ mod tests {
     #[test]
     fn test_non_utf8_files_are_skipped() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        
+
         // Create a valid UTF-8 markdown file
         create_test_file(&temp_dir, "valid.md", "---\ntags: [test]\n---\nValid content")?;
-        
+
         // Create a binary file with invalid UTF-8 bytes
         let binary_path = temp_dir.path().join("binary.md");
         std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
-        
+
         // These functions should not panic and should skip the invalid UTF-8 file
-        let word_stats = count_word_stats(&[temp_dir.path().to_path_buf()], &[], "test")?;
-        assert_eq!(word_stats.total_files, 1, "Should only count UTF-8 files");
-        assert_eq!(word_stats.tagged_files, 1, "Should find the tagged UTF-8 file");
-        
         let word_counts = count_words(&[temp_dir.path().to_path_buf()], &[], None)?;
         assert_eq!(word_counts.len(), 1, "Should only process UTF-8 files");
 
         let file_metrics = count_file_metrics(&[temp_dir.path().to_path_buf()], &[], &[], None)?;
         assert_eq!(file_metrics.len(), 1, "Should only process UTF-8 files");
-        
-        Ok(())
-    }
 
-    // REQ-STATS-MULTI-101: Total file count includes files from all specified directories
-    #[test]
-    fn test_should_count_total_files_from_multiple_directories() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(
-            &dir1,
-            "file1.md",
-            "---\ntags: [refactored]\n---\nContent one",
-        )?;
-        create_test_file(
-            &dir2,
-            "file2.md",
-            "---\ntags: [draft]\n---\nContent two",
-        )?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[], "refactored")?;
-
-        assert_eq!(stats.total_files, 2, "Should count files from both directories");
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-102: Total word count includes words from all specified directories
-    #[test]
-    fn test_should_sum_total_words_from_multiple_directories() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(
-            &dir1,
-            "file1.md",
-            "---\ntags: [refactored]\n---\nThis has four words",
-        )?;
-        create_test_file(
-            &dir2,
-            "file2.md",
-            "---\ntags: [draft]\n---\nThis has five total words",
-        )?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[], "refactored")?;
-
-        assert_eq!(stats.total_words, 9, "Should sum words from both directories");
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-103: Tagged file count includes tagged files from all specified directories
-    #[test]
-    fn test_should_count_tagged_files_from_multiple_directories() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(
-            &dir1,
-            "file1.md",
-            "---\ntags: [refactored]\n---\nContent",
-        )?;
-        create_test_file(
-            &dir2,
-            "file2.md",
-            "---\ntags: [refactored]\n---\nContent",
-        )?;
-        create_test_file(
-            &dir2,
-            "file3.md",
-            "---\ntags: [draft]\n---\nContent",
-        )?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[], "refactored")?;
-
-        assert_eq!(stats.tagged_files, 2, "Should count tagged files from both directories");
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-104: Tagged word count includes tagged words from all specified directories
-    #[test]
-    fn test_should_sum_tagged_words_from_multiple_directories() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(
-            &dir1,
-            "file1.md",
-            "---\ntags: [refactored]\n---\nFive words in this file",
-        )?;
-        create_test_file(
-            &dir2,
-            "file2.md",
-            "---\ntags: [refactored]\n---\nSix words in this one here",
-        )?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[], "refactored")?;
-
-        assert_eq!(stats.tagged_words, 11, "Should sum tagged words from both directories");
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-105: Percentage calculation uses aggregated totals
-    #[test]
-    fn test_should_calculate_percentage_from_aggregated_totals() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(
-            &dir1,
-            "file1.md",
-            "---\ntags: [refactored]\n---\nten",
-        )?;
-        create_test_file(
-            &dir2,
-            "file2.md",
-            "---\ntags: [draft]\n---\nten",
-        )?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[], "refactored")?;
-
-        assert_eq!(stats.total_words, 2);
-        assert_eq!(stats.tagged_words, 1);
-        assert_eq!(stats.calculate_percentage(), 50.0);
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-201: Each directory is scanned for markdown files
-    #[test]
-    fn test_should_scan_each_directory_for_markdown_files() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(&dir1, "file1.md", "Content")?;
-        create_test_file(&dir2, "file2.md", "Content")?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[], "test")?;
-
-        assert_eq!(stats.total_files, 2, "Should scan both directories");
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-203: Exclude patterns apply to all specified directories
-    #[test]
-    fn test_should_apply_exclude_patterns_to_all_directories() -> Result<()> {
-        let dir1 = TempDir::new()?;
-        let dir2 = TempDir::new()?;
-
-        create_test_file(&dir1, ".git/config", "Content")?;
-        create_test_file(&dir1, "file1.md", "Content")?;
-        create_test_file(&dir2, ".git/config", "Content")?;
-        create_test_file(&dir2, "file2.md", "Content")?;
-
-        let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
-        let stats = count_word_stats(&dirs, &[".git"], "test")?;
-
-        assert_eq!(stats.total_files, 2, "Should exclude .git in both directories");
-
-        Ok(())
-    }
-
-    // REQ-STATS-MULTI-003: When no directories specified, defaults to current directory
-    #[test]
-    fn test_should_default_to_current_directory_when_empty() -> Result<()> {
-        let stats = count_word_stats(&[], &[], "test")?;
-        // Should not panic and should return valid stats
-        let _ = stats.total_files;
         Ok(())
     }
 
