@@ -6,34 +6,6 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-/// Checks if a file contains a specific tag in its frontmatter.
-///
-/// # Arguments
-///
-/// * `path` - Path to the file to check
-/// * `tag` - The tag to search for
-///
-/// # Returns
-///
-/// * `Ok(bool)` - True if the file contains the tag, false otherwise
-///
-/// # Errors
-///
-/// This function may return an error if:
-/// * The file cannot be read
-/// * File system operations fail
-#[inline]
-pub fn contains_tag(path: &Path, tag: &str) -> io::Result<bool> {
-    let content = fs::read_to_string(path)?;
-
-    match parse_frontmatter(&content) {
-        Ok(frontmatter) => Ok(frontmatter
-            .tags
-            .is_some_and(|tags| tags.iter().any(|t| t == tag))),
-        Err(_) => Ok(false), // If parsing fails, assume no tags
-    }
-}
-
 /// Checks if a file contains only the specified tag and no other tags.
 ///
 /// # Arguments
@@ -268,36 +240,6 @@ mod file_tests {
     use tempfile::TempDir;
 
     #[test]
-    fn test_contains_tag() -> Result<()> {
-        let temp_dir = TempDir::new()?;
-        let file_path = temp_dir.path().join("test.md");
-        let content = "---
-tags:
-  - test_tag
----
-Content";
-
-        let mut file = File::create(&file_path)?;
-        file.write_all(content.as_bytes())?;
-
-        assert!(contains_tag(&file_path, "test_tag")?);
-        Ok(())
-    }
-
-    #[test]
-    fn test_contains_tag_no_tags() -> Result<()> {
-        let temp_dir = TempDir::new()?;
-        let file_path = temp_dir.path().join("test.md");
-        let content = "Just content, no frontmatter";
-
-        let mut file = File::create(&file_path)?;
-        file.write_all(content.as_bytes())?;
-
-        assert!(!contains_tag(&file_path, "test_tag")?);
-        Ok(())
-    }
-
-    #[test]
     fn test_has_only_tag() -> Result<()> {
         let temp_dir = TempDir::new()?;
 
@@ -326,18 +268,15 @@ Content";
     #[test]
     fn test_non_utf8_files_return_false() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        
+
         // Create a binary file with invalid UTF-8 bytes
         let binary_path = temp_dir.path().join("binary.md");
         std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
-        
-        // These functions should not panic and should return false for non-UTF-8 files
-        let contains_result = contains_tag(&binary_path, "test");
-        assert!(contains_result.is_err(), "Should return error for non-UTF-8 file");
-        
+
+        // has_only_tag should not panic and should return error for non-UTF-8 files
         let has_only_result = has_only_tag(&binary_path, "test");
         assert!(has_only_result.is_err(), "Should return error for non-UTF-8 file");
-        
+
         Ok(())
     }
 }

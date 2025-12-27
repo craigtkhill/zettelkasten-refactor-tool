@@ -18,4 +18,4 @@ pub use models::{
     FileMetrics, FileWordCount, Frontmatter, SinglePatternStats, WordCountStats,
 };
 pub use init::{RefactorConfig, SortBy, ZrtConfig};
-pub use utils::{contains_tag, is_hidden, parse_frontmatter, print_file_metrics, print_top_files};
+pub use utils::{is_hidden, parse_frontmatter, print_file_metrics, print_top_files};

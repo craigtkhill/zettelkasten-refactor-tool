@@ -10,3 +10,9 @@ module-item-order-groupings = [
     ["implementations", ["impl"]],
     ["functions", ["fn"]]
 ]
+
+# Best practice thresholds
+too-many-lines-threshold = 50  # Functions should be max 50 lines
+cognitive-complexity-threshold = 10  # Keep cognitive complexity low
+too-many-arguments-threshold = 5  # Functions should have max 5 parameters
+max-fn-params-bools = 2  # Max 2 boolean parameters
