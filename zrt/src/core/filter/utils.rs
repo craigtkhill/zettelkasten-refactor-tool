@@ -1,4 +1,4 @@
-use crate::core::ignore::Patterns;
+use crate::core::patterns::Patterns;
 
 /// Checks if a directory entry is hidden (starts with '.' except for temp directories)
 #[inline]
@@ -58,7 +58,7 @@ pub fn should_exclude(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::scanner::test_utils::setup_test_directory;
+    use crate::core::filter::test_utils::setup_test_directory;
     use anyhow::Result;
     use walkdir::WalkDir;
 

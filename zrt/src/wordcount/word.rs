@@ -4,9 +4,9 @@ use std::fs;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
+use crate::core::filter::utils::should_exclude;
 use crate::core::frontmatter::{parse_frontmatter, strip_frontmatter};
 use crate::core::ignore::load_ignore_patterns;
-use crate::core::scanner::utils::should_exclude;
 use crate::wordcount::models::{FileMetrics, FileWordCount, WordCountStats};
 
 /// Calculates word count statistics for files with and without a specific tag.
@@ -301,7 +301,7 @@ pub fn count_file_metrics(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::scanner::test_utils::{create_test_file, setup_test_directory};
+    use crate::core::filter::test_utils::{create_test_file, setup_test_directory};
     use anyhow::Result;
     use tempfile::TempDir;
 

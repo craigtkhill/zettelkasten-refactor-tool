@@ -1,4 +1,4 @@
-use crate::core::ignore::Patterns;
+use crate::core::patterns::Patterns;
 use anyhow::{Context as _, Result};
 use std::collections::HashSet;
 use std::fs;
