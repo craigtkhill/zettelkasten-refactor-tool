@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 // ============================================
 // TESTS
 // ============================================
@@ -5,6 +7,26 @@
 mod tests {
     use super::*;
 
+    // Frontmatter model tests
+    #[test]
+    fn test_frontmatter_deserialize() {
+        let yaml = "
+            tags:
+              - tag1
+              - tag2
+        ";
+        let frontmatter: Frontmatter = serde_yaml_ng::from_str(yaml).unwrap();
+        assert_eq!(frontmatter.tags.unwrap(), vec!["tag1", "tag2"]);
+    }
+
+    #[test]
+    fn test_frontmatter_no_tags() {
+        let yaml = "{}";
+        let frontmatter: Frontmatter = serde_yaml_ng::from_str(yaml).unwrap();
+        assert!(frontmatter.tags.is_none());
+    }
+
+    // Strip frontmatter tests
     #[test]
     fn test_should_return_body_when_frontmatter_present() {
         // REQ-STRIP-001
@@ -37,6 +59,11 @@ mod tests {
 // ============================================
 // TYPE DEFINITIONS
 // ============================================
+
+#[derive(Deserialize, Debug, Default)]
+pub struct Frontmatter {
+    pub tags: Option<Vec<String>>,
+}
 
 // ============================================
 // IMPLEMENTATIONS

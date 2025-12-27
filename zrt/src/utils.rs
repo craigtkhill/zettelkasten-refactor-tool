@@ -1,4 +1,4 @@
-use crate::models::Frontmatter;
+use crate::core::frontmatter::Frontmatter;
 use anyhow::{Result, anyhow};
 
 #[inline]
