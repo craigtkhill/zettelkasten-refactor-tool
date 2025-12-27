@@ -19,6 +19,15 @@ complexity = { priority = -1, level = "deny" }
 perf = { priority = -1, level = "deny" }
 cargo = { priority = -1, level = "deny" }
 style = { priority = -1, level = "deny" }
+
+# Code metrics and best practices
+too_many_lines = "warn"  # Warn if function exceeds 100 lines
+too_many_arguments = "warn"  # Warn if function has >7 parameters
+cognitive_complexity = "warn"  # Warn on overly complex functions
+struct_excessive_bools = "warn"  # Warn on structs with too many bools
+fn_params_excessive_bools = "warn"  # Warn on functions with too many bool params
+module_inception = "warn"  # Warn on module same name as parent
+
 # pedantic = { priority = -1, level = "deny" }
 # nursery = { priority = -1, level = "deny" }
 # restriction = { priority = -1, level = "deny" }
