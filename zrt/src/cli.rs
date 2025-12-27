@@ -3,9 +3,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use crate::core::scanner::{
-    count_file_metrics, count_words, scan_directory_only_tag,
-};
+use crate::core::scanner::{count_file_metrics, count_words};
 use crate::init::{SortBy, ZrtConfig};
 use crate::utils::{print_file_metrics, print_top_files};
 
@@ -49,15 +47,8 @@ pub enum Commands {
         sort_by: Option<SortBy>,
     },
 
-    /// Show files that have only a specific tag
-    Only {
-        /// Directories to scan (space-separated, defaults to current directory)
-        #[arg(short = 'd', long = "dir", num_args = 0.., default_values = &["."])]
-        directories: Vec<PathBuf>,
-
-        /// Tag to filter by
-        tag: String,
-    },
+    /// Search for files by tag criteria
+    Search(crate::search::cli::SearchArgs),
 
     /// Count files, words, or calculate percentage by tags
     Count(crate::count::cli::CountArgs),
@@ -116,16 +107,7 @@ pub fn run(args: Args) -> Result<()> {
 
             Ok(())
         }
-        Commands::Only { directories, tag } => {
-            let stats = scan_directory_only_tag(&directories, &tag)?;
-            println!("Total files: {}", stats.total_files);
-            println!(
-                "Files with only tag '{}': {}",
-                tag, stats.files_with_pattern
-            );
-            println!("Percentage: {:.2}%", stats.calculate_percentage());
-            Ok(())
-        }
+        Commands::Search(args) => crate::search::cli::run(args),
         Commands::Count(args) => crate::count::cli::run(args),
     }
 }

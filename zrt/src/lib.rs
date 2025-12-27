@@ -9,6 +9,7 @@ pub mod core;
 pub mod count;
 pub mod init;
 pub mod models;
+pub mod search;
 pub mod utils;
 
 pub use core::ignore::{Patterns, load_ignore_patterns};

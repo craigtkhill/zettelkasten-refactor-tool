@@ -5,6 +5,7 @@ mod core;
 mod count;
 mod init;
 mod models;
+mod search;
 mod utils;
 
 use anyhow::Result;
