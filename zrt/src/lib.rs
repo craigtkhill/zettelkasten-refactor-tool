@@ -30,6 +30,7 @@
 // Declare all modules
 pub mod cli;
 pub mod core;
+pub mod init;
 pub mod models;
 pub mod settings;
 pub mod utils;

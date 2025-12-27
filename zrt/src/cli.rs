@@ -90,7 +90,7 @@ pub enum Commands {
 #[inline]
 pub fn run(args: Args) -> Result<()> {
     match args.command {
-        Commands::Init => run_init(),
+        Commands::Init => crate::init::run(None),
         Commands::Stats {
             directories,
             tag,
@@ -171,37 +171,9 @@ pub fn run(args: Args) -> Result<()> {
     }
 }
 
-#[inline]
-fn run_init() -> Result<()> {
-    let zrt_dir = std::path::Path::new(".zrt");
-
-    if zrt_dir.exists() {
-        println!("ZRT directory already exists at .zrt/");
-        return Ok(());
-    }
-
-    std::fs::create_dir_all(zrt_dir)?;
-
-    // Create config with refactor settings
-    let config = ZrtConfig::default();
-    config.save_to_file(&zrt_dir.join("config.toml"))?;
-
-    println!("Initialized ZRT directory at .zrt/");
-    println!("Created default configuration at .zrt/config.toml");
-    println!("  - Refactor thresholds: 300+ words, 60+ lines");
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_init_command_parsing() {
-        let args = Args::parse_from(["program", "init"]);
-        matches!(args.command, Commands::Init);
-    }
 
     #[test]
     fn test_wordcount_command_parsing() {
