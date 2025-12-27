@@ -1,3 +1,5 @@
+pub mod cli;
+
 use anyhow::{Context as _, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
