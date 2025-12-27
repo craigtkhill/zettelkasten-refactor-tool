@@ -1,4 +1,3 @@
-// src/core/scanner.rs
 pub mod utils;
 
 #[cfg(test)]

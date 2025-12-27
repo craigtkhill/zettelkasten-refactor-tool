@@ -1,5 +1,3 @@
-// src/main.rs
-
 mod cli;
 mod core;
 mod count;

@@ -1,5 +1,3 @@
-// src/models/single_pattern_stats.rs
-
 #[derive(Debug, Default)]
 pub struct SinglePatternStats {
     pub files_with_pattern: u32,

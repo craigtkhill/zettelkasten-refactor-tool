@@ -1,5 +1,3 @@
-// src/models/file_metrics.rs
-
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]

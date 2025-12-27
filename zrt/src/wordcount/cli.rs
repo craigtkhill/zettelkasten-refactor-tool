@@ -1,4 +1,3 @@
-// src/wordcount/cli.rs
 use anyhow::Result;
 use clap::Args;
 use std::path::PathBuf;

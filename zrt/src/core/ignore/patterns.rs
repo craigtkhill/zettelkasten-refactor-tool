@@ -1,4 +1,3 @@
-// src/core/ignore/patterns.rs
 use anyhow::{Context as _, Result};
 use glob::Pattern;
 use std::path::{Path, PathBuf};

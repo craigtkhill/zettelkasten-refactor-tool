@@ -1,4 +1,3 @@
-// src/core/scanner/utils.rs
 use crate::core::ignore::Patterns;
 use crate::utils::is_hidden;
 

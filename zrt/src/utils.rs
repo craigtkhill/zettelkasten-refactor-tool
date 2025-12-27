@@ -1,4 +1,3 @@
-// src/utils.rs
 use crate::models::{FileMetrics, FileWordCount, Frontmatter};
 use crate::init::SortBy;
 use anyhow::{Result, anyhow};

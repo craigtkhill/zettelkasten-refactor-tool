@@ -1,4 +1,3 @@
-// src/core/ignore.rs
 mod loader;
 mod patterns;
 

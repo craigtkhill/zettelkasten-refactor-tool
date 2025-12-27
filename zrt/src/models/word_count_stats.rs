@@ -1,5 +1,3 @@
-// src/models/word_count_stats.rs
-
 #[derive(Debug, Default)]
 pub struct WordCountStats {
     pub tagged_files: u32,

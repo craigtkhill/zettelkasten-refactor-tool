@@ -1,4 +1,3 @@
-// src/cli.rs
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 

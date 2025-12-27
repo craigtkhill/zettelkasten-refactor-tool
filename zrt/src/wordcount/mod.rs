@@ -1,4 +1,3 @@
-// src/wordcount/mod.rs
 pub mod cli;
 pub mod word;
 

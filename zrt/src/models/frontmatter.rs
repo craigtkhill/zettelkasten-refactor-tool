@@ -1,4 +1,3 @@
-// src/models/frontmatter.rs
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Default)]

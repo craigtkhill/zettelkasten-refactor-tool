@@ -1,4 +1,3 @@
-// src/core/ignore/loader.rs
 use crate::core::ignore::Patterns;
 use anyhow::{Context as _, Result};
 use std::collections::HashSet;
