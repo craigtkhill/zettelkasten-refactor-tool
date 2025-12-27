@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 use crate::core::scanner::{
-    count_file_metrics, count_word_stats, count_words, scan_directory_only_tag,
+    count_file_metrics, count_words, scan_directory_only_tag,
 };
 use crate::init::{SortBy, ZrtConfig};
 use crate::utils::{print_file_metrics, print_top_files};
@@ -19,21 +19,7 @@ pub struct Args {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Initialize ZRT configuration
-    Init,
-
-    /// Show word count statistics for files with a specific tag
-    Stats {
-        /// Directories to scan (space-separated, defaults to current directory)
-        #[arg(short = 'd', long = "dir", num_args = 0.., default_values = &["."])]
-        directories: Vec<PathBuf>,
-
-        /// Tag to analyze
-        tag: String,
-
-        /// Directories to exclude (comma-separated)
-        #[arg(short, long, default_value = ".git")]
-        exclude: String,
-    },
+    Init(crate::init::cli::InitArgs),
 
     /// Show files ordered by word count (alias: wc)
     #[command(alias = "wc")]
@@ -80,25 +66,7 @@ pub enum Commands {
 #[inline]
 pub fn run(args: Args) -> Result<()> {
     match args.command {
-        Commands::Init => crate::init::run(None),
-        Commands::Stats {
-            directories,
-            tag,
-            exclude,
-        } => {
-            let exclude_dirs: Vec<&str> = exclude.split(',').collect();
-            let stats = count_word_stats(&directories, &exclude_dirs, &tag)?;
-
-            println!("Files with tag '{}': {}", tag, stats.tagged_files);
-            println!("Words in tagged files: {}", stats.tagged_words);
-            println!("Total files: {}", stats.total_files);
-            println!("Total words in all files: {}", stats.total_words);
-            println!(
-                "Percentage of words tagged: {:.2}%",
-                stats.calculate_percentage()
-            );
-            Ok(())
-        }
+        Commands::Init(args) => crate::init::cli::run(args),
         Commands::Wordcount {
             directories,
             filter_out,
