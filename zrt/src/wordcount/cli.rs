@@ -3,8 +3,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use crate::init::{SortBy, ZrtConfig};
-use crate::utils::{print_file_metrics, print_top_files};
-use crate::wordcount::{count_file_metrics, count_words};
+use crate::wordcount::{count_file_metrics, count_words, print_file_metrics, print_top_files};
 
 // ============================================
 // TESTS

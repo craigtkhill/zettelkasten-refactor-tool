@@ -1,38 +1,5 @@
-use crate::init::SortBy;
 use crate::models::Frontmatter;
-use crate::wordcount::models::{FileMetrics, FileWordCount};
 use anyhow::{Result, anyhow};
-use std::fs;
-use std::io;
-use std::path::Path;
-
-/// Checks if a file contains only the specified tag and no other tags.
-///
-/// # Arguments
-///
-/// * `path` - Path to the file to check
-/// * `tag` - The tag to search for as the only tag
-///
-/// # Returns
-///
-/// * `Ok(bool)` - True if the file contains only the specified tag, false otherwise
-///
-/// # Errors
-///
-/// This function may return an error if:
-/// * The file cannot be read
-/// * File system operations fail
-#[inline]
-pub fn has_only_tag(path: &Path, tag: &str) -> io::Result<bool> {
-    let content = fs::read_to_string(path)?;
-
-    match parse_frontmatter(&content) {
-        Ok(frontmatter) => frontmatter.tags.map_or(Ok(false), |tags| {
-            Ok(tags.len() == 1 && tags.contains(&tag.to_owned()))
-        }),
-        Err(_) => Ok(false),
-    }
-}
 
 #[inline]
 #[must_use]
@@ -87,61 +54,9 @@ pub fn parse_frontmatter(content: &str) -> Result<Frontmatter> {
         .map_err(|e| anyhow!("Failed to parse front matter: {}", e))
 }
 
-#[inline]
-pub fn print_top_files(files: &[FileWordCount], top: usize) {
-    for file in files.iter().take(top) {
-        println!("{:8} words  {}", file.words, file.path.display());
-    }
-}
-
-#[inline]
-pub fn print_file_metrics(
-    files: &[FileMetrics],
-    top: usize,
-    sort_by: SortBy,
-    thresholds: Option<(usize, usize)>,
-) {
-    let mut sorted_files = files.to_vec();
-
-    // Sort by the specified criteria
-    match sort_by {
-        SortBy::Words => {
-            sorted_files.sort_by(|a, b| b.words.cmp(&a.words));
-        }
-        SortBy::Lines => {
-            sorted_files.sort_by(|a, b| b.lines.cmp(&a.lines));
-        }
-    }
-
-    // Print header with thresholds if provided
-    if let Some((word_threshold, line_threshold)) = thresholds {
-        println!(
-            "Files exceeding size thresholds ({word_threshold}+ words, {line_threshold}+ lines):"
-        );
-    }
-
-    // Print files with their metrics
-    for file in sorted_files.iter().take(top) {
-        let tags_display = if file.tags.is_empty() {
-            String::new()
-        } else {
-            format!(" [{}]", file.tags.join(", "))
-        };
-
-        println!(
-            "{:8} words  {:4} lines  {}{}",
-            file.words,
-            file.lines,
-            file.path.display(),
-            tags_display
-        );
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     #[test]
     fn test_parse_frontmatter_empty_file() {
@@ -212,71 +127,5 @@ Content here";
 
             Ok(())
         }
-    }
-
-    #[test]
-    fn test_print_top_files() {
-        let files = vec![
-            FileWordCount {
-                path: PathBuf::from("test.txt"),
-                words: 100,
-            },
-            FileWordCount {
-                path: PathBuf::from("test2.txt"),
-                words: 50,
-            },
-        ];
-
-        // Here we could capture stdout to verify the output format
-        print_top_files(&files, 1);
-    }
-}
-
-#[cfg(test)]
-mod file_tests {
-    use super::*;
-    use std::fs::File;
-    use std::io::Write as _;
-    use tempfile::TempDir;
-
-    #[test]
-    fn test_has_only_tag() -> Result<()> {
-        let temp_dir = TempDir::new()?;
-
-        let single_tag_file = temp_dir.path().join("single.md");
-        let content = "---\ntags: [refactored]\n---\nContent";
-        let mut file = File::create(&single_tag_file)?;
-        file.write_all(content.as_bytes())?;
-
-        let multi_tag_file = temp_dir.path().join("multi.md");
-        let content = "---\ntags: [refactored, reviewed]\n---\nContent";
-        let mut file = File::create(&multi_tag_file)?;
-        file.write_all(content.as_bytes())?;
-
-        let no_tag_file = temp_dir.path().join("none.md");
-        let content = "Just content, no frontmatter";
-        let mut file = File::create(&no_tag_file)?;
-        file.write_all(content.as_bytes())?;
-
-        assert!(has_only_tag(&single_tag_file, "refactored")?);
-        assert!(!has_only_tag(&multi_tag_file, "refactored")?);
-        assert!(!has_only_tag(&no_tag_file, "refactored")?);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_non_utf8_files_return_false() -> Result<()> {
-        let temp_dir = TempDir::new()?;
-
-        // Create a binary file with invalid UTF-8 bytes
-        let binary_path = temp_dir.path().join("binary.md");
-        std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
-
-        // has_only_tag should not panic and should return error for non-UTF-8 files
-        let has_only_result = has_only_tag(&binary_path, "test");
-        assert!(has_only_result.is_err(), "Should return error for non-UTF-8 file");
-
-        Ok(())
     }
 }
