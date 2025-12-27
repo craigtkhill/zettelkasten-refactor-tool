@@ -7,8 +7,8 @@ use walkdir::WalkDir;
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
 use crate::core::strip_frontmatter::strip_frontmatter;
-use crate::models::{FileMetrics, FileWordCount, WordCountStats};
 use crate::utils::parse_frontmatter;
+use crate::wordcount::models::{FileMetrics, FileWordCount, WordCountStats};
 
 /// Calculates word count statistics for files with and without a specific tag.
 ///

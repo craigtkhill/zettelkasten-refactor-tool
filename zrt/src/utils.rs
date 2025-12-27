@@ -1,5 +1,6 @@
-use crate::models::{FileMetrics, FileWordCount, Frontmatter};
 use crate::init::SortBy;
+use crate::models::Frontmatter;
+use crate::wordcount::models::{FileMetrics, FileWordCount};
 use anyhow::{Result, anyhow};
 use std::fs;
 use std::io;

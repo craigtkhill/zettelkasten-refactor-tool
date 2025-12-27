@@ -14,9 +14,8 @@ pub mod utils;
 pub mod wordcount;
 
 pub use core::ignore::{Patterns, load_ignore_patterns};
+pub use models::Frontmatter;
+pub use wordcount::models::{FileMetrics, FileWordCount, WordCountStats};
 pub use wordcount::{count_file_metrics, count_words};
-pub use models::{
-    FileMetrics, FileWordCount, Frontmatter, WordCountStats,
-};
 pub use init::{RefactorConfig, SortBy, ZrtConfig};
 pub use utils::{is_hidden, parse_frontmatter, print_file_metrics, print_top_files};
