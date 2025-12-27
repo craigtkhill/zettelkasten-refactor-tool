@@ -3,6 +3,7 @@ mod core;
 mod count;
 mod init;
 mod search;
+mod similar;
 mod wordcount;
 
 use anyhow::Result;

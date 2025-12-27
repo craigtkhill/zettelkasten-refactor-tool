@@ -9,6 +9,7 @@ pub mod core;
 pub mod count;
 pub mod init;
 pub mod search;
+pub mod similar;
 pub mod wordcount;
 
 pub use core::filter::utils::is_hidden;

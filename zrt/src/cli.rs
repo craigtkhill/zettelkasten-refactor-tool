@@ -26,6 +26,10 @@ pub enum Commands {
     /// Count files, words, or calculate percentage by tags
     #[command(alias = "c")]
     Count(crate::count::cli::CountArgs),
+
+    /// Find similar notes for refactoring
+    #[command(alias = "sim")]
+    Similar(crate::similar::cli::SimilarArgs),
 }
 
 #[inline]
@@ -35,6 +39,7 @@ pub fn run(args: Args) -> Result<()> {
         Commands::Wordcount(args) => crate::wordcount::cli::run(args),
         Commands::Search(args) => crate::search::cli::run(args),
         Commands::Count(args) => crate::count::cli::run(args),
+        Commands::Similar(args) => crate::similar::cli::run(args),
     }
 }
 
