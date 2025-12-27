@@ -181,7 +181,6 @@ fn run_init() -> Result<()> {
     }
 
     std::fs::create_dir_all(zrt_dir)?;
-    std::fs::create_dir_all(zrt_dir.join("models"))?;
 
     // Create config with refactor settings
     let config = ZrtConfig::default();
