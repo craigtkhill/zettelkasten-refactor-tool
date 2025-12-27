@@ -6,6 +6,7 @@ use walkdir::WalkDir;
 
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
+use crate::core::strip_frontmatter::strip_frontmatter;
 use crate::utils::parse_frontmatter;
 
 // ============================================
@@ -218,21 +219,6 @@ pub fn count_files(dirs: &[PathBuf], tags: &[&str], exclude: &[&str]) -> Result<
     }
 
     Ok(count)
-}
-
-/// Strip frontmatter from content and return body
-fn strip_frontmatter(content: &str) -> &str {
-    if !content.starts_with("---") {
-        return content;
-    }
-
-    // Find the closing ---
-    if let Some(end) = content[3..].find("---") {
-        let body_start = 3 + end + 3; // Skip past second ---
-        return content.get(body_start..).unwrap_or("");
-    }
-
-    content
 }
 
 /// Count words in files matching tag criteria

@@ -7,6 +7,7 @@ use walkdir::WalkDir;
 
 use crate::core::ignore::load_ignore_patterns;
 use crate::core::scanner::utils::should_exclude;
+use crate::core::strip_frontmatter::strip_frontmatter;
 use crate::models::{FileMetrics, FileWordCount, WordCountStats};
 use crate::utils::parse_frontmatter;
 
@@ -170,7 +171,8 @@ pub fn count_words(
                     }
                 }
 
-                let word_count = content.split_whitespace().count();
+                let body = strip_frontmatter(&content);
+                let word_count = body.split_whitespace().count();
                 files.push(FileWordCount {
                     path: path.to_path_buf(),
                     words: word_count,
