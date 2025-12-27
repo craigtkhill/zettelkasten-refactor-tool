@@ -1,4 +1,4 @@
-// src/core/scanner/word.rs
+// src/wordcount/word.rs
 use anyhow::Result;
 use std::env;
 use std::fs;
