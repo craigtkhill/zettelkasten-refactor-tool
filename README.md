@@ -1,15 +1,14 @@
-# ZRT (Zettelkasten Refactor Tool)
+# Zettelkasten Refactor Tool
 
-ZRT is a powerful command-line tool for analyzing and managing refactoring tasks in a Zettelkasten note system. It helps you identify files that need attention, track progress through tags, and leverage machine learning to suggest appropriate tags for your notes.
+zrt is a command-line tool for analyzing and managing refactoring tasks in a Zettelkasten note system. It helps you identify files that need attention and track progress through tags.
 
 ## Features
 
-- **File Analysis**: Count and analyze markdown files with YAML frontmatter
-- **Tag-based Filtering**: Find files based on tag presence or absence
-- **Progress Tracking**: Compare completion states between different tags
-- **Word/Line Metrics**: Identify files that exceed configurable thresholds
-- **ML Tag Prediction**: Train models and get intelligent tag suggestions
-- **Flexible Configuration**: Customize thresholds, exclusions, and behavior
+- **File Analysis**: Count files and words with tag-based filtering
+- **Tag-based Search**: Find files with exact tag matches
+- **Similarity Detection**: Find similar notes for consolidation
+- **Word/Line Metrics**: Identify files exceeding thresholds
+- **Flexible Configuration**: Customize thresholds and sorting
 
 ## Installation
 
@@ -18,403 +17,208 @@ ZRT is a powerful command-line tool for analyzing and managing refactoring tasks
 ```bash
 git clone https://github.com/yourusername/zettelkasten-refactor-tool
 cd zettelkasten-refactor-tool
-cargo install --path .
+cargo install --path zrt
 ```
 
 ## Quick Start
 
-1. **Initialize ZRT in your notes directory:**
+1. **Initialize zrt in your notes directory:**
    ```bash
    zrt init
    ```
-   This creates a `.zrt/` directory with default configuration.
 
-2. **Find files needing refactoring:**
+2. **List files by word count:**
    ```bash
-   zrt wordcount -f refactored -n 20
+   zrt wc -n 20
    ```
-   Shows the top 20 files by word count that don't have the "refactored" tag.
 
-3. **Check your progress:**
+3. **Find similar notes:**
    ```bash
-   zrt stats refactored
+   zrt similar --threshold 0.6
    ```
-   Shows statistics about files with the "refactored" tag.
 
-## CLI Commands Reference
+## Commands
 
-### `zrt init`
+### `zrt init` (alias: `i`)
 
-Initialize ZRT configuration in the current directory.
+Initialize zrt configuration in the current directory.
 
 ```bash
 zrt init
 ```
 
-**What it creates:**
-- `.zrt/config.toml` - Main configuration file
-- `.zrt/models/` - Directory for ML models (if tagging enabled)
-- `.zrt/ml_config.toml` - ML-specific configuration (if tagging enabled)
+Creates `.zrt/config.toml` with default refactor thresholds (300 words, 60 lines).
 
-**Example output:**
-```
-Initialized ZRT directory at .zrt/
-Created default configuration at .zrt/config.toml
-  - Refactor thresholds: 300+ words, 60+ lines
-  - Tagging configuration included
-```
+### `zrt count` (alias: `c`)
 
-### `zrt count`
-
-Count total files in a directory with optional exclusions.
+Count files, words, or calculate percentages by tags.
 
 ```bash
-zrt count [OPTIONS]
+zrt count [OPTIONS] [TAGS...]
 ```
 
+**Flags (exactly one required):**
+- `--files` - Count files matching tags
+- `--words` - Count words in files matching tags
+- `--percentage` - Calculate percentage of words in tagged files
+
 **Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
-- `-e, --exclude <EXCLUDE>` - Directories to exclude (comma-separated, default: `.git`)
+- `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
+- `-e, --exclude <DIRS>` - Directories to exclude (space-separated)
+- `[TAGS...]` - Tags to filter by (omit to count all)
 
 **Examples:**
 ```bash
-# Count all markdown files in current directory
-zrt count
+# Count all files
+zrt count --files
 
-# Count files in specific directory, excluding multiple dirs
-zrt count -d ~/notes -e ".git,drafts,archive"
+# Count files with "refactored" tag
+zrt count --files refactored
+
+# Count words in files with "draft" or "wip" tags
+zrt count --words draft wip
+
+# Calculate percentage of words in refactored files
+zrt count --percentage refactored
+
+# Scan multiple directories
+zrt count --files -d ~/notes ~/work refactored
 ```
 
-### `zrt stats`
-
-Show detailed statistics for files containing a specific tag.
-
-```bash
-zrt stats [OPTIONS] <TAG>
-```
-
-**Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
-- `-e, --exclude <EXCLUDE>` - Directories to exclude (comma-separated, default: `.git`)
-
-**Examples:**
-```bash
-# Show statistics for "refactored" tag
-zrt stats refactored
-
-# Analyze "draft" tag in specific directory
-zrt stats -d ~/projects/notes draft
-```
-
-**Example output:**
-```
-Files with tag 'refactored': 45
-Words in tagged files: 23850
-Total files: 127
-Total words in all files: 89430
-Percentage of words tagged: 26.67%
-```
+**Output:** Single number (pipeable)
 
 ### `zrt wordcount` (alias: `wc`)
 
-Show files ordered by word count with powerful filtering options.
+Show files ordered by word or line count.
 
 ```bash
 zrt wordcount [OPTIONS]
-zrt wc [OPTIONS]  # Short alias
 ```
 
 **Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
-- `-f, --filter [<TAGS>...]` - Filter out files containing these tags (space-separated)
+- `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
+- `-f, --filter <TAGS>` - Filter out files with these tags (space-separated)
 - `-n, --num <TOP>` - Number of files to show (default: 10)
-- `-e, --exclude [<DIRS>...]` - Directories to exclude (space-separated, default: `.git`)
+- `-e, --exclude <DIRS>` - Directories to exclude (space-separated, default: `.git`)
 - `--exceeds` - Only show files exceeding configured thresholds
-- `--sort-by <SORT_BY>` - Sort by `words` or `lines` (overrides config)
-- `--suggest-tags` - Show ML-suggested tags for each file (requires tagging feature)
+- `--sort-by <SORT>` - Sort by `words` or `lines` (overrides config)
 
 **Examples:**
 ```bash
-# Top 10 files by word count (default)
+# Top 10 files by word count
 zrt wc
 
 # Files without "refactored" tag, top 20
 zrt wc -f refactored -n 20
 
-# Files without multiple tags
-zrt wc -f refactored completed reviewed -n 15
-
-# Only files exceeding configured thresholds
+# Only files exceeding thresholds
 zrt wc --exceeds
 
-# Sort by line count instead of word count
-zrt wc --sort-by lines -n 5
-
-# Include ML tag suggestions
-zrt wc --suggest-tags -n 5
+# Sort by line count
+zrt wc --sort-by lines
 ```
 
-**Example output:**
-```
-1. notes/complex-topic.md (1247 words)
-2. notes/research-findings.md (892 words)
-3. notes/project-analysis.md (654 words)
-4. notes/meeting-notes.md (543 words)
-5. notes/ideas-collection.md (421 words)
-```
+**Output:** File paths, one per line (pipeable)
 
-### `zrt search`
+### `zrt search` (alias: `s`)
 
-Search for files containing a specific pattern or tag.
+Search for files with exact tag matches.
 
 ```bash
-zrt search [OPTIONS] <PATTERN>
+zrt search [OPTIONS] --exactly <TAGS...>
 ```
 
 **Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
+- `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
+- `-e, --exclude <DIRS>` - Directories to exclude (space-separated)
+- `--exactly <TAGS>` - Find files with exactly these tags (no more, no less)
 
 **Examples:**
 ```bash
-# Find files with "urgent" tag
-zrt search urgent
+# Files with only "refactored" tag
+zrt search --exactly refactored
+
+# Files with exactly "draft" and "review" tags
+zrt search --exactly draft review
 
 # Search in specific directory
-zrt search -d ~/work-notes priority
+zrt search -d ~/notes --exactly refactored
 ```
 
-**Example output:**
-```
-Total files: 127
-Files with pattern 'urgent': 8
-Percentage: 6.30%
-```
+**Output:** File paths, one per line (pipeable)
 
-### `zrt compare`
+### `zrt similar` (alias: `sim`)
 
-Compare the distribution between two tags (typically "done" vs "todo").
+Find similar notes for refactoring and consolidation.
 
 ```bash
-zrt compare [OPTIONS] <DONE_TAG> <TODO_TAG>
+zrt similar [OPTIONS]
 ```
 
 **Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
+- `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
+- `-e, --exclude <DIRS>` - Directories to exclude (space-separated)
+- `--threshold <THRESHOLD>` - Similarity threshold 0.0-1.0 (default: 0.5)
 
 **Examples:**
 ```bash
-# Compare refactored vs needs-refactor
-zrt compare refactored needs-refactor
+# Find similar notes with default threshold
+zrt similar
 
-# Compare completed vs pending
-zrt compare completed pending
+# Higher threshold for stricter matching
+zrt similar --threshold 0.7
+
+# Scan multiple directories
+zrt similar -d ~/notes ~/work --threshold 0.6
 ```
 
-**Example output:**
-```
-refactored files: 45
-needs-refactor files: 23
-Done percentage: 66.18%
-```
+**Output:** Pairs of file paths (space-separated), one pair per line, sorted by similarity (pipeable)
 
-### `zrt only`
+**Frontmatter Exclusions:**
 
-Show files that have only a specific tag (no other tags).
+Exclude specific pairs from results using `exclude_similarity` field:
 
-```bash
-zrt only [OPTIONS] <TAG>
-```
-
-**Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
-
-**Examples:**
-```bash
-# Files with only "draft" tag
-zrt only draft
-
-# Files with only "refactored" tag
-zrt only refactored
-```
-
-**Example output:**
-```
-Total files: 127
-Files with only tag 'draft': 12
-Percentage: 9.45%
-```
-
-### `zrt tag` (ML Tag Prediction)
-
-Machine learning-powered tag prediction commands. Requires the `tagging` feature to be enabled.
-
-#### `zrt tag train`
-
-Train the tag prediction model using existing tagged files.
-
-```bash
-zrt tag train [OPTIONS]
-```
-
-**Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan for training data (default: current directory)
-- `-e, --exclude-tags [<TAGS>...]` - Tags to exclude from training (space-separated)
-
-**Examples:**
-```bash
-# Train model on all tagged files
-zrt tag train
-
-# Train excluding certain tags
-zrt tag train -e draft private temporary
-
-# Train on specific directory
-zrt tag train -d ~/knowledge-base
-```
-
-#### `zrt tag suggest`
-
-Get ML-powered tag suggestions for files.
-
-```bash
-zrt tag suggest [OPTIONS]
-```
-
-**Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan (default: current directory)
-- `-f, --file <FILE>` - Specific file to suggest tags for
-- `-t, --threshold <THRESHOLD>` - Confidence threshold for suggestions
-- `-n, --num <NUM>` - Number of top results to show (default: 10)
-- `-e, --exclude-tags [<TAGS>...]` - Tags to exclude from suggestions
-
-**Examples:**
-```bash
-# Suggest tags for all files in directory
-zrt tag suggest
-
-# Suggest tags for specific file
-zrt tag suggest -f notes/new-article.md
-
-# High-confidence suggestions only
-zrt tag suggest -t 0.8 -n 5
-
-# Exclude certain tags from suggestions
-zrt tag suggest -e draft temporary
-```
-
-**Example output:**
-```
-notes/new-article.md
-Existing tags: draft
-Suggested new tags:
-  research (confidence: 0.847)
-  methodology (confidence: 0.734)
-  analysis (confidence: 0.692)
-```
-
-#### `zrt tag validate`
-
-Validate the performance of the trained model.
-
-```bash
-zrt tag validate [OPTIONS]
-```
-
-**Options:**
-- `-d, --dir <DIRECTORY>` - Directory to scan for validation data (default: current directory)
-- `-e, --exclude-tags [<TAGS>...]` - Tags to exclude from validation
-
-**Examples:**
-```bash
-# Validate model performance
-zrt tag validate
-
-# Validate excluding certain tags
-zrt tag validate -e test experimental
+```markdown
+---
+tags: [research]
+exclude_similarity:
+  - [[duplicate-note]]
+  - [[old-version]]
+---
 ```
 
 ## Configuration
 
-ZRT uses a configuration file at `.zrt/config.toml` to customize behavior.
+zrt uses `.zrt/config.toml` to customize behavior.
 
 ### Default Configuration
 
 ```toml
 [refactor]
-word_threshold = 300      # Files with 300+ words are considered large
-line_threshold = 60       # Files with 60+ lines are considered large
-max_suggestions = 20      # Maximum number of suggestions to show
-exclude_tags = []         # Tags to exclude from analysis
+word_threshold = 300      # Files with 300+ words are large
+line_threshold = 60       # Files with 60+ lines are large
 sort_by = "words"        # Sort by "words" or "lines"
-
-[tagging]
-enabled = true           # Enable ML tag prediction features
 ```
 
 ### Configuration Options
 
 - **word_threshold**: Minimum word count for `--exceeds` filtering
 - **line_threshold**: Minimum line count for `--exceeds` filtering
-- **max_suggestions**: Default number of items to show in results
-- **exclude_tags**: Tags to automatically exclude from analysis
 - **sort_by**: Default sorting method ("words" or "lines")
 
-## Common Workflows
+## Ignore Patterns
 
-### Finding Files to Refactor
+Create a `.zrtignore` file to exclude directories (gitignore-style):
 
-1. **Identify largest unprocessed files:**
-   ```bash
-   zrt wc -f refactored -n 20
-   ```
+```
+.git/
+node_modules/
+archive/
+```
 
-2. **Find files exceeding your thresholds:**
-   ```bash
-   zrt wc --exceeds -f refactored
-   ```
+## File Format
 
-3. **Focus on specific content types:**
-   ```bash
-   zrt wc -f refactored completed -e drafts archive
-   ```
-
-### Progress Tracking
-
-1. **Check overall progress:**
-   ```bash
-   zrt stats refactored
-   ```
-
-2. **Compare completion states:**
-   ```bash
-   zrt compare refactored needs-work
-   ```
-
-3. **Find files that need initial categorization:**
-   ```bash
-   zrt only draft
-   ```
-
-### Using ML Tag Suggestions
-
-1. **Train the model on your existing notes:**
-   ```bash
-   zrt tag train
-   ```
-
-2. **Get suggestions for new or untagged files:**
-   ```bash
-   zrt tag suggest -t 0.7
-   ```
-
-3. **Validate model accuracy:**
-   ```bash
-   zrt tag validate
-   ```
-
-## File Format Requirements
-
-ZRT works with markdown files containing YAML frontmatter:
+zrt works with markdown files containing YAML frontmatter:
 
 ```markdown
 ---
@@ -422,10 +226,13 @@ tags:
   - research
   - methodology
   - draft
-title: "My Research Notes"
+exclude_similarity:
+  - [[old-version]]
 ---
 
 # Content here
 
-Your note content goes here...
+Your note content...
 ```
+
+Both inline `tags: [tag1, tag2]` and list format are supported.
