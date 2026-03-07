@@ -125,24 +125,28 @@ zrt wc --sort-by lines
 Search for files with exact tag matches.
 
 ```bash
-zrt search [OPTIONS] --exactly <TAGS...>
+zrt search [OPTIONS] (--tags <TAGS...> | --no-tags)
 ```
 
 **Options:**
 - `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
 - `-e, --exclude <DIRS>` - Directories to exclude (space-separated)
-- `--exactly <TAGS>` - Find files with exactly these tags (no more, no less)
+- `--tags <TAGS>` - Find files with exactly these tags (no more, no less)
+- `--no-tags` - Find files that have no tags at all
 
 **Examples:**
 ```bash
 # Files with only "refactored" tag
-zrt search --exactly refactored
+zrt search --tags refactored
 
 # Files with exactly "draft" and "review" tags
-zrt search --exactly draft review
+zrt search --tags draft review
 
 # Search in specific directory
-zrt search -d ~/notes --exactly refactored
+zrt search -d ~/notes --tags refactored
+
+# Files missing tags entirely
+zrt search --no-tags -d thoughts/ blog/
 ```
 
 **Output:** File paths, one per line (pipeable)
