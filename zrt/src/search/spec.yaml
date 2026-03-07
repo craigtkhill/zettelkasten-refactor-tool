@@ -1,0 +1,83 @@
+feature:
+  name: Search Files by Tag Criteria
+  user: zettelkasten user
+  goal: search for files based on tag filtering criteria
+  solutions:
+    - --tags flag for exact tag matching (replacing --exactly)
+    - --no-tags flag to find files missing tag metadata
+
+requirements:
+  - id: REQ-SEARCH-001
+    test: unit
+    code: done
+    description: Finds files with exactly one specified tag
+
+  - id: REQ-SEARCH-002
+    test: unit
+    code: done
+    description: Finds files with exactly multiple specified tags
+
+  - id: REQ-SEARCH-003
+    test: unit
+    code: done
+    description: Excludes files that have additional tags beyond specified ones
+
+  - id: REQ-SEARCH-004
+    test: unit
+    code: done
+    description: Excludes files that are missing any of the specified tags
+
+  - id: REQ-SEARCH-005
+    test: unit
+    code: done
+    description: Scans multiple directories specified via -d/--dir
+
+  - id: REQ-SEARCH-006
+    test: unit
+    code: done
+    description: Defaults to current directory when no -d specified
+
+  - id: REQ-SEARCH-007
+    test: unit
+    code: done
+    description: Excludes directories specified via -e/--exclude
+
+  - id: REQ-SEARCH-009
+    test: unit
+    code: done
+    description: Displays files matching criteria
+
+  - id: REQ-SEARCH-011
+    test: unit
+    code: done
+    description: Accepts --tags flag with space-separated tags for exact matching
+
+  - id: REQ-SEARCH-012
+    test: unit
+    code: done
+    description: Requires at least one tag when using --tags
+
+  - id: REQ-SEARCH-013
+    test: unit
+    code: done
+    description: Finds files that have no tags field in their frontmatter
+
+  - id: REQ-SEARCH-014
+    test: unit
+    code: done
+    description: Finds files that have no frontmatter at all
+
+  - id: REQ-SEARCH-015
+    test: unit
+    code: done
+    description: --no-tags results respect -d/--dir and -e/--exclude flags
+
+  - id: REQ-SEARCH-016
+    test: unit
+    code: done
+    description: --tags and --no-tags are mutually exclusive
+
+  - id: REQ-SEARCH-017
+    test: wont-implement
+    code: done
+    description: Requires at least one of --tags or --no-tags to be specified
