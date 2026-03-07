@@ -5,7 +5,9 @@ zrt is a command-line tool for analyzing and managing refactoring tasks in a Zet
 ## Features
 
 - **File Analysis**: Count files and words with tag-based filtering
-- **Tag-based Search**: Find files with exact tag matches
+- **Tag-based Search**: Find files with exact tag matches or missing tags
+- **Tag Frequency**: List tags sorted by how many notes use them
+- **Connection Analysis**: Find the most connected notes for a given tag
 - **Similarity Detection**: Find similar notes for consolidation
 - **Word/Line Metrics**: Identify files exceeding thresholds
 - **Flexible Configuration**: Customize thresholds and sorting
@@ -150,6 +152,61 @@ zrt search --no-tags -d thoughts/ blog/
 ```
 
 **Output:** File paths, one per line (pipeable)
+
+### `zrt tags` (alias: `t`)
+
+List tags sorted by how many notes use them.
+
+```bash
+zrt tags [OPTIONS]
+```
+
+**Options:**
+- `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
+- `-e, --exclude <DIRS>` - Directories to exclude (space-separated)
+- `--exclude-tag <TAGS>` - Tag names to omit from results (space-separated)
+- `--limit <N>` - Show only the top N tags
+
+**Examples:**
+```bash
+# List all tags by frequency
+zrt tags
+
+# Top 5 tags, excluding meta-tags
+zrt tags --limit 5 --exclude-tag refactored draft
+
+# Scan specific directories
+zrt tags -d thoughts/ blog/ --limit 10
+```
+
+**Output:** Tag names, one per line, sorted by frequency descending (pipeable)
+
+### `zrt connected` (alias: `con`)
+
+Find the most connected notes for a given tag. Only wikilinks between notes that both share the tag are counted.
+
+```bash
+zrt connected [TAG] [OPTIONS]
+```
+
+**Arguments:**
+- `[TAG]` - Tag to filter by (reads from stdin if not provided)
+
+**Options:**
+- `-d, --dir <DIRECTORY>` - Directories to scan (space-separated, default: current)
+- `-e, --exclude <DIRS>` - Directories to exclude (space-separated)
+- `--limit <N>` - Number of results to show (default: 20)
+
+**Examples:**
+```bash
+# Most connected notes tagged "writing"
+zrt connected writing
+
+# Top 3 results
+zrt connected writing --limit 3
+```
+
+**Output:** `<tag> <file_path>` per line, sorted by connection score descending (pipeable)
 
 ### `zrt similar` (alias: `sim`)
 
