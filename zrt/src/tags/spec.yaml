@@ -1,0 +1,42 @@
+feature:
+  name: List Tags by Frequency
+  user: zettelkasten user
+  goal: see which tags are used most across my notes so I can find the most active topic areas
+  solutions:
+    - walk markdown files, parse frontmatter tags, count frequency, sort and output
+
+requirements:
+  - id: REQ-TAGS-001
+    test: unit
+    code: done
+    description: Counts how many notes use each tag across all scanned markdown files
+
+  - id: REQ-TAGS-002
+    test: unit
+    code: done
+    description: Outputs tags sorted by frequency descending
+
+  - id: REQ-TAGS-003
+    test: wont-implement
+    code: done
+    description: Outputs one tag name per line
+
+  - id: REQ-TAGS-004
+    test: unit
+    code: done
+    description: Supports --exclude to omit specific tags from the output
+
+  - id: REQ-TAGS-005
+    test: unit
+    code: done
+    description: Supports --limit to show only the top N tags
+
+  - id: REQ-TAGS-006
+    test: unit
+    code: done
+    description: Scans multiple directories specified via -d/--dir
+
+  - id: REQ-TAGS-007
+    test: unit
+    code: done
+    description: Excludes directories specified via -e/--exclude

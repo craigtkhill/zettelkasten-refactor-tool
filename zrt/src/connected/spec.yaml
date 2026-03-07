@@ -1,0 +1,62 @@
+feature:
+  name: Most Connected Notes by Tag
+  user: zettelkasten user
+  goal: find the most connected note for a given tag so I can identify the best candidate for refactoring or review
+  solutions:
+    - walk markdown files, build a wikilink graph between notes sharing the tag, rank by total connections
+
+requirements:
+  - id: REQ-CONN-001
+    test: unit
+    code: done
+    description: Accepts a tag as a positional argument
+
+  - id: REQ-CONN-002
+    test: wont-implement
+    code: done
+    description: Accepts a tag from stdin when no positional argument is provided
+
+  - id: REQ-CONN-003
+    test: unit
+    code: done
+    description: Only considers notes that have the specified tag
+
+  - id: REQ-CONN-004
+    test: unit
+    code: done
+    description: Only counts wikilink connections between notes that both have the tag
+
+  - id: REQ-CONN-005
+    test: unit
+    code: done
+    description: Outgoing wikilinks to tagged notes count toward a note's connection score
+
+  - id: REQ-CONN-006
+    test: unit
+    code: done
+    description: Incoming wikilinks from tagged notes count toward a note's connection score
+
+  - id: REQ-CONN-007
+    test: unit
+    code: done
+    description: Outputs results sorted by total connections descending
+
+  - id: REQ-CONN-008
+    test: unit
+    code: done
+    description: Supports --limit to show only the top N results
+
+  - id: REQ-CONN-009
+    test: wont-implement
+    code: done
+    description: Output format is "<tag> <relative_path>" per line
+
+  - id: REQ-CONN-010
+    test: unit
+    code: done
+    description: Scans multiple directories specified via -d/--dir
+
+  - id: REQ-CONN-011
+    test: unit
+    code: done
+    description: Excludes directories specified via -e/--exclude

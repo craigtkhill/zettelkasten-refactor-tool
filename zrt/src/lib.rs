@@ -5,11 +5,13 @@
 //! and tracking refactoring progress through front matter tags.
 
 pub mod cli;
+pub mod connected;
 pub mod core;
 pub mod count;
 pub mod init;
 pub mod search;
 pub mod similar;
+pub mod tags;
 pub mod wordcount;
 
 pub use core::filter::utils::is_hidden;

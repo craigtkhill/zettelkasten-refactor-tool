@@ -30,6 +30,14 @@ pub enum Commands {
     /// Find similar notes for refactoring
     #[command(alias = "sim")]
     Similar(crate::similar::cli::SimilarArgs),
+
+    /// List tags by frequency across notes
+    #[command(alias = "t")]
+    Tags(crate::tags::cli::TagsArgs),
+
+    /// Find the most connected notes for a given tag
+    #[command(alias = "con")]
+    Connected(crate::connected::cli::ConnectedArgs),
 }
 
 #[inline]
@@ -40,6 +48,8 @@ pub fn run(args: Args) -> Result<()> {
         Commands::Search(args) => crate::search::cli::run(args),
         Commands::Count(args) => crate::count::cli::run(args),
         Commands::Similar(args) => crate::similar::cli::run(args),
+        Commands::Tags(args) => crate::tags::cli::run(args),
+        Commands::Connected(args) => crate::connected::cli::run(args),
     }
 }
 
