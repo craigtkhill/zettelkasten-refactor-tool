@@ -358,13 +358,9 @@ pub fn jaccard_similarity(set1: &HashSet<String>, set2: &HashSet<String>) -> f64
     }
 
     let intersection = set1.intersection(set2).count();
-    let union = set1.union(set2).count();
+    let union = set1.len() + set2.len() - intersection;
 
-    if union == 0 {
-        0.0
-    } else {
-        intersection as f64 / union as f64
-    }
+    intersection as f64 / union as f64
 }
 
 /// Parse exclude_similarity field from frontmatter
@@ -486,6 +482,13 @@ pub fn find_similar(
 
             // Skip if either set is empty
             if tokens1.is_empty() || tokens2.is_empty() {
+                continue;
+            }
+
+            // Upper bound: max possible Jaccard = min_len / max_len (when smaller ⊆ larger)
+            let min_len = tokens1.len().min(tokens2.len());
+            let max_len = tokens1.len().max(tokens2.len());
+            if (min_len as f64 / max_len as f64) < threshold {
                 continue;
             }
 
