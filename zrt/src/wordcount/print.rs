@@ -45,10 +45,10 @@ pub fn print_file_metrics(files: &[FileMetrics], top: usize, sort_by: SortBy) {
     // Sort by the specified criteria
     match sort_by {
         SortBy::Words => {
-            sorted_files.sort_by(|a, b| b.words.cmp(&a.words));
+            sorted_files.sort_by_key(|f| std::cmp::Reverse(f.words));
         }
         SortBy::Lines => {
-            sorted_files.sort_by(|a, b| b.lines.cmp(&a.lines));
+            sorted_files.sort_by_key(|f| std::cmp::Reverse(f.lines));
         }
     }
 

@@ -317,7 +317,7 @@ mod tests {
         let dir = TempDir::new()?;
         create_test_file(&dir, "note1.md", "content")?;
         let binary_path = dir.path().join("binary.md");
-        fs::write(&binary_path, &[0xFF, 0xFE, 0x00])?;
+        fs::write(&binary_path, [0xFF, 0xFE, 0x00])?;
 
         let pairs = find_similar(&[dir.path().to_path_buf()], 0.0, &[])?;
 

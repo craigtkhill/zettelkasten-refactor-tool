@@ -30,6 +30,8 @@ fn_params_excessive_bools = "allow"  # Max 2 boolean parameters
 module_inception = "allow"  # No module same name as parent
 collapsible_if = "allow"  # Temporarily allow nested ifs
 cargo_common_metadata = "allow"  # README not required yet
+items_after_test_module = "allow"  # Project convention: tests above implementation
+multiple_crate_versions = "allow"  # Transitive dependency version conflicts
 
 # pedantic = { priority = -1, level = "deny" }
 # nursery = { priority = -1, level = "deny" }

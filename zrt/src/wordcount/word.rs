@@ -85,37 +85,17 @@ pub fn count_words(
         }
     }
 
-    files.sort_by(|a, b| b.words.cmp(&a.words));
+    files.sort_by_key(|f| std::cmp::Reverse(f.words));
     Ok(files)
 }
 
-/// Counts words and lines in files, optionally filtering by thresholds and tags.
-///
-/// # Arguments
-///
-/// * `dirs` - The directory paths to scan. If empty, defaults to current directory.
-/// * `exclude_dirs` - A list of directory names to exclude from the scan
-/// * `filter_tags` - A list of tags to exclude files containing these tags
-/// * `thresholds` - Optional (word_threshold, line_threshold) to filter results
-///
-/// # Returns
-///
-/// * `Ok(Vec<FileMetrics>)` - A vector of file metrics with word counts, line counts, and tags
-///
-/// # Errors
-///
-/// This function may return an error if:
-/// * A directory cannot be accessed or read
-/// * File system operations fail during traversal
-/// * Files cannot be read as UTF-8 text
-/// * The ignore patterns file cannot be parsed
-/// * Frontmatter parsing fails
 #[inline]
 pub fn count_file_metrics(
     dirs: &[PathBuf],
     exclude_dirs: &[&str],
     filter_tags: &[&str],
-    thresholds: Option<(usize, usize)>,
+    thresholds: Option<(usize, usize, bool)>,
+    with_tags: &[&str],
 ) -> Result<Vec<FileMetrics>> {
     let mut files = Vec::new();
 
@@ -159,7 +139,9 @@ pub fn count_file_metrics(
                     // Remove frontmatter from content for accurate word/line counting
                     let lines: Vec<&str> = content.lines().collect();
                     if lines.len() > 2 && lines.first().is_some_and(|line| *line == "---") {
-                        if let Some(end_index) = lines.iter().skip(1).position(|&line| line == "---") {
+                        if let Some(end_index) =
+                            lines.iter().skip(1).position(|&line| line == "---")
+                        {
                             content_without_frontmatter =
                                 lines.get(end_index.saturating_add(2)..).map_or_else(
                                     || content.clone(),
@@ -184,14 +166,25 @@ pub fn count_file_metrics(
                     continue;
                 }
 
+                if !with_tags.is_empty()
+                    && !file_tags
+                        .iter()
+                        .any(|tag| with_tags.contains(&tag.as_str()))
+                {
+                    continue;
+                }
+
                 let word_count = content_without_frontmatter.split_whitespace().count();
                 let line_count = content_without_frontmatter.lines().count();
 
                 let metrics = FileMetrics::new(path.to_path_buf(), word_count, line_count);
 
-                // If thresholds are provided, only include files that exceed them
-                if let Some((word_threshold, line_threshold)) = thresholds {
-                    if metrics.exceeds_thresholds(word_threshold, line_threshold) {
+                if let Some((word_threshold, line_threshold, below)) = thresholds {
+                    if below {
+                        if !metrics.exceeds_thresholds(word_threshold, line_threshold) {
+                            files.push(metrics);
+                        }
+                    } else if metrics.exceeds_thresholds(word_threshold, line_threshold) {
                         files.push(metrics);
                     }
                 } else {
@@ -232,17 +225,25 @@ mod tests {
         let temp_dir = TempDir::new()?;
 
         // Create a valid UTF-8 markdown file
-        create_test_file(&temp_dir, "valid.md", "---\ntags: [test]\n---\nValid content")?;
+        create_test_file(
+            &temp_dir,
+            "valid.md",
+            "---\ntags: [test]\n---\nValid content",
+        )?;
 
         // Create a binary file with invalid UTF-8 bytes
         let binary_path = temp_dir.path().join("binary.md");
-        std::fs::write(&binary_path, &[0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F])?;
+        std::fs::write(
+            &binary_path,
+            [0xFF, 0xFE, 0x00, 0x48, 0x65, 0x6C, 0x6C, 0x6F],
+        )?;
 
         // These functions should not panic and should skip the invalid UTF-8 file
         let word_counts = count_words(&[temp_dir.path().to_path_buf()], &[], None)?;
         assert_eq!(word_counts.len(), 1, "Should only process UTF-8 files");
 
-        let file_metrics = count_file_metrics(&[temp_dir.path().to_path_buf()], &[], &[], None)?;
+        let file_metrics =
+            count_file_metrics(&[temp_dir.path().to_path_buf()], &[], &[], None, &[])?;
         assert_eq!(file_metrics.len(), 1, "Should only process UTF-8 files");
 
         Ok(())
@@ -278,7 +279,10 @@ mod tests {
         let files = count_words(&dirs, &[], None)?;
 
         assert_eq!(files.len(), 2);
-        assert!(files[0].words > files[1].words, "Files should be sorted by word count descending");
+        assert!(
+            files[0].words > files[1].words,
+            "Files should be sorted by word count descending"
+        );
 
         Ok(())
     }
@@ -314,7 +318,11 @@ mod tests {
         let dirs = vec![dir1.path().to_path_buf(), dir2.path().to_path_buf()];
         let files = count_words(&dirs, &[], Some("filtered"))?;
 
-        assert_eq!(files.len(), 2, "Should filter out tagged files from both directories");
+        assert_eq!(
+            files.len(),
+            2,
+            "Should filter out tagged files from both directories"
+        );
 
         Ok(())
     }
@@ -344,6 +352,88 @@ mod tests {
         let files = count_words(&[], &[], None)?;
         // Should not panic and should return valid results
         let _ = files.len();
+        Ok(())
+    }
+
+    #[test]
+    fn test_should_include_only_files_with_specified_tag() -> Result<()> {
+        // REQ-WC-004b
+        let dir = TempDir::new()?;
+        create_test_file(&dir, "tagged.md", "---\ntags: [long_file]\n---\nContent")?;
+        create_test_file(&dir, "untagged.md", "---\ntags: [other]\n---\nContent")?;
+
+        // When
+        let files =
+            count_file_metrics(&[dir.path().to_path_buf()], &[], &[], None, &["long_file"])?;
+
+        // Then
+        assert_eq!(files.len(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn test_should_exclude_files_without_specified_tag() -> Result<()> {
+        // REQ-WC-004b
+        let dir = TempDir::new()?;
+        create_test_file(&dir, "tagged.md", "---\ntags: [long_file]\n---\nContent")?;
+        create_test_file(&dir, "untagged.md", "---\ntags: [other]\n---\nContent")?;
+
+        // When
+        let files =
+            count_file_metrics(&[dir.path().to_path_buf()], &[], &[], None, &["long_file"])?;
+
+        // Then
+        assert!(files.iter().all(|f| f.path.ends_with("tagged.md")));
+        Ok(())
+    }
+
+    #[test]
+    fn test_should_show_files_below_word_threshold() -> Result<()> {
+        // REQ-WC-011
+        let dir = TempDir::new()?;
+        create_test_file(&dir, "short.md", "One two three")?;
+        create_test_file(
+            &dir,
+            "long.md",
+            "one two three four five six seven eight nine ten eleven",
+        )?;
+
+        // When: threshold is 10 words, below=true
+        let files = count_file_metrics(
+            &[dir.path().to_path_buf()],
+            &[],
+            &[],
+            Some((10, 100, true)),
+            &[],
+        )?;
+
+        // Then
+        assert_eq!(files.len(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn test_should_exclude_files_at_or_above_threshold_when_below() -> Result<()> {
+        // REQ-WC-011
+        let dir = TempDir::new()?;
+        create_test_file(&dir, "short.md", "One two three")?;
+        create_test_file(
+            &dir,
+            "long.md",
+            "one two three four five six seven eight nine ten eleven",
+        )?;
+
+        // When: threshold is 10 words, below=true
+        let files = count_file_metrics(
+            &[dir.path().to_path_buf()],
+            &[],
+            &[],
+            Some((10, 100, true)),
+            &[],
+        )?;
+
+        // Then
+        assert!(files.iter().all(|f| f.path.ends_with("short.md")));
         Ok(())
     }
 }

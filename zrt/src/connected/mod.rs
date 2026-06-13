@@ -236,7 +236,7 @@ pub fn most_connected(
                 let has_tag = parse_frontmatter(&content)
                     .ok()
                     .and_then(|fm| fm.tags)
-                    .map_or(false, |tags| tags.iter().any(|t| t == tag));
+                    .is_some_and(|tags| tags.iter().any(|t| t == tag));
                 let body = strip_frontmatter(&content).to_string();
                 notes.push((stem, path.display().to_string(), has_tag, body));
             }
@@ -277,7 +277,7 @@ pub fn most_connected(
                 .filter(|(other_stem, _, _, _)| {
                     outgoing
                         .get(other_stem.as_str())
-                        .map_or(false, |links| links.contains(stem.as_str()))
+                        .is_some_and(|links| links.contains(stem.as_str()))
                 })
                 .count();
 
