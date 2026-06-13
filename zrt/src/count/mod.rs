@@ -66,7 +66,11 @@ mod tests {
     fn test_should_count_words_with_single_tag() -> Result<()> {
         // REQ-COUNT-004
         let dir = TempDir::new()?;
-        create_test_file(&dir, "tagged.md", "---\ntags: [refactor]\n---\nOne two three")?;
+        create_test_file(
+            &dir,
+            "tagged.md",
+            "---\ntags: [refactor]\n---\nOne two three",
+        )?;
         create_test_file(&dir, "untagged.md", "Four five six seven")?;
 
         let count = count_words(&[dir.path().to_path_buf()], &["refactor"], &[])?;
@@ -119,7 +123,8 @@ mod tests {
         create_test_file(&dir, "tag2.md", "---\ntags: [draft]\n---\nThree four")?;
         create_test_file(&dir, "untagged.md", "Five six")?;
 
-        let percentage = calculate_percentage(&[dir.path().to_path_buf()], &["refactor", "draft"], &[])?;
+        let percentage =
+            calculate_percentage(&[dir.path().to_path_buf()], &["refactor", "draft"], &[])?;
         assert_eq!(percentage, 66.67); // 4 out of 6 words, rounded to 2 decimals
         Ok(())
     }
@@ -145,7 +150,11 @@ mod tests {
         create_test_file(&dir1, "file1.md", "Content 1")?;
         create_test_file(&dir2, "file2.md", "Content 2")?;
 
-        let count = count_files(&[dir1.path().to_path_buf(), dir2.path().to_path_buf()], &[], &[])?;
+        let count = count_files(
+            &[dir1.path().to_path_buf(), dir2.path().to_path_buf()],
+            &[],
+            &[],
+        )?;
         assert_eq!(count, 2);
         Ok(())
     }

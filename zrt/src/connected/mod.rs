@@ -56,7 +56,10 @@ mod tests {
         let results = most_connected(&[dir.path().to_path_buf()], "writing", &[])?;
 
         // Then
-        let a_score = results.iter().find(|(p, _)| p.ends_with("a.md")).map(|(_, c)| *c);
+        let a_score = results
+            .iter()
+            .find(|(p, _)| p.ends_with("a.md"))
+            .map(|(_, c)| *c);
         assert_eq!(a_score, Some(1));
         Ok(())
     }
@@ -74,7 +77,10 @@ mod tests {
         let results = most_connected(&[dir.path().to_path_buf()], "writing", &[])?;
 
         // Then
-        let b_score = results.iter().find(|(p, _)| p.ends_with("b.md")).map(|(_, c)| *c);
+        let b_score = results
+            .iter()
+            .find(|(p, _)| p.ends_with("b.md"))
+            .map(|(_, c)| *c);
         assert_eq!(b_score, Some(1));
         Ok(())
     }
@@ -93,7 +99,10 @@ mod tests {
         let results = most_connected(&[dir.path().to_path_buf()], "writing", &[])?;
 
         // Then
-        let a_score = results.iter().find(|(p, _)| p.ends_with("a.md")).map(|(_, c)| *c);
+        let a_score = results
+            .iter()
+            .find(|(p, _)| p.ends_with("a.md"))
+            .map(|(_, c)| *c);
         assert_eq!(a_score, Some(0));
         Ok(())
     }
@@ -253,13 +262,18 @@ pub fn most_connected(
         .iter()
         .filter(|(_, _, has_tag, _)| *has_tag)
         .map(|(stem, path, _, _)| {
-            let out_count = outgoing
-                .get(stem.as_str())
-                .map_or(0, |links| links.iter().filter(|l| tagged_stems.contains(l.as_str()) && l.as_str() != stem.as_str()).count());
+            let out_count = outgoing.get(stem.as_str()).map_or(0, |links| {
+                links
+                    .iter()
+                    .filter(|l| tagged_stems.contains(l.as_str()) && l.as_str() != stem.as_str())
+                    .count()
+            });
 
             let in_count = notes
                 .iter()
-                .filter(|(other_stem, _, _, _)| other_stem != stem && tagged_stems.contains(other_stem.as_str()))
+                .filter(|(other_stem, _, _, _)| {
+                    other_stem != stem && tagged_stems.contains(other_stem.as_str())
+                })
                 .filter(|(other_stem, _, _, _)| {
                     outgoing
                         .get(other_stem.as_str())

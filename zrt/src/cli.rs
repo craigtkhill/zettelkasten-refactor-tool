@@ -1,7 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
@@ -52,4 +51,3 @@ pub fn run(args: Args) -> Result<()> {
         Commands::Connected(args) => crate::connected::cli::run(args),
     }
 }
-

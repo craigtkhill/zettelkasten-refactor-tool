@@ -99,7 +99,14 @@ mod tests {
         // REQ-SEARCH-007
 
         // Given / When
-        let args = TestArgs::parse_from(["program", "--tags", "refactor", "-e", "node_modules", "target"]);
+        let args = TestArgs::parse_from([
+            "program",
+            "--tags",
+            "refactor",
+            "-e",
+            "node_modules",
+            "target",
+        ]);
 
         // Then
         assert_eq!(args.search.exclude.len(), 2);

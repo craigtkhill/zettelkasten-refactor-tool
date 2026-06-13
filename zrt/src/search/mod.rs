@@ -28,7 +28,11 @@ mod tests {
         // REQ-SEARCH-001
         let dir = TempDir::new()?;
         create_test_file(&dir, "exact.md", "---\ntags: [refactor]\n---\nContent")?;
-        create_test_file(&dir, "extra.md", "---\ntags: [refactor, draft]\n---\nContent")?;
+        create_test_file(
+            &dir,
+            "extra.md",
+            "---\ntags: [refactor, draft]\n---\nContent",
+        )?;
         create_test_file(&dir, "none.md", "No tags")?;
 
         let files = search_exactly(&[dir.path().to_path_buf()], &["refactor"], &[])?;
@@ -41,9 +45,17 @@ mod tests {
     fn test_should_find_files_with_exactly_multiple_tags() -> Result<()> {
         // REQ-SEARCH-002
         let dir = TempDir::new()?;
-        create_test_file(&dir, "exact.md", "---\ntags: [refactor, draft]\n---\nContent")?;
+        create_test_file(
+            &dir,
+            "exact.md",
+            "---\ntags: [refactor, draft]\n---\nContent",
+        )?;
         create_test_file(&dir, "partial.md", "---\ntags: [refactor]\n---\nContent")?;
-        create_test_file(&dir, "extra.md", "---\ntags: [refactor, draft, wip]\n---\nContent")?;
+        create_test_file(
+            &dir,
+            "extra.md",
+            "---\ntags: [refactor, draft, wip]\n---\nContent",
+        )?;
 
         let files = search_exactly(&[dir.path().to_path_buf()], &["refactor", "draft"], &[])?;
         assert_eq!(files.len(), 1);
@@ -56,7 +68,11 @@ mod tests {
         // REQ-SEARCH-003
         let dir = TempDir::new()?;
         create_test_file(&dir, "exact.md", "---\ntags: [refactor]\n---\nContent")?;
-        create_test_file(&dir, "extra.md", "---\ntags: [refactor, draft]\n---\nContent")?;
+        create_test_file(
+            &dir,
+            "extra.md",
+            "---\ntags: [refactor, draft]\n---\nContent",
+        )?;
 
         let files = search_exactly(&[dir.path().to_path_buf()], &["refactor"], &[])?;
         assert_eq!(files.len(), 1);
@@ -68,7 +84,11 @@ mod tests {
     fn test_should_exclude_files_missing_tags() -> Result<()> {
         // REQ-SEARCH-004
         let dir = TempDir::new()?;
-        create_test_file(&dir, "exact.md", "---\ntags: [refactor, draft]\n---\nContent")?;
+        create_test_file(
+            &dir,
+            "exact.md",
+            "---\ntags: [refactor, draft]\n---\nContent",
+        )?;
         create_test_file(&dir, "partial.md", "---\ntags: [refactor]\n---\nContent")?;
 
         let files = search_exactly(&[dir.path().to_path_buf()], &["refactor", "draft"], &[])?;
@@ -123,7 +143,11 @@ mod tests {
     #[test]
     fn test_should_handle_tag_order_independently() -> Result<()> {
         let dir = TempDir::new()?;
-        create_test_file(&dir, "file.md", "---\ntags: [draft, refactor]\n---\nContent")?;
+        create_test_file(
+            &dir,
+            "file.md",
+            "---\ntags: [draft, refactor]\n---\nContent",
+        )?;
 
         let files = search_exactly(&[dir.path().to_path_buf()], &["refactor", "draft"], &[])?;
         assert_eq!(files.len(), 1);
@@ -136,7 +160,11 @@ mod tests {
         create_test_file(&dir, "file.md", "---\ntags:\n  - refactored\n---\nContent")?;
 
         let files = search_exactly(&[dir.path().to_path_buf()], &["refactored"], &[])?;
-        assert_eq!(files.len(), 1, "Should find file with YAML list format tags");
+        assert_eq!(
+            files.len(),
+            1,
+            "Should find file with YAML list format tags"
+        );
         Ok(())
     }
 
@@ -187,10 +215,8 @@ mod tests {
         create_test_file(&dir2, "b.md", "No frontmatter")?;
 
         // When
-        let files = search_missing_tags(
-            &[dir1.path().to_path_buf(), dir2.path().to_path_buf()],
-            &[],
-        )?;
+        let files =
+            search_missing_tags(&[dir1.path().to_path_buf(), dir2.path().to_path_buf()], &[])?;
 
         // Then
         assert_eq!(files.len(), 2);

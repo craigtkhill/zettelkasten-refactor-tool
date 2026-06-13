@@ -39,7 +39,10 @@ mod tests {
         let results = count_tags(&[dir.path().to_path_buf()], &[], &[])?;
 
         // Then
-        let writing_count = results.iter().find(|(t, _)| t == "writing").map(|(_, c)| *c);
+        let writing_count = results
+            .iter()
+            .find(|(t, _)| t == "writing")
+            .map(|(_, c)| *c);
         assert_eq!(writing_count, Some(2));
         Ok(())
     }
@@ -97,7 +100,10 @@ mod tests {
         )?;
 
         // Then
-        let writing_count = results.iter().find(|(t, _)| t == "writing").map(|(_, c)| *c);
+        let writing_count = results
+            .iter()
+            .find(|(t, _)| t == "writing")
+            .map(|(_, c)| *c);
         assert_eq!(writing_count, Some(2));
         Ok(())
     }

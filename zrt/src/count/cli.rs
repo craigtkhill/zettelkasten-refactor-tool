@@ -120,8 +120,7 @@ pub fn run(args: CountArgs) -> Result<()> {
         let count = crate::count::count_words(&args.directories, &tag_refs, &exclude_dirs)?;
         println!("{}", count);
     } else if args.percentage {
-        let pct =
-            crate::count::calculate_percentage(&args.directories, &tag_refs, &exclude_dirs)?;
+        let pct = crate::count::calculate_percentage(&args.directories, &tag_refs, &exclude_dirs)?;
         println!("{:.2}", pct);
     }
 

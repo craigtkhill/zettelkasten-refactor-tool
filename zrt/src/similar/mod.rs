@@ -220,7 +220,8 @@ mod tests {
     #[test]
     fn test_should_parse_exclude_similarity_field() -> Result<()> {
         // REQ-SIM-303
-        let exclusions = parse_exclude_similarity("exclude_similarity:\n  - [[note2]]\n  - [[note3]]");
+        let exclusions =
+            parse_exclude_similarity("exclude_similarity:\n  - [[note2]]\n  - [[note3]]");
 
         assert_eq!(exclusions.len(), 2);
         assert!(exclusions.contains("note2"));
@@ -232,7 +233,11 @@ mod tests {
     fn test_should_skip_excluded_pairs() -> Result<()> {
         // REQ-SIM-304
         let dir = TempDir::new()?;
-        create_test_file(&dir, "note1.md", "---\nexclude_similarity:\n  - [[note2]]\n---\napple banana")?;
+        create_test_file(
+            &dir,
+            "note1.md",
+            "---\nexclude_similarity:\n  - [[note2]]\n---\napple banana",
+        )?;
         create_test_file(&dir, "note2.md", "apple banana")?;
 
         let pairs = find_similar(&[dir.path().to_path_buf()], 0.0, &[])?;
@@ -245,9 +250,8 @@ mod tests {
     #[test]
     fn test_should_support_yaml_list_format() -> Result<()> {
         // REQ-SIM-305
-        let exclusions = parse_exclude_similarity(
-            "exclude_similarity:\n  - [[note1]]\n  - [[note2]]\n"
-        );
+        let exclusions =
+            parse_exclude_similarity("exclude_similarity:\n  - [[note1]]\n  - [[note2]]\n");
 
         assert_eq!(exclusions.len(), 2);
         assert!(exclusions.contains("note1"));
@@ -458,12 +462,8 @@ pub fn find_similar(
             let path2 = note_paths[j];
 
             // Check exclusions
-            let note1_stem = path1.file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("");
-            let note2_stem = path2.file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("");
+            let note1_stem = path1.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+            let note2_stem = path2.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
             if let Some(exclusions) = note_exclusions.get(path1) {
                 if exclusions.contains(note2_stem) {

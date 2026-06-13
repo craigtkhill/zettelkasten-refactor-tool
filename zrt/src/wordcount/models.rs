@@ -63,11 +63,7 @@ impl FileMetrics {
     #[inline]
     #[must_use]
     pub fn new(path: PathBuf, words: usize, lines: usize) -> Self {
-        Self {
-            path,
-            words,
-            lines,
-        }
+        Self { path, words, lines }
     }
 
     #[inline]
