@@ -1,0 +1,69 @@
+feature:
+  name: Word Count File Listing
+  user: zettelkasten user
+  goal: see which files are the longest and identify ones that need refactoring
+  solutions:
+    - walk markdown files, count words and lines, sort and output top N
+    - filter by tags to narrow the view to relevant files
+    - compare against configured thresholds to find files that exceed or fall below them
+
+requirements:
+  - id: REQ-WC-001
+    test: unit
+    code: done
+    description: Lists top N files ordered by word count descending
+
+  - id: REQ-WC-002
+    test: unit
+    code: done
+    description: Allows specifying number of files to show via -n/--num
+
+  - id: REQ-WC-003
+    test: unit
+    code: done
+    description: Defaults to showing 10 files when -n is not specified
+
+  - id: REQ-WC-004a
+    test: unit
+    code: done
+    description: Filters out files containing specified tags via -f/--filter
+
+  - id: REQ-WC-004b
+    test: unit
+    code: done
+    description: Shows only files containing specified tags via -t/--with-tags
+
+  - id: REQ-WC-005
+    test: unit
+    code: done
+    description: Shows only files exceeding configured word or line thresholds via --exceeds
+
+  - id: REQ-WC-006
+    test: unit
+    code: done
+    description: Sorts by word count by default
+
+  - id: REQ-WC-007
+    test: unit
+    code: done
+    description: Allows sorting by line count via --sort-by
+
+  - id: REQ-WC-008
+    test: unit
+    code: done
+    description: Scans multiple directories specified via -d/--dir
+
+  - id: REQ-WC-009
+    test: unit
+    code: done
+    description: Defaults to current directory when -d is not specified
+
+  - id: REQ-WC-010
+    test: unit
+    code: done
+    description: Excludes directories specified via -e/--exclude
+
+  - id: REQ-WC-011
+    test: unit
+    code: done
+    description: Shows only files below configured word and line thresholds via --below
